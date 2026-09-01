@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipment Damage & Maintenance Dashboard</title>
+    <title>Equipment Maintenance & Failure Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --sidebar-width: 250px;
+            --sidebar-width: 260px;
             --primary-color: #1e293b;
             --secondary-color: #0f172a;
             --accent-color: #3b82f6;
@@ -40,7 +40,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             background-color: var(--secondary-color);
@@ -66,9 +66,8 @@
         }
 
         .sidebar-header h2 {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
 
         .sidebar-menu {
@@ -88,19 +87,20 @@
         .sidebar-menu li a {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 12px 24px;
+            gap: 12px;
+            padding: 14px 24px;
             color: #cbd5e1;
             text-decoration: none;
             font-size: 0.95rem;
             font-weight: 500;
             transition: all 0.2s;
             border-left: 4px solid transparent;
+            cursor: pointer;
         }
 
         .sidebar-menu li a:hover,
         .sidebar-menu li a.active {
-            background-color: rgba(255, 255, 255, 0.06);
+            background-color: rgba(255, 255, 255, 0.08);
             color: #ffffff;
             border-left-color: var(--accent-color);
         }
@@ -108,6 +108,14 @@
         .sidebar-menu li a i {
             width: 20px;
             font-size: 1.1rem;
+        }
+
+        .badge-count {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: auto;
         }
 
         /* Main Content */
@@ -129,7 +137,7 @@
         }
 
         .top-nav h1 {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--primary-color);
         }
@@ -155,7 +163,6 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
         .stat-icon {
@@ -203,7 +210,7 @@
         .search-box {
             position: relative;
             flex: 1;
-            max-width: 400px;
+            max-width: 420px;
         }
 
         .search-box i {
@@ -253,7 +260,7 @@
             border-color: var(--accent-color);
         }
 
-        /* Data Table */
+        /* Table */
         .table-responsive {
             max-height: 600px;
             overflow-y: auto;
@@ -301,6 +308,7 @@
         .tag-t { background-color: var(--tag-t-bg); color: var(--tag-t-color); }
         .tag-l { background-color: var(--tag-l-bg); color: var(--tag-l-color); }
         .tag-h { background-color: var(--tag-h-bg); color: var(--tag-h-color); }
+        .tag-none { background-color: #e2e8f0; color: #475569; }
 
         .desc-text {
             color: var(--text-main);
@@ -309,14 +317,6 @@
 
         .failure-text {
             color: #475569;
-        }
-
-        .badge-count {
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            margin-left: auto;
         }
     </style>
 </head>
@@ -328,12 +328,19 @@
             <h2>ระบบจัดการข้อมูล</h2>
         </div>
         <ul class="sidebar-menu">
-            <div class="menu-category">เมนูหลัก</div>
+            <div class="menu-category">เมนูระบบ</div>
             <li>
-                <a href="#" class="active">
+                <a href="javascript:void(0)" id="menuDamaged" class="active" onclick="switchTab('DAMAGED')">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span>DAMAGED</span>
-                    <span class="badge-count" id="menuCount">71</span>
+                    <span class="badge-count" id="countDamagedBadge">71</span>
+                </a>
+            </li>
+            <li>
+                <a href="javascript:void(0)" id="menuError" onclick="switchTab('EQUIPMENT ERROR')">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>EQUIPMENT ERROR</span>
+                    <span class="badge-count" id="countErrorBadge">14</span>
                 </a>
             </li>
         </ul>
@@ -341,7 +348,7 @@
 
     <div class="main-wrapper">
         <header class="top-nav">
-            <h1><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED (รหัสความเสียหายและอุปกรณ์)</h1>
+            <h1 id="pageTitle"><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED</h1>
         </header>
 
         <main class="content-container">
@@ -351,8 +358,8 @@
                         <i class="fa-solid fa-database"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รายการความเสียหายทั้งหมด</h3>
-                        <p id="totalRecords">71</p>
+                        <h3>รายการในหมวดนี้</h3>
+                        <p id="totalRecords">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -360,8 +367,8 @@
                         <i class="fa-solid fa-microchip"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>อุปกรณ์หม้อแปลง/รีเลย์ (T-Series)</h3>
-                        <p id="totalT">63</p>
+                        <h3>อุปกรณ์หมวด T (Transformer/Relay)</h3>
+                        <p id="totalT">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -369,8 +376,8 @@
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รอดำเนินการ/อะไหล่ (L-Series)</h3>
-                        <p id="totalL">6</p>
+                        <h3>อุปกรณ์หมวด L</h3>
+                        <p id="totalL">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -378,8 +385,8 @@
                         <i class="fa-solid fa-wrench"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>งานตรวจรับอื่นๆ (H-Series)</h3>
-                        <p id="totalH">2</p>
+                        <h3>หมวด H / อื่นๆ</h3>
+                        <p id="totalH">0</p>
                     </div>
                 </div>
             </div>
@@ -416,80 +423,100 @@
     </div>
 
     <script>
+        // 1. ข้อมูลชุดที่ 1: DAMAGED (71 รายการ)
         const damagedData = [
-            { id: 2, code: "อายุใช้งานเสื่อมสภาพ / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
-            { id: 3, code: "ความชื้น/สิ่งสกปรก / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
-            { id: 4, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL DESK หลอดขาด", desc: "T102 Control desk หลอดขาด" },
-            { id: 5, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL พัดลมชำรุด", desc: "T103 Control พัดลมชำรุด" },
-            { id: 6, code: "เสื่อมสภาพจากอายุใช้งาน / DIFFERENTIAL RELAY", desc: "T105 Differential relay เปลี่ยน" },
-            { id: 7, code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY เปลี่ยน", desc: "T107 Tripping relay เปลี่ยน" },
-            { id: 8, code: "โครงแตก / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
-            { id: 9, code: "ซีลเสื่อมสภาพ / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
-            { id: 10, code: "โครงแตก / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
-            { id: 11, code: "โครงแตก / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
-            { id: 12, code: "เสื่อมสภาพ / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
-            { id: 13, code: "SILICAGEL เสื่อมสภาพ / SILICAGEL/AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" },
-            { id: 14, code: "โครงแตก / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
-            { id: 15, code: "เสื่อมสภาพ / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
-            { id: 16, code: "การรั่วซึมของน้ำมัน / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { id: 17, code: "การเกิดไฟฟ้าลัดวงจร / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { id: 18, code: "อายุการใช้งานเสื่อมสภาพ / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { id: 19, code: "ความร้อนสะสมเกินไป / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { id: 20, code: "สึกหรอจากการใช้งานนาน / เปลี่ยนพัดลมหม้อแปลง", desc: "T018 เปลี่ยนพัดลมหม้อแปลง" },
-            { id: 21, code: "สึกหรอจากการใช้งานนาน / พัดลมหม้อแปลงถอดไปซ่อม", desc: "T019 พัดลมหม้อแปลงถอดไปซ่อม" },
-            { id: 22, code: "การเสียหายของมอเตอร์ / พัดลมหม้อแปลงไม่ทำงาน", desc: "T020 พัดลมหม้อแปลงไม่ทำงาน" },
-            { id: 23, code: "WAITING / งานตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "L212 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { id: 24, code: "WAITING / งานตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L010 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
-            { id: 25, code: "WAITING / ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร", desc: "L213 ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร" },
-            { id: 26, code: "การโอเวอร์โหลด (OVERLOAD) / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { id: 27, code: "ความผิดปกติของแรงดัน / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { id: 28, code: "การผลิตที่ไม่ดี / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { id: 29, code: "การเกิดความชื้น / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { id: 30, code: "การออกแบบที่ผิดพลาด / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { id: 31, code: "ความเครียดการเปลี่ยนกระแสไฟฟ้า / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { id: 32, code: "การสะสมของความร้อน / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { id: 33, code: "เสื่อมสภาพ / HV BUSHING หม้อแปลงชำรุด", desc: "T025 HV Bushing หม้อแปลงชำรุด" },
-            { id: 34, code: "เสื่อมสภาพ / MV BUSHING หม้อแปลงชำรุด", desc: "T026 MV Bushing หม้อแปลงชำรุด" },
-            { id: 35, code: "เสื่อมสภาพ / OFF LOAD TAP หม้อแปลงชำรุด", desc: "T027 OFF LOAD TAP หม้อแปลงชำรุด" },
-            { id: 36, code: "SHORT CIRCUIT / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { id: 37, code: "การติดตั้งไม่ถูกต้อง / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { id: 38, code: "เสื่อมสภาพจากอายุใช้งาน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { id: 39, code: "อุณหภูมิสูงเกิน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { id: 40, code: "กลไกติดขัด / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { id: 41, code: "การติดตั้งไม่ถูกต้อง / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { id: 42, code: "กลไกติดขัด / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { id: 43, code: "เสื่อมสภาพจากอายุใช้งาน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { id: 44, code: "แรงดันเกินขีดจำกัดบ่อยเกิน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { id: 45, code: "ระบบควบคุมทำงานผิดพลาด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { id: 46, code: "TRANSFORMER MALFUNCTION / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { id: 47, code: "การตั้งค่าผิด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { id: 48, code: "ระบบภายนอกสัญญาณผิดปกติ / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { id: 49, code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY ชำรุด", desc: "T106 Tripping relay ชำรุด" },
-            { id: 50, code: "เปลี่ยน TAP แล้วมีเสียง/ เปลี่ยน TAP แล้วมีเสียง", desc: "T211 เปลี่ยน TAP แล้วมีเสียงดัง" },
-            { id: 51, code: "WAITING / ตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "T213 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { id: 52, code: "WAITING / ตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L106 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
-            { id: 53, code: "กลไกเสื่อมสภาพ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { id: 54, code: "ความชื้น, ฝุ่น ฯ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { id: 55, code: "ต่อสายผิด, SHORT / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { id: 56, code: "อาร์ก ระหว่างเปลี่ยน TAP บ่อย / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { id: 57, code: "อุณหภูมิสูงเกินจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { id: 58, code: "น้ำมัน OLTC เสื่อมสภาพ / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { id: 59, code: "อุณหภูมิสูงมาจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { id: 60, code: "อาร์ก ขณะสลับ TAP / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { id: 61, code: "น้ำมัน OLTC เสื่อมสภาพ / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { id: 62, code: "สปริง/กลไก CONTACT เสีย / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { id: 63, code: "ค่าต้านทานCONTACTเพิ่ม / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { id: 64, code: "สึกหรอ / GEAR UNIT ชำรุด", desc: "T218 Gear unit ชำรุด" },
-            { id: 65, code: "ชำรุดจาก ACCESSORIES / OLTC ACCESSORIES ชำรุด", desc: "T219 OLTC Accessories ชำรุด" },
-            { id: 66, code: "แรงดันV ผิดปกติ / MOTOR DRIVE CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { id: 67, code: "ฝุ่นละอองฯ ในกล่องควบคุม / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { id: 68, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { id: 69, code: "แรงดันน้ำมันเกิน / PRESSURE GAUGE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
-            { id: 70, code: "สิ่งสกปรกเข้าไปในเกจ / PRESSURE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
-            { id: 71, code: "WAITING / ตรวจสอบ รอจัดซื้ออะไหล่", desc: "T306 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { id: 72, code: "WAITING / ตรวจสอบ ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "H204 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" }
+            { code: "อายุใช้งานเสื่อมสภาพ / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
+            { code: "ความชื้น/สิ่งสกปรก / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL DESK หลอดขาด", desc: "T102 Control desk หลอดขาด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL พัดลมชำรุด", desc: "T103 Control พัดลมชำรุด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / DIFFERENTIAL RELAY", desc: "T105 Differential relay เปลี่ยน" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY เปลี่ยน", desc: "T107 Tripping relay เปลี่ยน" },
+            { code: "โครงแตก / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
+            { code: "ซีลเสื่อมสภาพ / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
+            { code: "โครงแตก / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
+            { code: "โครงแตก / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
+            { code: "เสื่อมสภาพ / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
+            { code: "SILICAGEL เสื่อมสภาพ / SILICAGEL/AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" },
+            { code: "โครงแตก / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
+            { code: "เสื่อมสภาพ / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
+            { code: "การรั่วซึมของน้ำมัน / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { code: "การเกิดไฟฟ้าลัดวงจร / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { code: "อายุการใช้งานเสื่อมสภาพ / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { code: "ความร้อนสะสมเกินไป / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { code: "สึกหรอจากการใช้งานนาน / เปลี่ยนพัดลมหม้อแปลง", desc: "T018 เปลี่ยนพัดลมหม้อแปลง" },
+            { code: "สึกหรอจากการใช้งานนาน / พัดลมหม้อแปลงถอดไปซ่อม", desc: "T019 พัดลมหม้อแปลงถอดไปซ่อม" },
+            { code: "การเสียหายของมอเตอร์ / พัดลมหม้อแปลงไม่ทำงาน", desc: "T020 พัดลมหม้อแปลงไม่ทำงาน" },
+            { code: "WAITING / งานตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "L212 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { code: "WAITING / งานตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L010 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
+            { code: "WAITING / ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร", desc: "L213 ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร" },
+            { code: "การโอเวอร์โหลด (OVERLOAD) / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { code: "ความผิดปกติของแรงดัน / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { code: "การผลิตที่ไม่ดี / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { code: "การเกิดความชื้น / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { code: "การออกแบบที่ผิดพลาด / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { code: "ความเครียดการเปลี่ยนกระแสไฟฟ้า / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { code: "การสะสมของความร้อน / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { code: "เสื่อมสภาพ / HV BUSHING หม้อแปลงชำรุด", desc: "T025 HV Bushing หม้อแปลงชำรุด" },
+            { code: "เสื่อมสภาพ / MV BUSHING หม้อแปลงชำรุด", desc: "T026 MV Bushing หม้อแปลงชำรุด" },
+            { code: "เสื่อมสภาพ / OFF LOAD TAP หม้อแปลงชำรุด", desc: "T027 OFF LOAD TAP หม้อแปลงชำรุด" },
+            { code: "SHORT CIRCUIT / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { code: "การติดตั้งไม่ถูกต้อง / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { code: "อุณหภูมิสูงเกิน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { code: "กลไกติดขัด / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { code: "การติดตั้งไม่ถูกต้อง / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { code: "กลไกติดขัด / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { code: "แรงดันเกินขีดจำกัดบ่อยเกิน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { code: "ระบบควบคุมทำงานผิดพลาด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { code: "TRANSFORMER MALFUNCTION / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { code: "การตั้งค่าผิด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { code: "ระบบภายนอกสัญญาณผิดปกติ / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY ชำรุด", desc: "T106 Tripping relay ชำรุด" },
+            { code: "เปลี่ยน TAP แล้วมีเสียง/ เปลี่ยน TAP แล้วมีเสียง", desc: "T211 เปลี่ยน TAP แล้วมีเสียงดัง" },
+            { code: "WAITING / ตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "T213 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { code: "WAITING / ตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L106 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
+            { code: "กลไกเสื่อมสภาพ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { code: "ความชื้น, ฝุ่น ฯ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { code: "ต่อสายผิด, SHORT / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { code: "อาร์ก ระหว่างเปลี่ยน TAP บ่อย / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { code: "อุณหภูมิสูงเกินจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { code: "น้ำมัน OLTC เสื่อมสภาพ / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { code: "อุณหภูมิสูงมาจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { code: "อาร์ก ขณะสลับ TAP / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { code: "น้ำมัน OLTC เสื่อมสภาพ / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { code: "สปริง/กลไก CONTACT เสีย / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { code: "ค่าต้านทานCONTACTเพิ่ม / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { code: "สึกหรอ / GEAR UNIT ชำรุด", desc: "T218 Gear unit ชำรุด" },
+            { code: "ชำรุดจาก ACCESSORIES / OLTC ACCESSORIES ชำรุด", desc: "T219 OLTC Accessories ชำรุด" },
+            { code: "แรงดันV ผิดปกติ / MOTOR DRIVE CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { code: "ฝุ่นละอองฯ ในกล่องควบคุม / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { code: "แรงดันน้ำมันเกิน / PRESSURE GAUGE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
+            { code: "สิ่งสกปรกเข้าไปในเกจ / PRESSURE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
+            { code: "WAITING / ตรวจสอบ รอจัดซื้ออะไหล่", desc: "T306 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { code: "WAITING / ตรวจสอบ ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "H204 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" }
         ];
 
+        // 2. ข้อมูลชุดที่ 2: EQUIPMENT ERROR (14 รายการ)
+        const equipmentErrorData = [
+            { code: "กลไกชำรุด / COUNTER L/A ชำรุด", desc: "Counter Lightning Arrester ชำรุด" },
+            { code: "กลไกชำรุด / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
+            { code: "กลไกชำรุด / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
+            { code: "กลไกชำรุด / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
+            { code: "การทำงานผิดพลาดของรีเลย์ / หม้อแปลง TRIP", desc: "T016 หม้อแปลง Trip" },
+            { code: "กลไกติดขัด / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
+            { code: "ชุดเฟืองภายในชำรุด / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
+            { code: "LUBRICATION / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
+            { code: "เสื่อมสภาพจากอายุใช้งาน / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
+            { code: "กลไกติดขัด / MICRO SW. LOWER & UPPER LIMIT ค้าง", desc: "T208 Micro sw. Lower & upper limit ค้าง" },
+            { code: "OLTC ไม่ทำงาน / OLTC เปลี่ยน TAP ทางไฟฟ้าไม่ได้", desc: "T209 OLTC เปลี่ยน Tap ทางไฟฟ้าไม่ได้" },
+            { code: "การรบกวนจากสัญญาณไฟฟ้า / CF ทำงานผิดปกติ", desc: "T301 Counter oil filter ทำงานผิดปกติ" },
+            { code: "MOTOR OIL FILTER ต่อท่อผิดด้าน / MF หมุนกลับทาง", desc: "T302 Motor oil filter หมุนกลับทาง" },
+            { code: "ปั๊มน้ำมัน OLTC เสีย / OF ไม่ทำงานหลังเปลี่ยน TAP", desc: "T304 Oil filter ไม่ทำงานหลังจากเปลี่ยน Tap" }
+        ];
+
+        let currentTab = 'DAMAGED';
         let currentFilter = 'ALL';
         let searchQuery = '';
 
@@ -498,15 +525,65 @@
             return match ? match[1] : '';
         }
 
+        function getCurrentDataSet() {
+            return currentTab === 'DAMAGED' ? damagedData : equipmentErrorData;
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            currentFilter = 'ALL';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+
+            // Update UI Menu
+            document.getElementById('menuDamaged').classList.toggle('active', tabName === 'DAMAGED');
+            document.getElementById('menuError').classList.toggle('active', tabName === 'EQUIPMENT ERROR');
+            
+            // Update Title
+            const icon = tabName === 'DAMAGED' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation';
+            document.getElementById('pageTitle').innerHTML = `<i class="fa-solid ${icon}" style="margin-right: 10px; color: var(--accent-color);"></i>${tabName}`;
+
+            // Reset Filter Buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes('ทั้งหมด'));
+            });
+
+            updateStats();
+            renderTable();
+        }
+
+        function updateStats() {
+            const data = getCurrentDataSet();
+            let countT = 0, countL = 0, countH = 0;
+
+            data.forEach(item => {
+                const code = extractDeviceCode(item.desc);
+                const prefix = code ? code.charAt(0) : '';
+                if (prefix === 'T') countT++;
+                else if (prefix === 'L') countL++;
+                else if (prefix === 'H') countH++;
+            });
+
+            document.getElementById('totalRecords').innerText = data.length;
+            document.getElementById('totalT').innerText = countT;
+            document.getElementById('totalL').innerText = countL;
+            document.getElementById('totalH').innerText = countH;
+        }
+
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
+            const data = getCurrentDataSet();
 
-            const filtered = damagedData.filter(item => {
-                const codeMatch = item.desc.match(/^([TLH])/);
-                const prefix = codeMatch ? codeMatch[1] : '';
+            const filtered = data.filter(item => {
+                const devCode = extractDeviceCode(item.desc);
+                const prefix = devCode ? devCode.charAt(0) : '';
                 
-                const matchesCategory = (currentFilter === 'ALL') || (prefix === currentFilter);
+                const matchesCategory = (currentFilter === 'ALL') || 
+                                      (currentFilter === 'T' && prefix === 'T') ||
+                                      (currentFilter === 'L' && prefix === 'L') ||
+                                      (currentFilter === 'H' && (prefix === 'H' || prefix === ''));
+
                 const matchesSearch = item.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
                                       item.desc.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -515,19 +592,23 @@
 
             filtered.forEach((item, index) => {
                 const devCode = extractDeviceCode(item.desc);
-                const descText = item.desc.replace(devCode, '').trim();
-                const prefix = devCode.charAt(0);
+                const descText = devCode ? item.desc.replace(devCode, '').trim() : item.desc;
+                const prefix = devCode ? devCode.charAt(0) : '';
 
-                let tagClass = 'tag-h';
-                if (prefix === 'T') tagClass = 'tag-t';
-                else if (prefix === 'L') tagClass = 'tag-l';
+                let tagHtml = '';
+                if (devCode) {
+                    let tagClass = 'tag-h';
+                    if (prefix === 'T') tagClass = 'tag-t';
+                    else if (prefix === 'L') tagClass = 'tag-l';
+                    tagHtml = `<span class="tag ${tagClass}">${devCode}</span>`;
+                }
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${index + 1}</td>
                     <td class="failure-text">${item.code}</td>
                     <td>
-                        <span class="tag ${tagClass}">${devCode}</span>
+                        ${tagHtml}
                         <span class="desc-text">${descText}</span>
                     </td>
                 `;
@@ -551,7 +632,10 @@
             renderTable();
         });
 
-        // Initialize dashboard
+        // Initialize App
+        document.getElementById('countDamagedBadge').innerText = damagedData.length;
+        document.getElementById('countErrorBadge').innerText = equipmentErrorData.length;
+        updateStats();
         renderTable();
     </script>
 </body>
