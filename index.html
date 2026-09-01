@@ -75,6 +75,7 @@
             list-style: none;
             padding: 20px 0;
             flex: 1;
+            overflow-y: auto;
         }
 
         .menu-category {
@@ -351,6 +352,13 @@
                     <span class="badge-count" id="countExhaustionBadge">1</span>
                 </a>
             </li>
+            <li>
+                <a href="javascript:void(0)" id="menuOilLeak" onclick="switchTab('OIL LEAK')">
+                    <i class="fa-solid fa-droplet"></i>
+                    <span>OIL LEAK</span>
+                    <span class="badge-count" id="countOilLeakBadge">17</span>
+                </a>
+            </li>
         </ul>
     </aside>
 
@@ -534,6 +542,27 @@
             { code: "การอุดตัน / ฝุ่นละออง / SILICAGEL AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" }
         ];
 
+        // 4. ข้อมูล OIL LEAK (17 รายการ)
+        const oilLeakData = [
+            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมด้านบนหม้อแปลง", desc: "T006 น้ำมันรั่วซึมด้านบนหม้อแปลง" },
+            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ BUSHING หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
+            { code: "แตกหัก / น้ำมันรั่วซึมที่ BUSHING หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
+            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
+            { code: "ความเสียหายจากการเคลื่อนที่ / น้ำมันรั่วซึมที่หม้อ", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
+            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
+            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
+            { code: "ความร้อนสูงเกินไป / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
+            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
+            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
+            { code: "แรงดันภายในสูง / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
+            { code: "การเสื่อมจากสิ่งสกปรก / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
+            { code: "ระบบระบายความร้อนทำงานผิดปกติ / น้ำมันหม้อแปลงต่ำ", desc: "T012 น้ำมันหม้อแปลงต่ำ" },
+            { code: "ซีลเสื่อมสภาพ / น้ำมันหม้อแปลงต่ำ", desc: "T012 น้ำมันหม้อแปลงต่ำ" },
+            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ฝาบ่อ OLTC", desc: "T210 น้ำมันรั่วซึมที่ฝาบ่อ OLTC" },
+            { code: "OLTC ระดับน้ำมันต่ำ ซีลเสื่อมสภาพ", desc: "T212 ระดับน้ำมันต่ำที่ OLTC" },
+            { code: "ซีลเสื่อมสภาพ / OIL FILTER UNIT มีน้ำมันรั่วซึม", desc: "T303 Oil filter unit มีน้ำมันรั่วซึม" }
+        ];
+
         let currentTab = 'DAMAGED';
         let currentFilter = 'ALL';
         let searchQuery = '';
@@ -547,6 +576,7 @@
             if (currentTab === 'DAMAGED') return damagedData;
             if (currentTab === 'EQUIPMENT ERROR') return equipmentErrorData;
             if (currentTab === 'EXHAUSTION') return exhaustionData;
+            if (currentTab === 'OIL LEAK') return oilLeakData;
             return [];
         }
 
@@ -560,11 +590,13 @@
             document.getElementById('menuDamaged').classList.toggle('active', tabName === 'DAMAGED');
             document.getElementById('menuError').classList.toggle('active', tabName === 'EQUIPMENT ERROR');
             document.getElementById('menuExhaustion').classList.toggle('active', tabName === 'EXHAUSTION');
+            document.getElementById('menuOilLeak').classList.toggle('active', tabName === 'OIL LEAK');
             
             // Update Title & Icon
             let icon = 'fa-triangle-exclamation';
             if (tabName === 'EQUIPMENT ERROR') icon = 'fa-circle-exclamation';
             if (tabName === 'EXHAUSTION') icon = 'fa-wind';
+            if (tabName === 'OIL LEAK') icon = 'fa-droplet';
 
             document.getElementById('pageTitle').innerHTML = `<i class="fa-solid ${icon}" style="margin-right: 10px; color: var(--accent-color);"></i>${tabName}`;
 
@@ -661,6 +693,7 @@
         document.getElementById('countDamagedBadge').innerText = damagedData.length;
         document.getElementById('countErrorBadge').innerText = equipmentErrorData.length;
         document.getElementById('countExhaustionBadge').innerText = exhaustionData.length;
+        document.getElementById('countOilLeakBadge').innerText = oilLeakData.length;
         updateStats();
         renderTable();
     </script>
