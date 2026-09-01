@@ -3,58 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Web App</title>
+    <title>Equipment Damage & Maintenance Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+        :root {
+            --sidebar-width: 250px;
+            --primary-color: #1e293b;
+            --secondary-color: #0f172a;
+            --accent-color: #3b82f6;
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --tag-t-bg: #e0f2fe;
+            --tag-t-color: #0369a1;
+            --tag-l-bg: #fef3c7;
+            --tag-l-color: #b45309;
+            --tag-h-bg: #f1f5f9;
+            --tag-h-color: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            background-color: #f4f6f8;
+            padding: 0;
+            font-family: 'Sarabun', sans-serif;
         }
-        .card {
-            background: white;
-            padding: 2rem;
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--secondary-color);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header i {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .menu-category {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            padding: 8px 24px;
+            font-weight: 600;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 24px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            border-left-color: var(--accent-color);
+        }
+
+        .sidebar-menu li a i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-nav {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-nav h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .content-container {
+            padding: 32px;
+            flex: 1;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .stat-info h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* Table Card & Filter */
+        .table-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .table-header-tools {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
             max-width: 400px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-box input {
             width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.95rem;
+            transition: all 0.2s;
         }
-        button {
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 6px;
+
+        .search-box input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background-color: #ffffff;
+            border-radius: 8px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.2s;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
         }
-        button:hover {
-            background-color: #0052a3;
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        /* Data Table */
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 14px 24px;
+            border-bottom: 2px solid var(--border-color);
+            z-index: 1;
+        }
+
+        tbody td {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-right: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-t { background-color: var(--tag-t-bg); color: var(--tag-t-color); }
+        .tag-l { background-color: var(--tag-l-bg); color: var(--tag-l-color); }
+        .tag-h { background-color: var(--tag-h-bg); color: var(--tag-h-color); }
+
+        .desc-text {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .failure-text {
+            color: #475569;
+        }
+
+        .badge-count {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: auto;
         }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>🚀 ยินดีต้อนรับสู่ Web App</h2>
-    <p>Web App นี้รันผ่าน GitHub Pages</p>
-    <p id="counter-text">จำนวนคลิก: <strong>0</strong></p>
-    <button onclick="increaseCount()">กดตรงนี้!</button>
-</div>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-bolt-lightning"></i>
+            <h2>ระบบจัดการข้อมูล</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <div class="menu-category">เมนูหลัก</div>
+            <li>
+                <a href="#" class="active">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>DAMAGED</span>
+                    <span class="badge-count" id="menuCount">71</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
 
-<script>
-    let count = 0;
-    function increaseCount() {
-        count++;
-        document.getElementById('counter-text').innerHTML = `จำนวนคลิก: <strong>${count}</strong>`;
-    }
-</script>
+    <div class="main-wrapper">
+        <header class="top-nav">
+            <h1><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED (รหัสความเสียหายและอุปกรณ์)</h1>
+        </header>
 
+        <main class="content-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #eff6ff; color: #2563eb;">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>รายการความเสียหายทั้งหมด</h3>
+                        <p id="totalRecords">71</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #ecfeff; color: #0891b2;">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>อุปกรณ์หม้อแปลง/รีเลย์ (T-Series)</h3>
+                        <p id="totalT">63</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #fffbeb; color: #d97706;">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>รอดำเนินการ/อะไหล่ (L-Series)</h3>
+                        <p id="totalL">6</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #f1f5f9; color: #475569;">
+                        <i class="fa-solid fa-wrench"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>งานตรวจรับอื่นๆ (H-Series)</h3>
+                        <p id="totalH">2</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header-tools">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="ค้นหา Failure Code หรือ Description...">
+                    </div>
+                    <div class="filter-group">
+                        <button class="filter-btn active" onclick="filterData('ALL')">ทั้งหมด</button>
+                        <button class="filter-btn" onclick="filterData('T')">หมวด T</button>
+                        <button class="filter-btn" onclick="filterData('L')">หมวด L</button>
+                        <button class="filter-btn" onclick="filterData('H')">หมวด H</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 80px; text-align: center;">ลำดับ</th>
+                                <th style="width: 50%;">Failure Code</th>
+                                <th style="width: 40%;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const damagedData = [
+            { id: 2, code: "อายุใช้งานเสื่อมสภาพ / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
+            { id: 3, code: "ความชื้น/สิ่งสกปรก / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
+            { id: 4, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL DESK หลอดขาด", desc: "T102 Control desk หลอดขาด" },
+            { id: 5, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL พัดลมชำรุด", desc: "T103 Control พัดลมชำรุด" },
+            { id: 6, code: "เสื่อมสภาพจากอายุใช้งาน / DIFFERENTIAL RELAY", desc: "T105 Differential relay เปลี่ยน" },
+            { id: 7, code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY เปลี่ยน", desc: "T107 Tripping relay เปลี่ยน" },
+            { id: 8, code: "โครงแตก / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
+            { id: 9, code: "ซีลเสื่อมสภาพ / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
+            { id: 10, code: "โครงแตก / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
+            { id: 11, code: "โครงแตก / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
+            { id: 12, code: "เสื่อมสภาพ / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
+            { id: 13, code: "SILICAGEL เสื่อมสภาพ / SILICAGEL/AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" },
+            { id: 14, code: "โครงแตก / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
+            { id: 15, code: "เสื่อมสภาพ / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
+            { id: 16, code: "การรั่วซึมของน้ำมัน / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { id: 17, code: "การเกิดไฟฟ้าลัดวงจร / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { id: 18, code: "อายุการใช้งานเสื่อมสภาพ / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { id: 19, code: "ความร้อนสะสมเกินไป / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
+            { id: 20, code: "สึกหรอจากการใช้งานนาน / เปลี่ยนพัดลมหม้อแปลง", desc: "T018 เปลี่ยนพัดลมหม้อแปลง" },
+            { id: 21, code: "สึกหรอจากการใช้งานนาน / พัดลมหม้อแปลงถอดไปซ่อม", desc: "T019 พัดลมหม้อแปลงถอดไปซ่อม" },
+            { id: 22, code: "การเสียหายของมอเตอร์ / พัดลมหม้อแปลงไม่ทำงาน", desc: "T020 พัดลมหม้อแปลงไม่ทำงาน" },
+            { id: 23, code: "WAITING / งานตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "L212 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { id: 24, code: "WAITING / งานตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L010 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
+            { id: 25, code: "WAITING / ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร", desc: "L213 ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร" },
+            { id: 26, code: "การโอเวอร์โหลด (OVERLOAD) / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { id: 27, code: "ความผิดปกติของแรงดัน / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { id: 28, code: "การผลิตที่ไม่ดี / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { id: 29, code: "การเกิดความชื้น / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
+            { id: 30, code: "การออกแบบที่ผิดพลาด / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { id: 31, code: "ความเครียดการเปลี่ยนกระแสไฟฟ้า / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { id: 32, code: "การสะสมของความร้อน / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
+            { id: 33, code: "เสื่อมสภาพ / HV BUSHING หม้อแปลงชำรุด", desc: "T025 HV Bushing หม้อแปลงชำรุด" },
+            { id: 34, code: "เสื่อมสภาพ / MV BUSHING หม้อแปลงชำรุด", desc: "T026 MV Bushing หม้อแปลงชำรุด" },
+            { id: 35, code: "เสื่อมสภาพ / OFF LOAD TAP หม้อแปลงชำรุด", desc: "T027 OFF LOAD TAP หม้อแปลงชำรุด" },
+            { id: 36, code: "SHORT CIRCUIT / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { id: 37, code: "การติดตั้งไม่ถูกต้อง / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { id: 38, code: "เสื่อมสภาพจากอายุใช้งาน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { id: 39, code: "อุณหภูมิสูงเกิน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { id: 40, code: "กลไกติดขัด / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
+            { id: 41, code: "การติดตั้งไม่ถูกต้อง / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { id: 42, code: "กลไกติดขัด / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { id: 43, code: "เสื่อมสภาพจากอายุใช้งาน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { id: 44, code: "แรงดันเกินขีดจำกัดบ่อยเกิน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
+            { id: 45, code: "ระบบควบคุมทำงานผิดพลาด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { id: 46, code: "TRANSFORMER MALFUNCTION / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { id: 47, code: "การตั้งค่าผิด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { id: 48, code: "ระบบภายนอกสัญญาณผิดปกติ / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
+            { id: 49, code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY ชำรุด", desc: "T106 Tripping relay ชำรุด" },
+            { id: 50, code: "เปลี่ยน TAP แล้วมีเสียง/ เปลี่ยน TAP แล้วมีเสียง", desc: "T211 เปลี่ยน TAP แล้วมีเสียงดัง" },
+            { id: 51, code: "WAITING / ตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "T213 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { id: 52, code: "WAITING / ตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L106 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
+            { id: 53, code: "กลไกเสื่อมสภาพ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { id: 54, code: "ความชื้น, ฝุ่น ฯ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { id: 55, code: "ต่อสายผิด, SHORT / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
+            { id: 56, code: "อาร์ก ระหว่างเปลี่ยน TAP บ่อย / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { id: 57, code: "อุณหภูมิสูงเกินจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { id: 58, code: "น้ำมัน OLTC เสื่อมสภาพ / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { id: 59, code: "อุณหภูมิสูงมาจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
+            { id: 60, code: "อาร์ก ขณะสลับ TAP / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { id: 61, code: "น้ำมัน OLTC เสื่อมสภาพ / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { id: 62, code: "สปริง/กลไก CONTACT เสีย / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { id: 63, code: "ค่าต้านทานCONTACTเพิ่ม / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
+            { id: 64, code: "สึกหรอ / GEAR UNIT ชำรุด", desc: "T218 Gear unit ชำรุด" },
+            { id: 65, code: "ชำรุดจาก ACCESSORIES / OLTC ACCESSORIES ชำรุด", desc: "T219 OLTC Accessories ชำรุด" },
+            { id: 66, code: "แรงดันV ผิดปกติ / MOTOR DRIVE CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { id: 67, code: "ฝุ่นละอองฯ ในกล่องควบคุม / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { id: 68, code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
+            { id: 69, code: "แรงดันน้ำมันเกิน / PRESSURE GAUGE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
+            { id: 70, code: "สิ่งสกปรกเข้าไปในเกจ / PRESSURE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
+            { id: 71, code: "WAITING / ตรวจสอบ รอจัดซื้ออะไหล่", desc: "T306 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
+            { id: 72, code: "WAITING / ตรวจสอบ ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "H204 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" }
+        ];
+
+        let currentFilter = 'ALL';
+        let searchQuery = '';
+
+        function extractDeviceCode(desc) {
+            const match = desc.match(/^([TLH]\d+)/);
+            return match ? match[1] : '';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            const filtered = damagedData.filter(item => {
+                const codeMatch = item.desc.match(/^([TLH])/);
+                const prefix = codeMatch ? codeMatch[1] : '';
+                
+                const matchesCategory = (currentFilter === 'ALL') || (prefix === currentFilter);
+                const matchesSearch = item.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                      item.desc.toLowerCase().includes(searchQuery.toLowerCase());
+
+                return matchesCategory && matchesSearch;
+            });
+
+            filtered.forEach((item, index) => {
+                const devCode = extractDeviceCode(item.desc);
+                const descText = item.desc.replace(devCode, '').trim();
+                const prefix = devCode.charAt(0);
+
+                let tagClass = 'tag-h';
+                if (prefix === 'T') tagClass = 'tag-t';
+                else if (prefix === 'L') tagClass = 'tag-l';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${index + 1}</td>
+                    <td class="failure-text">${item.code}</td>
+                    <td>
+                        <span class="tag ${tagClass}">${devCode}</span>
+                        <span class="desc-text">${descText}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filterData(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText.includes(category === 'ALL' ? 'ทั้งหมด' : category)) {
+                    btn.classList.add('active');
+                }
+            });
+            renderTable();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTable();
+        });
+
+        // Initialize dashboard
+        renderTable();
+    </script>
 </body>
 </html>
