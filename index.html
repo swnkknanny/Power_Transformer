@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Equipment Maintenance & Failure Dashboard</title>
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -308,7 +309,6 @@
         .tag-t { background-color: var(--tag-t-bg); color: var(--tag-t-color); }
         .tag-l { background-color: var(--tag-l-bg); color: var(--tag-l-color); }
         .tag-h { background-color: var(--tag-h-bg); color: var(--tag-h-color); }
-        .tag-none { background-color: #e2e8f0; color: #475569; }
 
         .desc-text {
             color: var(--text-main);
@@ -322,13 +322,14 @@
 </head>
 <body>
 
+    <!-- Left Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <i class="fa-solid fa-bolt-lightning"></i>
             <h2>ระบบจัดการข้อมูล</h2>
         </div>
         <ul class="sidebar-menu">
-            <div class="menu-category">เมนูระบบ</div>
+            <div class="menu-category">หมวดหมู่ความเสียหาย</div>
             <li>
                 <a href="javascript:void(0)" id="menuDamaged" class="active" onclick="switchTab('DAMAGED')">
                     <i class="fa-solid fa-triangle-exclamation"></i>
@@ -343,15 +344,24 @@
                     <span class="badge-count" id="countErrorBadge">14</span>
                 </a>
             </li>
+            <li>
+                <a href="javascript:void(0)" id="menuExhaustion" onclick="switchTab('EXHAUSTION')">
+                    <i class="fa-solid fa-wind"></i>
+                    <span>EXHAUSTION</span>
+                    <span class="badge-count" id="countExhaustionBadge">1</span>
+                </a>
+            </li>
         </ul>
     </aside>
 
+    <!-- Main Content Area -->
     <div class="main-wrapper">
         <header class="top-nav">
-            <h1 id="pageTitle"><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED</h1>
+            <h1 id="pageTitle"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED</h1>
         </header>
 
         <main class="content-container">
+            <!-- KPI Summary Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon" style="background-color: #eff6ff; color: #2563eb;">
@@ -391,6 +401,7 @@
                 </div>
             </div>
 
+            <!-- Table Card -->
             <div class="table-card">
                 <div class="table-header-tools">
                     <div class="search-box">
@@ -415,15 +426,17 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            </tbody>
+                            <!-- Data rows will be generated via JavaScript -->
+                        </tbody>
                     </table>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Data & Script -->
     <script>
-        // 1. ข้อมูลชุดที่ 1: DAMAGED (71 รายการ)
+        // 1. ข้อมูล DAMAGED (71 รายการ)
         const damagedData = [
             { code: "อายุใช้งานเสื่อมสภาพ / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
             { code: "ความชื้น/สิ่งสกปรก / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
@@ -498,7 +511,7 @@
             { code: "WAITING / ตรวจสอบ ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "H204 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" }
         ];
 
-        // 2. ข้อมูลชุดที่ 2: EQUIPMENT ERROR (14 รายการ)
+        // 2. ข้อมูล EQUIPMENT ERROR (14 รายการ)
         const equipmentErrorData = [
             { code: "กลไกชำรุด / COUNTER L/A ชำรุด", desc: "Counter Lightning Arrester ชำรุด" },
             { code: "กลไกชำรุด / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
@@ -516,6 +529,11 @@
             { code: "ปั๊มน้ำมัน OLTC เสีย / OF ไม่ทำงานหลังเปลี่ยน TAP", desc: "T304 Oil filter ไม่ทำงานหลังจากเปลี่ยน Tap" }
         ];
 
+        // 3. ข้อมูล EXHAUSTION (1 รายการ)
+        const exhaustionData = [
+            { code: "การอุดตัน / ฝุ่นละออง / SILICAGEL AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" }
+        ];
+
         let currentTab = 'DAMAGED';
         let currentFilter = 'ALL';
         let searchQuery = '';
@@ -526,7 +544,10 @@
         }
 
         function getCurrentDataSet() {
-            return currentTab === 'DAMAGED' ? damagedData : equipmentErrorData;
+            if (currentTab === 'DAMAGED') return damagedData;
+            if (currentTab === 'EQUIPMENT ERROR') return equipmentErrorData;
+            if (currentTab === 'EXHAUSTION') return exhaustionData;
+            return [];
         }
 
         function switchTab(tabName) {
@@ -535,12 +556,16 @@
             searchQuery = '';
             document.getElementById('searchInput').value = '';
 
-            // Update UI Menu
+            // Update UI Menu Active State
             document.getElementById('menuDamaged').classList.toggle('active', tabName === 'DAMAGED');
             document.getElementById('menuError').classList.toggle('active', tabName === 'EQUIPMENT ERROR');
+            document.getElementById('menuExhaustion').classList.toggle('active', tabName === 'EXHAUSTION');
             
-            // Update Title
-            const icon = tabName === 'DAMAGED' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation';
+            // Update Title & Icon
+            let icon = 'fa-triangle-exclamation';
+            if (tabName === 'EQUIPMENT ERROR') icon = 'fa-circle-exclamation';
+            if (tabName === 'EXHAUSTION') icon = 'fa-wind';
+
             document.getElementById('pageTitle').innerHTML = `<i class="fa-solid ${icon}" style="margin-right: 10px; color: var(--accent-color);"></i>${tabName}`;
 
             // Reset Filter Buttons
@@ -635,6 +660,7 @@
         // Initialize App
         document.getElementById('countDamagedBadge').innerText = damagedData.length;
         document.getElementById('countErrorBadge').innerText = equipmentErrorData.length;
+        document.getElementById('countExhaustionBadge').innerText = exhaustionData.length;
         updateStats();
         renderTable();
     </script>
