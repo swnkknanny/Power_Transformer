@@ -375,3 +375,10 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
     loadFromDB();
 });
+// ฟังก์ชันเปิด/ปิดแถบเมนูในมือถือและแท็บเล็ต
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
