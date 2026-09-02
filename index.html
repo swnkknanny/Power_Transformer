@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,53 +13,66 @@
 </head>
 <body>
 
-    <!-- หน้าต่าง Login (ปรากฏเมื่อยังไม่ได้ใส่รหัส) -->
+    <!-- Professional English Login Gateway -->
     <div class="login-modal-overlay" id="loginModal">
         <div class="login-box">
             <div class="login-icon">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
-            <h2>Power Transformer Access</h2>
-            <p>กรุณาใส่รหัสผ่านเพื่อเข้าใช้งานแดชบอร์ด</p>
+            <h2>Security Gateway</h2>
+            <p>Select your authorized credential role to proceed</p>
             
             <form onsubmit="handleLogin(event)">
+                <!-- Role Selector Buttons -->
+                <div class="role-selector">
+                    <button type="button" class="role-btn active" id="btnRoleMaster" onclick="selectLoginRole('MasterKey')">
+                        <i class="fa-solid fa-crown"></i> MasterKey
+                    </button>
+                    <button type="button" class="role-btn" id="btnRoleVisitor" onclick="selectLoginRole('Visitor')">
+                        <i class="fa-regular fa-user"></i> Visitor
+                    </button>
+                </div>
+
                 <div class="input-group">
-                    <i class="fa-solid fa-key"></i>
-                    <input type="password" id="accessPass" placeholder="ใส่รหัสผ่านที่นี่..." required autofocus>
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="accessPass" placeholder="Enter Access Code..." required autofocus>
                 </div>
                 <div id="loginError" class="login-error-msg"></div>
-                <button type="submit" class="btn-login">เข้าสู่ระบบ</button>
+                
+                <button type="submit" class="btn-login">
+                    Authenticate & Access <i class="fa-solid fa-arrow-right"></i>
+                </button>
             </form>
             
             <div class="login-hints">
-                <span><i class="fa-solid fa-circle-info"></i> ป้อนรหัส MasterKey หรือ Visitor เพื่อเข้าสู่ระบบ</span>
+                <span id="roleHintText"><i class="fa-solid fa-circle-check"></i> MasterKey: Administrative & modification privilege</span>
             </div>
         </div>
     </div>
 
-    <!-- ฉากหลังสีทึบตอนเปิดเมนูบนมือถือ -->
+    <!-- Mobile Sidebar Backdrop -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
-    <!-- แถบเมนูด้านซ้าย (Sidebar) -->
+    <!-- Left Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon-box"><i class="fa-solid fa-chart-simple"></i></div>
+            <div class="brand-icon-box"><i class="fa-solid fa-bolt-lightning"></i></div>
             <h2>Power Transformer</h2>
             <button class="btn-close-sidebar" onclick="toggleMobileSidebar()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         
         <div class="sidebar-content">
             <div class="menu-category">
-                <span>ไฟล์ในระบบ (<span id="fileCount">0</span>)</span>
+                <span>Loaded Datasets (<span id="fileCount">0</span>)</span>
             </div>
             <ul class="file-list" id="fileListContainer"></ul>
 
-            <div class="menu-category">หมวดหมู่ข้อมูล</div>
+            <div class="menu-category">Data Classification</div>
             <ul class="category-list" id="categoryMenu"></ul>
         </div>
     </aside>
 
-    <!-- พื้นที่แสดงข้อมูลหลัก -->
+    <!-- Main Workspace -->
     <div class="main-wrapper">
         <header class="top-nav">
             <div class="nav-left">
@@ -68,77 +81,75 @@
                 </button>
                 <h1 id="pageTitle">
                     <i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i>
-                    <span>ยังไม่ได้เลือกหมวดหมู่</span>
+                    <span>No Dataset Selected</span>
                 </h1>
             </div>
             
             <div class="nav-actions">
-                <!-- ป้ายแสดงสถานะสิทธิ์ -->
                 <span class="user-role-badge" id="roleBadge">Visitor</span>
 
-                <!-- ปุ่มของผู้ดูแล (ซ่อนอัตโนมัติหากเป็น Visitor) -->
+                <!-- Admin Action Tools -->
                 <div id="adminActionButtons" class="admin-controls">
-                    <button class="btn-clear-all" onclick="clearAllFiles()" title="ล้างข้อมูลทั้งหมด">
-                        <i class="fa-regular fa-trash-can"></i> <span class="btn-text">ล้างข้อมูล</span>
+                    <button class="btn-clear-all" onclick="clearAllFiles()" title="Purge Datasets">
+                        <i class="fa-regular fa-trash-can"></i> <span class="btn-text">Purge Data</span>
                     </button>
                     <label class="btn-upload">
-                        <i class="fa-solid fa-plus"></i> <span class="btn-text">เพิ่มไฟล์ Excel</span>
+                        <i class="fa-solid fa-plus"></i> <span class="btn-text">Import Excel</span>
                         <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
                     </label>
                 </div>
 
-                <!-- ปุ่มออกจากระบบ -->
-                <button class="btn-logout" onclick="logout()" title="ออกจากระบบ">
+                <button class="btn-logout" onclick="logout()" title="Terminate Session">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </header>
 
         <main class="content-container">
-            <!-- การ์ดสรุป KPI -->
+            <!-- KPI Metrix Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon icon-all"><i class="fa-regular fa-rectangle-list"></i></div>
                     <div class="stat-info">
-                        <h3>รายการทั้งหมดในหน้านี้</h3>
+                        <h3>Total Active Records</h3>
                         <p id="totalRecords">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-t"><i class="fa-solid fa-microchip"></i></div>
                     <div class="stat-info">
-                        <h3>รหัสอุปกรณ์ T (หม้อแปลง/รีเลย์)</h3>
+                        <h3>T-Series (Transformer / Relay)</h3>
                         <p id="totalT">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-l"><i class="fa-regular fa-clock"></i></div>
                     <div class="stat-info">
-                        <h3>รหัสอุปกรณ์ L (รออะไหล่/ระบบ)</h3>
+                        <h3>L-Series (Pending & Spares)</h3>
                         <p id="totalL">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon icon-h"><i class="fa-solid fa-sliders"></i></div>
                     <div class="stat-info">
-                        <h3>รหัสอุปกรณ์ H / อื่นๆ</h3>
+                        <h3>H-Series & Auxiliary</h3>
                         <p id="totalH">0</p>
                     </div>
                 </div>
             </div>
 
-            <!-- กล่องตารางข้อมูล -->
+            <!-- Table Card -->
             <div class="table-card">
                 <div class="table-header-tools">
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="searchInput" placeholder="ค้นหา Failure Code หรือ Description...">
+                        <input type="text" id="searchInput" placeholder="Search Failure Code or Description...">
                     </div>
                     <div class="filter-group">
-                        <button class="filter-btn active" onclick="filterData('ALL')">ทั้งหมด</button>
-                        <button class="filter-btn" onclick="filterData('T')">หมวด T</button>
-                        <button class="filter-btn" onclick="filterData('L')">หมวด L</button>
-                        <button class="filter-btn" onclick="filterData('H')">หมวด H</button>
+                        <button class="filter-btn active" onclick="filterData('ALL')">All Units</button>
+                        <button class="filter-btn" onclick="filterData('T')">Class T</button>
+                        <button class="filter-btn" onclick="filterData('L')">Class L</button>
+                        <button class="filter-btn" onclick="filterData('H')">Class H</button>
                     </div>
                 </div>
 
@@ -155,7 +166,7 @@
                             <tr>
                                 <td colspan="3" class="empty-state">
                                     <i class="fa-regular fa-file-excel" style="font-size: 2.2rem; margin-bottom: 12px; color: #cfd8d0;"></i>
-                                    <p>ยังไม่มีข้อมูลในระบบ</p>
+                                    <p>No telemetry data available.</p>
                                 </td>
                             </tr>
                         </tbody>
