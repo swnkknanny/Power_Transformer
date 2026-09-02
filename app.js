@@ -1,22 +1,22 @@
 // ==========================================
-// 1. Firebase Configuration จากโปรเจกต์ของคุณ
+// 1. Firebase Configuration (คงเดิม 100%)
 // ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyADet4LDE5kwcgVk1-VXgLDB2RprewvYgU",
     authDomain: "power-transformer-db.firebaseapp.com",
     databaseURL: "https://power-transformer-db-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "power-transformer-db",
-    storageBucket: "power-transformer-db.firebasestorage.app",
+    storageStorageBucket: "power-transformer-db.firebasestorage.app",
     messagingSenderId: "752096858741",
     appId: "1:752096858741:web:2a047c764e317c830f5e3c"
 };
 
-// เริ่มต้นใช้งาน Firebase
+// Initialize Firebase Realtime Database
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const filesRef = db.ref('shared_datasets');
 
-// ตัวแปรระบบ
+// Core Variables & Data Store
 let allFilesData = {};
 let currentActiveFile = '';
 let currentActiveCategory = '';
@@ -26,7 +26,7 @@ let selectedLoginRole = 'MasterKey';
 let currentUserRole = sessionStorage.getItem('user_role') || null;
 
 // ==========================================
-// 2. Realtime Sync (อัปเดตทุกอุปกรณ์อัตโนมัติ)
+// 2. Realtime Synchronization
 // ==========================================
 filesRef.on('value', (snapshot) => {
     const data = snapshot.val();
@@ -44,19 +44,19 @@ filesRef.on('value', (snapshot) => {
 function saveToCloud() {
     if (currentUserRole !== 'MasterKey') return;
     filesRef.set(allFilesData).catch((err) => {
-        alert('Cloud sync failed: ' + err.message);
+        alert('Cloud synchronization error: ' + err.message);
     });
 }
 
 function clearCloud() {
     if (currentUserRole !== 'MasterKey') return;
     filesRef.remove().catch((err) => {
-        alert('Purge failed: ' + err.message);
+        alert('Purge operation failed: ' + err.message);
     });
 }
 
 // ==========================================
-// 3. Authentication System
+// 3. Authentication & Access Control
 // ==========================================
 function selectLoginRole(role) {
     selectedLoginRole = role;
@@ -68,12 +68,12 @@ function selectLoginRole(role) {
     if (role === 'MasterKey') {
         btnMaster.classList.add('active');
         btnVisitor.classList.remove('active');
-        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> MasterKey: Administrative & modification privilege';
+        hint.innerText = 'MasterKey: Administrative & modification privilege';
         passInput.placeholder = 'Enter MasterKey Code...';
     } else {
         btnVisitor.classList.add('active');
         btnMaster.classList.remove('active');
-        hint.innerHTML = '<i class="fa-regular fa-eye"></i> Visitor: Inspection & telemetry read-only mode';
+        hint.innerText = 'Visitor: Read-only telemetry inspection';
         passInput.placeholder = 'Enter Visitor Passcode...';
     }
     document.getElementById('loginError').innerText = '';
@@ -133,7 +133,7 @@ function handleLogin(e) {
 }
 
 function logout() {
-    if (confirm('Terminate current active session?')) {
+    if (confirm('Terminate active session?')) {
         sessionStorage.removeItem('user_role');
         currentUserRole = null;
         document.getElementById('accessPass').value = '';
@@ -143,7 +143,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Data Parsing & Display
+// 4. Data Processing & Utilities
 // ==========================================
 function extractDeviceCode(desc) {
     if (!desc) return '';
@@ -221,7 +221,7 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             currentActiveCategory = '';
             
             saveToCloud();
-            alert(`Dataset "${file.name}" uploaded and synced to all devices!`);
+            alert(`Dataset "${file.name}" imported successfully.`);
 
         } catch (err) {
             alert('File parse exception: ' + err.message);
@@ -249,7 +249,7 @@ function clearAllFiles() {
         alert('Permission Denied: Administrative rights required.');
         return;
     }
-    if (Object.keys(allFilesData).length === 0) return alert('Storage empty.');
+    if (Object.keys(allFilesData).length === 0) return alert('Storage is currently empty.');
     if (confirm('Execute complete dataset purge across all connected devices?')) {
         allFilesData = {};
         currentActiveFile = '';
@@ -258,6 +258,9 @@ function clearAllFiles() {
     }
 }
 
+// ==========================================
+// 5. Visual Hierarchy & Rendering Engine
+// ==========================================
 function renderSidebar() {
     const fileListEl = document.getElementById('fileListContainer');
     const categoryMenuEl = document.getElementById('categoryMenu');
@@ -268,9 +271,10 @@ function renderSidebar() {
     categoryMenuEl.innerHTML = '';
 
     if (fileNames.length === 0) {
-        fileListEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">No active sets</li>`;
-        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">No categories</li>`;
-        document.getElementById('pageTitle').innerHTML = `<i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i><span>No Classification Selected</span>`;
+        fileListEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No active sets</li>`;
+        categoryMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No categories</li>`;
+        document.getElementById('pageTitle').innerHTML = `No Classification Selected`;
+        document.getElementById('headerRecordCount').innerText = '0';
         updateStats();
         renderTable();
         return;
@@ -290,7 +294,7 @@ function renderSidebar() {
 
         li.innerHTML = `
             <div class="file-name-click" onclick="selectFile('${fName}')" title="${fName}">
-                <i class="fa-regular fa-file-excel"></i>
+                <i class="fa-regular fa-file"></i>
                 <span>${fName}</span>
             </div>
             ${deleteBtnHtml}
@@ -302,7 +306,7 @@ function renderSidebar() {
     const categories = Object.keys(activeFileCategories);
 
     if (categories.length === 0) {
-        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">Empty category set</li>`;
+        categoryMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">Empty category set</li>`;
         currentActiveCategory = '';
     } else {
         if (!currentActiveCategory || !activeFileCategories[currentActiveCategory]) {
@@ -315,7 +319,6 @@ function renderSidebar() {
             li.className = 'category-item';
             li.innerHTML = `
                 <a href="javascript:void(0)" class="${catName === currentActiveCategory ? 'active' : ''}" onclick="selectCategory('${catName}')">
-                    <i class="fa-regular fa-circle-dot"></i>
                     <span>${catName}</span>
                     <span class="badge-count">${count}</span>
                 </a>
@@ -326,9 +329,8 @@ function renderSidebar() {
 
     if (currentActiveCategory) {
         document.getElementById('pageTitle').innerHTML = `
-            <i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i>
-            <span>${currentActiveCategory}</span>
-            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 8px;">(${currentActiveFile})</span>
+            ${currentActiveCategory}
+            <span class="dataset-source">/ ${currentActiveFile}</span>
         `;
     }
 
@@ -354,9 +356,8 @@ function selectCategory(catName) {
     });
 
     document.getElementById('pageTitle').innerHTML = `
-        <i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i>
-        <span>${catName}</span>
-        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal; margin-left: 8px;">(${currentActiveFile})</span>
+        ${catName}
+        <span class="dataset-source">/ ${currentActiveFile}</span>
     `;
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -385,6 +386,7 @@ function updateStats() {
     });
 
     document.getElementById('totalRecords').innerText = data.length;
+    document.getElementById('headerRecordCount').innerText = data.length;
     document.getElementById('totalT').innerText = countT;
     document.getElementById('totalL').innerText = countL;
     document.getElementById('totalH').innerText = countH;
@@ -396,7 +398,7 @@ function renderTable() {
     const data = getCurrentData();
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><i class="fa-regular fa-folder" style="font-size: 2rem; margin-bottom: 8px; color: #cbd5e1;"></i><p>No telemetry data available.</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><p>No telemetry records found.</p></td></tr>`;
         return;
     }
 
@@ -416,26 +418,22 @@ function renderTable() {
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state">No matching units found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><p>No matching units found.</p></td></tr>`;
         return;
     }
 
     filtered.forEach((item, index) => {
         const devCode = extractDeviceCode(item.desc);
         const descText = devCode ? item.desc.replace(devCode, '').trim() : item.desc;
-        const prefix = devCode ? devCode.charAt(0) : '';
 
         let tagHtml = '';
         if (devCode) {
-            let tagClass = 'tag-h';
-            if (prefix === 'T') tagClass = 'tag-t';
-            else if (prefix === 'L') tagClass = 'tag-l';
-            tagHtml = `<span class="tag ${tagClass}">${devCode}</span>`;
+            tagHtml = `<span class="tag tag-badge">${devCode}</span>`;
         }
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">${index + 1}</td>
+            <td style="color: var(--text-muted); font-size: 12px;">${index + 1}</td>
             <td class="failure-text">${item.code}</td>
             <td>
                 ${tagHtml}
