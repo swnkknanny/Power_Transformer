@@ -326,7 +326,7 @@ body {
 .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; }
 .icon-all { background-color: #f1f7f2; color: #588157; }
 .icon-t { background-color: #edf5ee; color: #4f774e; }
-.icon-l { background-color: #fcf6eb; color: #b38539; }
+.icon-l { background-color: #edf5ee; color: #4f774e; }
 .icon-h { background-color: #f3f5f3; color: #636f65; }
 .stat-info h3 { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px; font-weight: 500; }
 .stat-info p { font-size: 1.45rem; font-weight: 700; color: var(--text-heading); }
