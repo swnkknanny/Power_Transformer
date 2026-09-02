@@ -4,7 +4,67 @@ let currentActiveCategory = '';
 let currentFilter = 'ALL';
 let searchQuery = '';
 
-// --- ระบบบันทึกฐานข้อมูลถาวร IndexedDB ---
+// ตัวแปรเก็บสิทธิ์: 'MasterKey', 'Visitor', หรือ null
+let currentUserRole = sessionStorage.getItem('user_role') || null;
+
+// --- ระบบยืนยันตัวตน (Authentication) ---
+function checkAuth() {
+    const modal = document.getElementById('loginModal');
+    const badge = document.getElementById('roleBadge');
+    const adminControls = document.getElementById('adminActionButtons');
+
+    if (!currentUserRole) {
+        modal.style.display = 'flex';
+    } else {
+        modal.style.display = 'none';
+
+        if (currentUserRole === 'MasterKey') {
+            badge.innerText = 'MasterKey (Admin)';
+            badge.className = 'user-role-badge role-master';
+            adminControls.style.display = 'flex';
+        } else if (currentUserRole === 'Visitor') {
+            badge.innerText = 'Visitor (View Only)';
+            badge.className = 'user-role-badge role-visitor';
+            adminControls.style.display = 'none';
+        }
+        renderSidebar();
+    }
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const passInput = document.getElementById('accessPass');
+    const errorEl = document.getElementById('loginError');
+    const pass = passInput.value.trim();
+
+    if (pass === '13102547') {
+        currentUserRole = 'MasterKey';
+        sessionStorage.setItem('user_role', 'MasterKey');
+        errorEl.innerText = '';
+        passInput.value = '';
+        checkAuth();
+    } else if (pass === '66002288') {
+        currentUserRole = 'Visitor';
+        sessionStorage.setItem('user_role', 'Visitor');
+        errorEl.innerText = '';
+        passInput.value = '';
+        checkAuth();
+    } else {
+        errorEl.innerText = 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
+    }
+}
+
+function logout() {
+    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+        sessionStorage.removeItem('user_role');
+        currentUserRole = null;
+        document.getElementById('accessPass').value = '';
+        document.getElementById('loginError').innerText = '';
+        checkAuth();
+    }
+}
+
+// --- ระบบบันทึกฐานข้อมูล IndexedDB ---
 const DB_NAME = 'TransformerDashboardDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'filesData';
@@ -24,6 +84,7 @@ function openDB() {
 }
 
 async function saveToDB() {
+    if (currentUserRole !== 'MasterKey') return;
     try {
         const db = await openDB();
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -50,6 +111,7 @@ async function loadFromDB() {
 }
 
 async function clearDB() {
+    if (currentUserRole !== 'MasterKey') return;
     try {
         const db = await openDB();
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -73,13 +135,13 @@ function categorizeRawText(codeText) {
 }
 
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (typeof XLSX === 'undefined') {
-        alert('ไลบรารีกำลังโหลด กรุณารีเฟรช 1 ครั้ง');
+    if (currentUserRole !== 'MasterKey') {
+        alert('เฉพาะ MasterKey เท่านั้นที่สามารถเพิ่มหรือแก้ไขข้อมูลได้');
         return;
     }
+
+    const file = e.target.files[0];
+    if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async function(evt) {
@@ -127,18 +189,13 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
                 }
             }
 
-            if (Object.keys(fileCategories).length === 0) {
-                alert('ไม่พบข้อมูลที่อ่านได้ในตาราง');
-                return;
-            }
-
             allFilesData[file.name] = fileCategories;
             currentActiveFile = file.name;
             currentActiveCategory = '';
             
             await saveToDB();
             renderSidebar();
-            alert(`เพิ่มไฟล์ "${file.name}" เรียบร้อยแล้ว!`);
+            alert(`เพิ่มไฟล์ "${file.name}" สำเร็จ!`);
 
         } catch (err) {
             alert('เกิดข้อผิดพลาดในการอ่านไฟล์: ' + err.message);
@@ -150,6 +207,11 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
 
 async function deleteFile(fileName, event) {
     event.stopPropagation();
+    if (currentUserRole !== 'MasterKey') {
+        alert('เฉพาะ MasterKey เท่านั้นที่สามารถลบไฟล์ได้');
+        return;
+    }
+
     if (confirm(`คุณต้องการนำไฟล์ "${fileName}" ออกจากระบบใช่หรือไม่?`)) {
         delete allFilesData[fileName];
         await saveToDB();
@@ -163,6 +225,10 @@ async function deleteFile(fileName, event) {
 }
 
 async function clearAllFiles() {
+    if (currentUserRole !== 'MasterKey') {
+        alert('เฉพาะ MasterKey เท่านั้นที่สามารถล้างข้อมูลได้');
+        return;
+    }
     if (Object.keys(allFilesData).length === 0) return alert('ไม่มีไฟล์ในระบบ');
     if (confirm('คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?')) {
         allFilesData = {};
@@ -198,12 +264,18 @@ function renderSidebar() {
     fileNames.forEach(fName => {
         const li = document.createElement('li');
         li.className = `file-item ${fName === currentActiveFile ? 'active' : ''}`;
+        
+        // ถ้าเป็น MasterKey ให้แสดงปุ่มถังขยะลบไฟล์ แต่ถ้าเป็น Visitor จะไม่แสดงปุ่มถังขยะ
+        const deleteBtnHtml = (currentUserRole === 'MasterKey') 
+            ? `<i class="fa-regular fa-trash-can btn-delete-file" onclick="deleteFile('${fName}', event)" title="ลบไฟล์นี้"></i>`
+            : '';
+
         li.innerHTML = `
             <div class="file-name-click" onclick="selectFile('${fName}')" title="${fName}">
                 <i class="fa-regular fa-file-excel"></i>
                 <span>${fName}</span>
             </div>
-            <i class="fa-regular fa-trash-can btn-delete-file" onclick="deleteFile('${fName}', event)" title="ลบไฟล์นี้"></i>
+            ${deleteBtnHtml}
         `;
         fileListEl.appendChild(li);
     });
@@ -372,13 +444,16 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     renderTable();
 });
 
-window.addEventListener('DOMContentLoaded', () => {
-    loadFromDB();
-});
-// ฟังก์ชันเปิด/ปิดแถบเมนูในมือถือและแท็บเล็ต
 function toggleMobileSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
+    if (sidebar && overlay) {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    loadFromDB();
+});
