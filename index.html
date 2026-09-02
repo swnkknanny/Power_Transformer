@@ -13,27 +13,19 @@
 
     <style>
         :root {
-            /* Light Sage & Oat Minimalist Palette */
             --sidebar-width: 275px;
             --sidebar-bg: #fbfcfb;
             --sidebar-hover: #f1f5f2;
-            
             --bg-canvas: #f6f8f6;
             --card-bg: #ffffff;
-            
-            /* Sage Soft Greens */
-            --accent-primary: #588157;       /* Soft Sage Green */
+            --accent-primary: #588157;
             --accent-hover: #486a47;
-            --accent-light: #edf3ed;         /* Pale Mint / Cream */
-            
+            --accent-light: #edf3ed;
             --text-heading: #263328;
             --text-body: #526054;
             --text-muted: #8c998e;
-            
             --border-subtle: #e9eee9;
             --border-light: #f3f6f3;
-            
-            /* Soft Pastel Tags */
             --tag-t-bg: #eaf3eb;
             --tag-t-text: #4f774e;
             --tag-l-bg: #fdf6ec;
@@ -46,7 +38,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif; }
         body { background-color: var(--bg-canvas); color: var(--text-body); display: flex; min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-        /* Clean White/Sage Sidebar */
         .sidebar {
             width: var(--sidebar-width);
             background-color: var(--sidebar-bg);
@@ -79,13 +70,7 @@
             font-size: 0.95rem;
         }
 
-        .sidebar-brand h2 { 
-            font-size: 1.05rem; 
-            font-weight: 600; 
-            color: var(--text-heading); 
-            letter-spacing: -0.2px;
-        }
-
+        .sidebar-brand h2 { font-size: 1.05rem; font-weight: 600; color: var(--text-heading); letter-spacing: -0.2px; }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 16px 0; }
 
         .menu-category {
@@ -157,7 +142,6 @@
             color: var(--accent-primary);
         }
 
-        /* Main Workspace */
         .main-wrapper { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
         .top-nav {
             background-color: var(--card-bg);
@@ -406,6 +390,64 @@
         let currentFilter = 'ALL';
         let searchQuery = '';
 
+        // --- ระบบฐานข้อมูล IndexedDB (ถาวร ไม่จำกัดขนาด) ---
+        const DB_NAME = 'TransformerDashboardDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'filesData';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function saveToDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put(allFilesData, 'allFiles');
+            } catch (err) {
+                console.error('Error saving to IndexedDB:', err);
+            }
+        }
+
+        async function loadFromDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get('allFiles');
+                req.onsuccess = () => {
+                    if (req.result) {
+                        allFilesData = req.result;
+                        renderSidebar();
+                    }
+                };
+            } catch (err) {
+                console.error('Error loading from IndexedDB:', err);
+            }
+        }
+
+        async function clearDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).clear();
+            } catch (err) {
+                console.error('Error clearing DB:', err);
+            }
+        }
+
+        // --- Logic แยกข้อมูล ---
         function extractDeviceCode(desc) {
             if (!desc) return '';
             const match = String(desc).match(/^([TLH]\d+)/);
@@ -429,6 +471,7 @@
             return "OTHERS";
         }
 
+        // นำเข้าไฟล์ Excel
         document.getElementById('excelFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -439,7 +482,7 @@
             }
 
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = async function(evt) {
                 try {
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
@@ -493,8 +536,9 @@
                     currentActiveFile = file.name;
                     currentActiveCategory = '';
                     
+                    await saveToDB();
                     renderSidebar();
-                    alert(`เพิ่มไฟล์ "${file.name}" เรียบร้อยแล้ว!`);
+                    alert(`เพิ่มไฟล์ "${file.name}" และบันทึกข้อมูลเรียบร้อยแล้ว!`);
 
                 } catch (err) {
                     console.error(err);
@@ -505,10 +549,11 @@
             e.target.value = '';
         });
 
-        function deleteFile(fileName, event) {
+        async function deleteFile(fileName, event) {
             event.stopPropagation();
             if (confirm(`คุณต้องการนำไฟล์ "${fileName}" ออกจากระบบใช่หรือไม่?`)) {
                 delete allFilesData[fileName];
+                await saveToDB();
                 const fileNames = Object.keys(allFilesData);
                 if (currentActiveFile === fileName) {
                     currentActiveFile = fileNames.length > 0 ? fileNames[0] : '';
@@ -518,12 +563,13 @@
             }
         }
 
-        function clearAllFiles() {
+        async function clearAllFiles() {
             if (Object.keys(allFilesData).length === 0) return alert('ไม่มีไฟล์ในระบบ');
             if (confirm('คุณต้องการลบข้อมูลทั้งหมดใช่หรือไม่?')) {
                 allFilesData = {};
                 currentActiveFile = '';
                 currentActiveCategory = '';
+                await clearDB();
                 renderSidebar();
             }
         }
@@ -727,7 +773,10 @@
             renderTable();
         });
 
-        renderSidebar();
+        // โหลดข้อมูลอัตโนมัติจาก IndexedDB เมื่อเปิดเว็บ
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromDB();
+        });
     </script>
 </body>
 </html>
