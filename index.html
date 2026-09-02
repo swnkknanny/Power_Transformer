@@ -7,8 +7,9 @@
     <!-- Fonts & Minimal Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- SheetJS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- CDNJS SheetJS (เสถียรและทำงานได้ 100% บน GitHub Pages) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -268,7 +269,7 @@
                 <button class="btn-clear-all" onclick="clearAllFiles()" title="ล้างข้อมูลทั้งหมด"><i class="fa-regular fa-trash-can"></i> ล้างข้อมูล</button>
                 <label class="btn-upload">
                     <i class="fa-solid fa-plus"></i> เพิ่มไฟล์ Excel
-                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" multiple>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
                 </label>
             </div>
         </header>
@@ -355,17 +356,15 @@
             return match ? match[1] : '';
         }
 
-        // *** ตรรกะแยกหมวดหมู่อัตโนมัติจากข้อความดิบ ***
         function categorizeRawText(codeText) {
             const text = String(codeText).toUpperCase();
-            
             if (text.includes("น้ำมัน") || text.includes("รั่ว") || text.includes("ซึม") || text.includes("OIL")) {
                 return "OIL LEAK";
             }
             if (text.includes("SILICAGEL") || text.includes("อุดตัน")) {
                 return "EXHAUSTION";
             }
-            if (text.includes("ไม่ทำงาน") || text.includes("TRIP") || text.includes("ผิดปกติ") || text.includes("ค้าง") || text.includes("กลไกติดขัด")) {
+            if (text.includes("ไม่ทำงาน") || text.includes("TRIP") || text.includes("ผิดปกติ") || text.includes("ค้าง") || text.includes("กลไก")) {
                 return "EQUIPMENT ERROR";
             }
             if (text.includes("ชำรุด") || text.includes("แตก") || text.includes("ขาด") || text.includes("เสื่อมสภาพ")) {
@@ -374,36 +373,34 @@
             return "OTHERS";
         }
 
-        function saveToLocalStorage() {
-            try {
-                localStorage.setItem('multiMaintenanceExcelDataV2', JSON.stringify(allFilesData));
-            } catch (e) {}
-        }
-
+        // อ่านไฟล์ Excel
         document.getElementById('excelFileInput').addEventListener('change', function(e) {
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
+            const file = e.target.files[0];
+            if (!file) return;
 
-            let filesReadCount = 0;
+            if (typeof XLSX === 'undefined') {
+                alert('เกิดข้อผิดพลาด: ระบบกำลังโหลดไลบรารี Excel กรุณารีเฟรชหน้าจอ 1 ครั้งแล้วลองใหม่');
+                return;
+            }
 
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-
                     const fileCategories = {};
 
-                    // กรณีที่ 1: ไฟล์มีหลาย Sheet อยู่แล้ว
                     if (workbook.SheetNames.length > 1) {
                         workbook.SheetNames.forEach(sheetName => {
                             const sheet = workbook.Sheets[sheetName];
                             const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                            if (rows.length > 0) {
+                            if (rows && rows.length > 0) {
                                 const parsedRows = [];
-                                for (let i = 1; i < rows.length; i++) {
+                                for (let i = 0; i < rows.length; i++) {
                                     const row = rows[i];
                                     if (row && (row[0] || row[1])) {
+                                        // ข้ามหัวตารางถ้ามี
+                                        if (i === 0 && String(row[0]).toLowerCase().includes('failure')) continue;
                                         parsedRows.push({
                                             code: row[0] ? String(row[0]).trim() : '-',
                                             desc: row[1] ? String(row[1]).trim() : '-'
@@ -413,37 +410,44 @@
                                 if (parsedRows.length > 0) fileCategories[sheetName] = parsedRows;
                             }
                         });
-                    } 
-                    // กรณีที่ 2: ไฟล์เป็นแผ่นเดียว (Single Sheet / Raw Data) -> ให้ระบบประมวลผลแยกให้อัตโนมัติ
-                    else {
+                    } else {
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                         const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                         
-                        for (let i = 1; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (row && (row[0] || row[1])) {
-                                const code = row[0] ? String(row[0]).trim() : '-';
-                                const desc = row[1] ? String(row[1]).trim() : '-';
-                                const category = categorizeRawText(code);
+                        if (rows && rows.length > 0) {
+                            for (let i = 0; i < rows.length; i++) {
+                                const row = rows[i];
+                                if (row && (row[0] || row[1])) {
+                                    if (i === 0 && String(row[0]).toLowerCase().includes('failure')) continue;
+                                    const code = row[0] ? String(row[0]).trim() : '-';
+                                    const desc = row[1] ? String(row[1]).trim() : '-';
+                                    const category = categorizeRawText(code);
 
-                                if (!fileCategories[category]) fileCategories[category] = [];
-                                fileCategories[category].push({ code, desc });
+                                    if (!fileCategories[category]) fileCategories[category] = [];
+                                    fileCategories[category].push({ code, desc });
+                                }
                             }
                         }
                     }
 
+                    if (Object.keys(fileCategories).length === 0) {
+                        alert('อ่านไฟล์สำเร็จ แต่ไม่พบข้อมูลในตาราง');
+                        return;
+                    }
+
                     allFilesData[file.name] = fileCategories;
                     currentActiveFile = file.name;
+                    currentActiveCategory = '';
+                    
+                    renderSidebar();
+                    alert(`เพิ่มไฟล์ "${file.name}" เข้าสู่ระบบเรียบร้อยแล้ว!`);
 
-                    filesReadCount++;
-                    if (filesReadCount === files.length) {
-                        saveToLocalStorage();
-                        renderSidebar();
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-
+                } catch (err) {
+                    console.error(err);
+                    alert('เกิดข้อผิดพลาดในการประมวลผลไฟล์: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
             e.target.value = '';
         });
 
@@ -451,7 +455,6 @@
             event.stopPropagation();
             if (confirm(`คุณต้องการนำไฟล์ "${fileName}" ออกจากระบบใช่หรือไม่?`)) {
                 delete allFilesData[fileName];
-                saveToLocalStorage();
                 const fileNames = Object.keys(allFilesData);
                 if (currentActiveFile === fileName) {
                     currentActiveFile = fileNames.length > 0 ? fileNames[0] : '';
@@ -467,7 +470,6 @@
                 allFilesData = {};
                 currentActiveFile = '';
                 currentActiveCategory = '';
-                localStorage.removeItem('multiMaintenanceExcelDataV2');
                 renderSidebar();
             }
         }
@@ -671,15 +673,7 @@
             renderTable();
         });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const cached = localStorage.getItem('multiMaintenanceExcelDataV2');
-            if (cached) {
-                try {
-                    allFilesData = JSON.parse(cached);
-                } catch(e) {}
-            }
-            renderSidebar();
-        });
+        renderSidebar();
     </script>
 </body>
 </html>
