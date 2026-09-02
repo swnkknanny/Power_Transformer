@@ -1,13 +1,63 @@
+// ==========================================
+// 1. Firebase Configuration จากโปรเจกต์ของคุณ
+// ==========================================
+const firebaseConfig = {
+    apiKey: "AIzaSyADet4LDE5kwcgVk1-VXgLDB2RprewvYgU",
+    authDomain: "power-transformer-db.firebaseapp.com",
+    databaseURL: "https://power-transformer-db-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "power-transformer-db",
+    storageBucket: "power-transformer-db.firebasestorage.app",
+    messagingSenderId: "752096858741",
+    appId: "1:752096858741:web:2a047c764e317c830f5e3c"
+};
+
+// เริ่มต้นใช้งาน Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const filesRef = db.ref('shared_datasets');
+
+// ตัวแปรระบบ
 let allFilesData = {};
 let currentActiveFile = '';
 let currentActiveCategory = '';
 let currentFilter = 'ALL';
 let searchQuery = '';
-
-let selectedLoginRole = 'MasterKey'; // ค่าเริ่มต้นในหน้าต่าง Login
+let selectedLoginRole = 'MasterKey';
 let currentUserRole = sessionStorage.getItem('user_role') || null;
 
-// สลับบทบาทในหน้าต่าง Login (MasterKey / Visitor)
+// ==========================================
+// 2. Realtime Sync (อัปเดตทุกอุปกรณ์อัตโนมัติ)
+// ==========================================
+filesRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    allFilesData = data || {};
+    
+    const fileNames = Object.keys(allFilesData);
+    if (!allFilesData[currentActiveFile]) {
+        currentActiveFile = fileNames.length > 0 ? fileNames[0] : '';
+        currentActiveCategory = '';
+    }
+    
+    renderSidebar();
+});
+
+function saveToCloud() {
+    if (currentUserRole !== 'MasterKey') return;
+    filesRef.set(allFilesData).catch((err) => {
+        alert('Cloud sync failed: ' + err.message);
+    });
+}
+
+function clearCloud() {
+    if (currentUserRole !== 'MasterKey') return;
+    filesRef.remove().catch((err) => {
+        alert('Purge failed: ' + err.message);
+    });
+}
+
+// ==========================================
+// 3. Authentication System
+// ==========================================
 function selectLoginRole(role) {
     selectedLoginRole = role;
     const btnMaster = document.getElementById('btnRoleMaster');
@@ -30,7 +80,6 @@ function selectLoginRole(role) {
     passInput.focus();
 }
 
-// ตรวจสอบสิทธิ์การเข้าใช้งาน
 function checkAuth() {
     const modal = document.getElementById('loginModal');
     const badge = document.getElementById('roleBadge');
@@ -93,61 +142,9 @@ function logout() {
     }
 }
 
-// --- IndexedDB Persistence ---
-const DB_NAME = 'TransformerDashboardDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'filesData';
-
-function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function saveToDB() {
-    if (currentUserRole !== 'MasterKey') return;
-    try {
-        const db = await openDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).put(allFilesData, 'allFiles');
-    } catch (err) {
-        console.error('Save DB error:', err);
-    }
-}
-
-async function loadFromDB() {
-    try {
-        const db = await openDB();
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const req = tx.objectStore(STORE_NAME).get('allFiles');
-        req.onsuccess = () => {
-            if (req.result && Object.keys(req.result).length > 0) {
-                allFilesData = req.result;
-                renderSidebar();
-            }
-        };
-    } catch (err) {
-        console.error('Load DB error:', err);
-    }
-}
-
-async function clearDB() {
-    if (currentUserRole !== 'MasterKey') return;
-    try {
-        const db = await openDB();
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        tx.objectStore(STORE_NAME).clear();
-    } catch (err) {}
-}
-
+// ==========================================
+// 4. Data Parsing & Display
+// ==========================================
 function extractDeviceCode(desc) {
     if (!desc) return '';
     const match = String(desc).match(/^([TLH]\d+)/);
@@ -173,7 +170,7 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async function(evt) {
+    reader.onload = function(evt) {
         try {
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
@@ -218,13 +215,13 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
                 }
             }
 
-            allFilesData[file.name] = fileCategories;
-            currentActiveFile = file.name;
+            const safeFileName = file.name.replace(/\./g, '_');
+            allFilesData[safeFileName] = fileCategories;
+            currentActiveFile = safeFileName;
             currentActiveCategory = '';
             
-            await saveToDB();
-            renderSidebar();
-            alert(`Dataset "${file.name}" imported successfully.`);
+            saveToCloud();
+            alert(`Dataset "${file.name}" uploaded and synced to all devices!`);
 
         } catch (err) {
             alert('File parse exception: ' + err.message);
@@ -234,37 +231,30 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
     e.target.value = '';
 });
 
-async function deleteFile(fileName, event) {
+function deleteFile(fileName, event) {
     event.stopPropagation();
     if (currentUserRole !== 'MasterKey') {
         alert('Permission Denied: Administrative rights required.');
         return;
     }
 
-    if (confirm(`Purge dataset "${fileName}" from system storage?`)) {
+    if (confirm(`Purge dataset "${fileName}" from Cloud storage?`)) {
         delete allFilesData[fileName];
-        await saveToDB();
-        const fileNames = Object.keys(allFilesData);
-        if (currentActiveFile === fileName) {
-            currentActiveFile = fileNames.length > 0 ? fileNames[0] : '';
-            currentActiveCategory = '';
-        }
-        renderSidebar();
+        saveToCloud();
     }
 }
 
-async function clearAllFiles() {
+function clearAllFiles() {
     if (currentUserRole !== 'MasterKey') {
         alert('Permission Denied: Administrative rights required.');
         return;
     }
     if (Object.keys(allFilesData).length === 0) return alert('Storage empty.');
-    if (confirm('Execute complete dataset purge? This action cannot be reversed.')) {
+    if (confirm('Execute complete dataset purge across all connected devices?')) {
         allFilesData = {};
         currentActiveFile = '';
         currentActiveCategory = '';
-        await clearDB();
-        renderSidebar();
+        clearCloud();
     }
 }
 
@@ -482,5 +472,4 @@ function toggleMobileSidebar() {
 
 window.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    loadFromDB();
 });
