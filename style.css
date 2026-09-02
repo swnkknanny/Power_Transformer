@@ -41,8 +41,8 @@ body {
 .login-modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(29, 46, 40, 0.6);
-    backdrop-filter: blur(10px);
+    background: rgba(38, 51, 40, 0.45);
+    backdrop-filter: blur(12px);
     z-index: 99999;
     display: flex;
     justify-content: center;
@@ -53,20 +53,20 @@ body {
 .login-box {
     background: #ffffff;
     width: 100%;
-    max-width: 380px;
-    padding: 36px 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    max-width: 400px;
+    padding: 38px 32px;
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(38, 51, 40, 0.1);
     text-align: center;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid rgba(230, 237, 230, 0.8);
 }
 
 .login-icon {
-    width: 50px;
-    height: 50px;
+    width: 52px;
+    height: 52px;
     background: var(--accent-light);
     color: var(--accent-primary);
-    border-radius: 12px;
+    border-radius: 14px;
     display: inline-flex;
     justify-content: center;
     align-items: center;
@@ -75,20 +75,58 @@ body {
 }
 
 .login-box h2 {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     color: var(--text-heading);
     margin-bottom: 6px;
+    letter-spacing: -0.3px;
 }
 
 .login-box p {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
-    margin-bottom: 24px;
+    margin-bottom: 22px;
+}
+
+/* Smart Segmented Switcher */
+.role-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #f1f5f2;
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    gap: 4px;
+}
+
+.role-btn {
+    padding: 9px 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.role-btn:hover {
+    color: var(--text-heading);
+}
+
+.role-btn.active {
+    background: #ffffff;
+    color: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .input-group {
     position: relative;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .input-group i {
@@ -97,22 +135,25 @@ body {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
+    font-size: 0.9rem;
 }
 
 .input-group input {
     width: 100%;
     padding: 12px 14px 12px 40px;
     border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    font-size: 0.95rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     outline: none;
     background: #fafbfa;
-    transition: border 0.2s;
+    transition: all 0.2s;
+    letter-spacing: 1px;
 }
 
 .input-group input:focus {
     border-color: var(--accent-primary);
     background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(88, 129, 87, 0.12);
 }
 
 .btn-login {
@@ -121,40 +162,46 @@ body {
     background: var(--accent-primary);
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
-    margin-top: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 12px rgba(88, 129, 87, 0.2);
 }
 
 .btn-login:hover {
     background: var(--accent-hover);
+    transform: translateY(-1px);
 }
 
 .login-error-msg {
     color: var(--danger-color);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     margin-bottom: 8px;
     min-height: 18px;
+    font-weight: 500;
 }
 
 .login-hints {
     margin-top: 20px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
 }
 
 /* User Role Badge & Logout Button */
 .user-role-badge {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
-    letter-spacing: 0.3px;
-    display: inline-flex;
-    align-items: center;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
 }
 .role-master {
     background-color: #d8f3dc;
