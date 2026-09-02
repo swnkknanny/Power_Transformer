@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipment Maintenance & Failure Dashboard</title>
+    <title>Dynamic Maintenance Dashboard</title>
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- SheetJS Library for reading Excel files -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         :root {
-            --sidebar-width: 260px;
+            --sidebar-width: 270px;
             --primary-color: #1e293b;
             --secondary-color: #0f172a;
-            --accent-color: #3b82f6;
+            --accent-color: #2563eb;
             --bg-light: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #334155;
@@ -67,13 +69,13 @@
         }
 
         .sidebar-header h2 {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
         }
 
         .sidebar-menu {
             list-style: none;
-            padding: 20px 0;
+            padding: 16px 0;
             flex: 1;
             overflow-y: auto;
         }
@@ -90,10 +92,10 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 24px;
+            padding: 12px 24px;
             color: #cbd5e1;
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.2s;
             border-left: 4px solid transparent;
@@ -108,8 +110,8 @@
         }
 
         .sidebar-menu li a i {
-            width: 20px;
-            font-size: 1.1rem;
+            width: 18px;
+            font-size: 1rem;
         }
 
         .badge-count {
@@ -120,7 +122,7 @@
             margin-left: auto;
         }
 
-        /* Main Content */
+        /* Main Wrapper */
         .main-wrapper {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -132,16 +134,45 @@
         .top-nav {
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
-            padding: 16px 32px;
+            padding: 14px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
         }
 
         .top-nav h1 {
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--primary-color);
+        }
+
+        .upload-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-upload {
+            background-color: #10b981;
+            color: white;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #059669;
+        }
+
+        .btn-upload input {
+            display: none;
         }
 
         .content-container {
@@ -190,7 +221,7 @@
             color: var(--primary-color);
         }
 
-        /* Table Card & Filter */
+        /* Table Card & Tools */
         .table-card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -235,7 +266,7 @@
 
         .search-box input:focus {
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
 
         .filter-group {
@@ -264,7 +295,7 @@
 
         /* Table */
         .table-responsive {
-            max-height: 600px;
+            max-height: 560px;
             overflow-y: auto;
         }
 
@@ -319,6 +350,13 @@
         .failure-text {
             color: #475569;
         }
+
+        /* Empty / Alert Message */
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 <body>
@@ -326,46 +364,25 @@
     <!-- Left Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <i class="fa-solid fa-bolt-lightning"></i>
-            <h2>ระบบจัดการข้อมูล</h2>
+            <i class="fa-solid fa-file-excel"></i>
+            <h2>ระบบบำรุงรักษา</h2>
         </div>
-        <ul class="sidebar-menu">
-            <div class="menu-category">หมวดหมู่ความเสียหาย</div>
-            <li>
-                <a href="javascript:void(0)" id="menuDamaged" class="active" onclick="switchTab('DAMAGED')">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>DAMAGED</span>
-                    <span class="badge-count" id="countDamagedBadge">71</span>
-                </a>
-            </li>
-            <li>
-                <a href="javascript:void(0)" id="menuError" onclick="switchTab('EQUIPMENT ERROR')">
-                    <i class="fa-solid fa-circle-exclamation"></i>
-                    <span>EQUIPMENT ERROR</span>
-                    <span class="badge-count" id="countErrorBadge">14</span>
-                </a>
-            </li>
-            <li>
-                <a href="javascript:void(0)" id="menuExhaustion" onclick="switchTab('EXHAUSTION')">
-                    <i class="fa-solid fa-wind"></i>
-                    <span>EXHAUSTION</span>
-                    <span class="badge-count" id="countExhaustionBadge">1</span>
-                </a>
-            </li>
-            <li>
-                <a href="javascript:void(0)" id="menuOilLeak" onclick="switchTab('OIL LEAK')">
-                    <i class="fa-solid fa-droplet"></i>
-                    <span>OIL LEAK</span>
-                    <span class="badge-count" id="countOilLeakBadge">17</span>
-                </a>
-            </li>
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <div class="menu-category">Sheet ข้อมูล</div>
+            <!-- Category list auto-generated from Excel Sheets -->
         </ul>
     </aside>
 
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <header class="top-nav">
-            <h1 id="pageTitle"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 10px; color: var(--accent-color);"></i>DAMAGED</h1>
+            <h1 id="pageTitle"><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>รอเลือกเมนู</h1>
+            <div class="upload-wrapper">
+                <label class="btn-upload">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> นำเข้าไฟล์ Excel (.xlsx)
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
+                </label>
+            </div>
         </header>
 
         <main class="content-container">
@@ -376,7 +393,7 @@
                         <i class="fa-solid fa-database"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รายการในหมวดนี้</h3>
+                        <h3>รายการใน Sheet นี้</h3>
                         <p id="totalRecords">0</p>
                     </div>
                 </div>
@@ -385,7 +402,7 @@
                         <i class="fa-solid fa-microchip"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>อุปกรณ์หมวด T (Transformer/Relay)</h3>
+                        <h3>รหัสอุปกรณ์ T (Transformer)</h3>
                         <p id="totalT">0</p>
                     </div>
                 </div>
@@ -394,7 +411,7 @@
                         <i class="fa-solid fa-clock-rotate-left"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>อุปกรณ์หมวด L</h3>
+                        <h3>รหัสอุปกรณ์ L</h3>
                         <p id="totalL">0</p>
                     </div>
                 </div>
@@ -403,7 +420,7 @@
                         <i class="fa-solid fa-wrench"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>หมวด H / อื่นๆ</h3>
+                        <h3>รหัสอุปกรณ์ H / อื่นๆ</h3>
                         <p id="totalH">0</p>
                     </div>
                 </div>
@@ -434,7 +451,12 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <!-- Data rows will be generated via JavaScript -->
+                            <tr>
+                                <td colspan="3" class="empty-state">
+                                    <i class="fa-solid fa-file-excel" style="font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                                    <p>ยังไม่มีข้อมูล กรุณากดปุ่ม <strong>"นำเข้าไฟล์ Excel"</strong> ด้านบนขวา</p>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -442,163 +464,111 @@
         </main>
     </div>
 
-    <!-- Data & Script -->
+    <!-- Script Handling Excel Import & Parsing -->
     <script>
-        // 1. ข้อมูล DAMAGED (71 รายการ)
-        const damagedData = [
-            { code: "อายุใช้งานเสื่อมสภาพ / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
-            { code: "ความชื้น/สิ่งสกปรก / CONTROL DESK TAP อ่านไม่ตรง", desc: "T101 Control desk tap อ่านไม่ตรง" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL DESK หลอดขาด", desc: "T102 Control desk หลอดขาด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL พัดลมชำรุด", desc: "T103 Control พัดลมชำรุด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / DIFFERENTIAL RELAY", desc: "T105 Differential relay เปลี่ยน" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY เปลี่ยน", desc: "T107 Tripping relay เปลี่ยน" },
-            { code: "โครงแตก / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
-            { code: "ซีลเสื่อมสภาพ / COUNTER L/A ชำรุด", desc: "T001 Counter Lightning Arrester ชำรุด" },
-            { code: "โครงแตก / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
-            { code: "โครงแตก / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
-            { code: "เสื่อมสภาพ / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
-            { code: "SILICAGEL เสื่อมสภาพ / SILICAGEL/AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" },
-            { code: "โครงแตก / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
-            { code: "เสื่อมสภาพ / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
-            { code: "การรั่วซึมของน้ำมัน / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { code: "การเกิดไฟฟ้าลัดวงจร / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { code: "อายุการใช้งานเสื่อมสภาพ / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { code: "ความร้อนสะสมเกินไป / เปลี่ยนหม้อแปลงชำรุด", desc: "T015 เปลี่ยนหม้อแปลงชำรุด" },
-            { code: "สึกหรอจากการใช้งานนาน / เปลี่ยนพัดลมหม้อแปลง", desc: "T018 เปลี่ยนพัดลมหม้อแปลง" },
-            { code: "สึกหรอจากการใช้งานนาน / พัดลมหม้อแปลงถอดไปซ่อม", desc: "T019 พัดลมหม้อแปลงถอดไปซ่อม" },
-            { code: "การเสียหายของมอเตอร์ / พัดลมหม้อแปลงไม่ทำงาน", desc: "T020 พัดลมหม้อแปลงไม่ทำงาน" },
-            { code: "WAITING / งานตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "L212 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { code: "WAITING / งานตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L010 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
-            { code: "WAITING / ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร", desc: "L213 ต่อการจ่ายไฟ หรืออื่น ๆ ตามเห็นสมควร" },
-            { code: "การโอเวอร์โหลด (OVERLOAD) / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { code: "ความผิดปกติของแรงดัน / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { code: "การผลิตที่ไม่ดี / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { code: "การเกิดความชื้น / ขดลวดหม้อแปลงชำรุด", desc: "T023 ขดลวดหม้อแปลงชำรุด" },
-            { code: "การออกแบบที่ผิดพลาด / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { code: "ความเครียดการเปลี่ยนกระแสไฟฟ้า / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { code: "การสะสมของความร้อน / แกนเหล็กหม้อแปลงชำรุด", desc: "T024 แกนเหล็กหม้อแปลงชำรุด" },
-            { code: "เสื่อมสภาพ / HV BUSHING หม้อแปลงชำรุด", desc: "T025 HV Bushing หม้อแปลงชำรุด" },
-            { code: "เสื่อมสภาพ / MV BUSHING หม้อแปลงชำรุด", desc: "T026 MV Bushing หม้อแปลงชำรุด" },
-            { code: "เสื่อมสภาพ / OFF LOAD TAP หม้อแปลงชำรุด", desc: "T027 OFF LOAD TAP หม้อแปลงชำรุด" },
-            { code: "SHORT CIRCUIT / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { code: "การติดตั้งไม่ถูกต้อง / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { code: "อุณหภูมิสูงเกิน / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { code: "กลไกติดขัด / BUCHHOLZ RELAY ชำรุด", desc: "T028 Buchholz relay ชำรุด" },
-            { code: "การติดตั้งไม่ถูกต้อง / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { code: "กลไกติดขัด / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { code: "แรงดันเกินขีดจำกัดบ่อยเกิน / PRESSURE RELIEF ชำรุด", desc: "T029 Pressure relief ชำรุด" },
-            { code: "ระบบควบคุมทำงานผิดพลาด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { code: "TRANSFORMER MALFUNCTION / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { code: "การตั้งค่าผิด / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { code: "ระบบภายนอกสัญญาณผิดปกติ / DIFFERENTIAL RELAY ชำรุด", desc: "T104 Differential relay ชำรุด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / TRIPPING RELAY ชำรุด", desc: "T106 Tripping relay ชำรุด" },
-            { code: "เปลี่ยน TAP แล้วมีเสียง/ เปลี่ยน TAP แล้วมีเสียง", desc: "T211 เปลี่ยน TAP แล้วมีเสียงดัง" },
-            { code: "WAITING / ตรวจสอบแล้ว รอจัดซื้ออะไหล่", desc: "T213 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { code: "WAITING / ตรวจสอบแล้ว ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "L106 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" },
-            { code: "กลไกเสื่อมสภาพ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { code: "ความชื้น, ฝุ่น ฯ / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { code: "ต่อสายผิด, SHORT / TAP PROTECTIVE RELAY ชำรุด", desc: "T215 Tap protective relay ชำรุด" },
-            { code: "อาร์ก ระหว่างเปลี่ยน TAP บ่อย / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { code: "อุณหภูมิสูงเกินจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { code: "น้ำมัน OLTC เสื่อมสภาพ / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { code: "อุณหภูมิสูงมาจากกระแสเกิน / MAIN CONTACT ชำรุด", desc: "T216 Main contact ชำรุด" },
-            { code: "อาร์ก ขณะสลับ TAP / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { code: "น้ำมัน OLTC เสื่อมสภาพ / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { code: "สปริง/กลไก CONTACT เสีย / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { code: "ค่าต้านทานCONTACTเพิ่ม / TRANSITION CONTACT ชำรุด", desc: "T217 Transition contact ชำรุด" },
-            { code: "สึกหรอ / GEAR UNIT ชำรุด", desc: "T218 Gear unit ชำรุด" },
-            { code: "ชำรุดจาก ACCESSORIES / OLTC ACCESSORIES ชำรุด", desc: "T219 OLTC Accessories ชำรุด" },
-            { code: "แรงดันV ผิดปกติ / MOTOR DRIVE CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { code: "ฝุ่นละอองฯ ในกล่องควบคุม / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / CONTROL BOARD ชำรุด", desc: "T220 Motor drive control board ชำรุด" },
-            { code: "แรงดันน้ำมันเกิน / PRESSURE GAUGE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
-            { code: "สิ่งสกปรกเข้าไปในเกจ / PRESSURE OIL FILTER เสีย", desc: "T305 Pressure gauge oil filter เสีย" },
-            { code: "WAITING / ตรวจสอบ รอจัดซื้ออะไหล่", desc: "T306 งานตรวจสอบแล้ว รอจัดซื้ออะไหล่" },
-            { code: "WAITING / ตรวจสอบ ไม่มีอะไหล่ ไม่มีผลกระทบ", desc: "H204 งานตรวจสอบแล้ว ไม่มีอะไหล่ และไม่มีผลกระทบ" }
-        ];
-
-        // 2. ข้อมูล EQUIPMENT ERROR (14 รายการ)
-        const equipmentErrorData = [
-            { code: "กลไกชำรุด / COUNTER L/A ชำรุด", desc: "Counter Lightning Arrester ชำรุด" },
-            { code: "กลไกชำรุด / OIL LEVEL GAUGE ชำรุด", desc: "T002 Oil level gauge ชำรุด" },
-            { code: "กลไกชำรุด / OIL TEMP ชำรุด", desc: "T003 Oil temp ชำรุด" },
-            { code: "กลไกชำรุด / WINDING TEMP ชำรุด", desc: "T005 Winding temp ชำรุด" },
-            { code: "การทำงานผิดพลาดของรีเลย์ / หม้อแปลง TRIP", desc: "T016 หม้อแปลง Trip" },
-            { code: "กลไกติดขัด / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
-            { code: "ชุดเฟืองภายในชำรุด / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
-            { code: "LUBRICATION / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
-            { code: "เสื่อมสภาพจากอายุใช้งาน / COUNTER TAP ไม่ทำงาน", desc: "T206 Counter Tap ไม่ทำงาน" },
-            { code: "กลไกติดขัด / MICRO SW. LOWER & UPPER LIMIT ค้าง", desc: "T208 Micro sw. Lower & upper limit ค้าง" },
-            { code: "OLTC ไม่ทำงาน / OLTC เปลี่ยน TAP ทางไฟฟ้าไม่ได้", desc: "T209 OLTC เปลี่ยน Tap ทางไฟฟ้าไม่ได้" },
-            { code: "การรบกวนจากสัญญาณไฟฟ้า / CF ทำงานผิดปกติ", desc: "T301 Counter oil filter ทำงานผิดปกติ" },
-            { code: "MOTOR OIL FILTER ต่อท่อผิดด้าน / MF หมุนกลับทาง", desc: "T302 Motor oil filter หมุนกลับทาง" },
-            { code: "ปั๊มน้ำมัน OLTC เสีย / OF ไม่ทำงานหลังเปลี่ยน TAP", desc: "T304 Oil filter ไม่ทำงานหลังจากเปลี่ยน Tap" }
-        ];
-
-        // 3. ข้อมูล EXHAUSTION (1 รายการ)
-        const exhaustionData = [
-            { code: "การอุดตัน / ฝุ่นละออง / SILICAGEL AIR ชำรุด", desc: "T004 Silicagel เปลี่ยนสี/Air Breather ชำรุด" }
-        ];
-
-        // 4. ข้อมูล OIL LEAK (17 รายการ)
-        const oilLeakData = [
-            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมด้านบนหม้อแปลง", desc: "T006 น้ำมันรั่วซึมด้านบนหม้อแปลง" },
-            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ BUSHING หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
-            { code: "แตกหัก / น้ำมันรั่วซึมที่ BUSHING หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
-            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่หม้อแปลง", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
-            { code: "ความเสียหายจากการเคลื่อนที่ / น้ำมันรั่วซึมที่หม้อ", desc: "T007 น้ำมันรั่วซึมที่ Bushing หม้อแปลง" },
-            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
-            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
-            { code: "ความร้อนสูงเกินไป / น้ำมันรั่วซึมที่ CABLE BOX", desc: "T008 น้ำมันรั่วซึมที่ Cable box" },
-            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
-            { code: "ติดตั้งไม่ตามมาตรฐาน / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
-            { code: "แรงดันภายในสูง / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
-            { code: "การเสื่อมจากสิ่งสกปรก / น้ำมันรั่วซึมที่ RADIATOR", desc: "T009 น้ำมันรั่วซึมที่ Radiator" },
-            { code: "ระบบระบายความร้อนทำงานผิดปกติ / น้ำมันหม้อแปลงต่ำ", desc: "T012 น้ำมันหม้อแปลงต่ำ" },
-            { code: "ซีลเสื่อมสภาพ / น้ำมันหม้อแปลงต่ำ", desc: "T012 น้ำมันหม้อแปลงต่ำ" },
-            { code: "ซีลเสื่อมสภาพ / น้ำมันรั่วซึมที่ฝาบ่อ OLTC", desc: "T210 น้ำมันรั่วซึมที่ฝาบ่อ OLTC" },
-            { code: "OLTC ระดับน้ำมันต่ำ ซีลเสื่อมสภาพ", desc: "T212 ระดับน้ำมันต่ำที่ OLTC" },
-            { code: "ซีลเสื่อมสภาพ / OIL FILTER UNIT มีน้ำมันรั่วซึม", desc: "T303 Oil filter unit มีน้ำมันรั่วซึม" }
-        ];
-
-        let currentTab = 'DAMAGED';
+        let workbookData = {};
+        let activeSheet = '';
         let currentFilter = 'ALL';
         let searchQuery = '';
 
+        // ดึง Device Code เช่น T001, L106, H204
         function extractDeviceCode(desc) {
-            const match = desc.match(/^([TLH]\d+)/);
+            if (!desc) return '';
+            const match = String(desc).match(/^([TLH]\d+)/);
             return match ? match[1] : '';
         }
 
-        function getCurrentDataSet() {
-            if (currentTab === 'DAMAGED') return damagedData;
-            if (currentTab === 'EQUIPMENT ERROR') return equipmentErrorData;
-            if (currentTab === 'EXHAUSTION') return exhaustionData;
-            if (currentTab === 'OIL LEAK') return oilLeakData;
-            return [];
+        // จัดการเมื่อเลือกไฟล์ Excel
+        document.getElementById('excelFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                workbookData = {};
+                workbook.SheetNames.forEach(sheetName => {
+                    const sheet = workbook.Sheets[sheetName];
+                    // แปลง Sheet เป็น JSON array
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    if (rows.length > 0) {
+                        const parsedRows = [];
+                        // ข้าม Header แถวแรก
+                        for (let i = 1; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (row && (row[0] || row[1])) {
+                                parsedRows.push({
+                                    code: row[0] ? String(row[0]).trim() : '-',
+                                    desc: row[1] ? String(row[1]).trim() : '-'
+                                });
+                            }
+                        }
+                        if (parsedRows.length > 0) {
+                            workbookData[sheetName] = parsedRows;
+                        }
+                    }
+                });
+
+                // บันทึกลง LocalStorage ให้ไม่ต้องกดอัปโหลดใหม่ทุกรอบ
+                try {
+                    localStorage.setItem('cachedMaintenanceExcel', JSON.stringify(workbookData));
+                } catch(e) {
+                    console.log('Cache storage full');
+                }
+
+                buildMenu();
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // สร้างเมนูด้านซ้ายจาก Sheet Names
+        function buildMenu() {
+            const sheetNames = Object.keys(workbookData);
+            const menuEl = document.getElementById('sidebarMenu');
+            menuEl.innerHTML = '<div class="menu-category">Sheet ข้อมูล</div>';
+
+            if (sheetNames.length === 0) return;
+
+            sheetNames.forEach((name, index) => {
+                const count = workbookData[name].length;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="javascript:void(0)" class="${index === 0 ? 'active' : ''}" onclick="selectSheet('${name}')">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>${name}</span>
+                        <span class="badge-count">${count}</span>
+                    </a>
+                `;
+                menuEl.appendChild(li);
+            });
+
+            // เลือกแท็บแรกอัตโนมัติ
+            selectSheet(sheetNames[0]);
         }
 
-        function switchTab(tabName) {
-            currentTab = tabName;
+        // สลับเลือก Sheet
+        function selectSheet(sheetName) {
+            activeSheet = sheetName;
             currentFilter = 'ALL';
             searchQuery = '';
             document.getElementById('searchInput').value = '';
 
-            // Update UI Menu Active State
-            document.getElementById('menuDamaged').classList.toggle('active', tabName === 'DAMAGED');
-            document.getElementById('menuError').classList.toggle('active', tabName === 'EQUIPMENT ERROR');
-            document.getElementById('menuExhaustion').classList.toggle('active', tabName === 'EXHAUSTION');
-            document.getElementById('menuOilLeak').classList.toggle('active', tabName === 'OIL LEAK');
-            
-            // Update Title & Icon
-            let icon = 'fa-triangle-exclamation';
-            if (tabName === 'EQUIPMENT ERROR') icon = 'fa-circle-exclamation';
-            if (tabName === 'EXHAUSTION') icon = 'fa-wind';
-            if (tabName === 'OIL LEAK') icon = 'fa-droplet';
+            // Update UI Menu
+            const links = document.querySelectorAll('#sidebarMenu li a');
+            links.forEach(a => {
+                const span = a.querySelector('span');
+                if (span && span.innerText === sheetName) {
+                    a.classList.add('active');
+                } else {
+                    a.classList.remove('active');
+                }
+            });
 
-            document.getElementById('pageTitle').innerHTML = `<i class="fa-solid ${icon}" style="margin-right: 10px; color: var(--accent-color);"></i>${tabName}`;
+            // Update Title
+            document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-layer-group" style="margin-right: 10px; color: var(--accent-color);"></i>${sheetName}`;
 
             // Reset Filter Buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -610,7 +580,7 @@
         }
 
         function updateStats() {
-            const data = getCurrentDataSet();
+            const data = workbookData[activeSheet] || [];
             let countT = 0, countL = 0, countH = 0;
 
             data.forEach(item => {
@@ -630,12 +600,17 @@
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
-            const data = getCurrentDataSet();
+            const data = workbookData[activeSheet] || [];
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลใน Sheet นี้</td></tr>`;
+                return;
+            }
 
             const filtered = data.filter(item => {
                 const devCode = extractDeviceCode(item.desc);
                 const prefix = devCode ? devCode.charAt(0) : '';
-                
+
                 const matchesCategory = (currentFilter === 'ALL') || 
                                       (currentFilter === 'T' && prefix === 'T') ||
                                       (currentFilter === 'L' && prefix === 'L') ||
@@ -646,6 +621,11 @@
 
                 return matchesCategory && matchesSearch;
             });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
+                return;
+            }
 
             filtered.forEach((item, index) => {
                 const devCode = extractDeviceCode(item.desc);
@@ -689,13 +669,16 @@
             renderTable();
         });
 
-        // Initialize App
-        document.getElementById('countDamagedBadge').innerText = damagedData.length;
-        document.getElementById('countErrorBadge').innerText = equipmentErrorData.length;
-        document.getElementById('countExhaustionBadge').innerText = exhaustionData.length;
-        document.getElementById('countOilLeakBadge').innerText = oilLeakData.length;
-        updateStats();
-        renderTable();
+        // โหลดข้อมูลเดิมที่เคยบันทึกไว้ในเบราว์เซอร์อัตโนมัติ (ถ้ามี)
+        window.addEventListener('DOMContentLoaded', () => {
+            const cached = localStorage.getItem('cachedMaintenanceExcel');
+            if (cached) {
+                try {
+                    workbookData = JSON.parse(cached);
+                    buildMenu();
+                } catch(e) {}
+            }
+        });
     </script>
 </body>
 </html>
