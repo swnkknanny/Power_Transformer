@@ -447,7 +447,7 @@ body {
 }
 
 .table-toolbar {
-    padding: 16px 20px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
@@ -516,14 +516,18 @@ body {
     font-weight: 600;
 }
 
-/* Data Table */
+/* ===================================================
+   DATA TABLE (SPACIOUS & EXPANDED)
+   =================================================== */
 .table-responsive {
     max-height: 580px;
     overflow-y: auto;
+    width: 100%;
 }
 
 table {
     width: 100%;
+    table-layout: fixed; /* บังคับให้ตารางกางเต็มพื้นที่ และแบ่งตามสัดส่วนจริง */
     border-collapse: collapse;
     text-align: left;
     font-size: 13px;
@@ -535,7 +539,7 @@ thead th {
     background-color: var(--surface);
     color: var(--text-muted);
     font-weight: 500;
-    padding: 12px 20px;
+    padding: 14px 24px;
     border-bottom: 1px solid var(--border-subtle);
     font-size: 12px;
     letter-spacing: 0.3px;
@@ -543,10 +547,11 @@ thead th {
 }
 
 tbody td {
-    padding: 14px 20px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border-subtle);
     vertical-align: middle;
     color: var(--text-secondary);
+    word-break: break-word;
 }
 
 tbody tr:last-child td {
@@ -561,12 +566,12 @@ tbody tr:hover td {
 /* Failure Badge (Subtle Technical Label) */
 .tag {
     display: inline-block;
-    padding: 2px 7px;
+    padding: 3px 8px;
     border-radius: var(--radius-sm);
     font-size: 11px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
-    margin-right: 8px;
+    margin-right: 10px;
     letter-spacing: 0.2px;
 }
 
@@ -579,6 +584,7 @@ tbody tr:hover td {
     font-weight: 500;
     color: var(--text-primary);
     letter-spacing: -0.1px;
+    padding-right: 24px; /* เว้นระยะหายใจห่างจาก Description */
 }
 
 .desc-text {
