@@ -10,6 +10,10 @@
     
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Firebase SDK สำหรับ Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -23,7 +27,6 @@
             <p>Select your authorized credential role to proceed</p>
             
             <form onsubmit="handleLogin(event)">
-                <!-- Role Selector Buttons -->
                 <div class="role-selector">
                     <button type="button" class="role-btn active" id="btnRoleMaster" onclick="selectLoginRole('MasterKey')">
                         <i class="fa-solid fa-crown"></i> MasterKey
