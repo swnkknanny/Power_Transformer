@@ -13,6 +13,30 @@
 </head>
 <body>
 
+    <!-- หน้าต่าง Login (ปรากฏเมื่อยังไม่ได้ใส่รหัส) -->
+    <div class="login-modal-overlay" id="loginModal">
+        <div class="login-box">
+            <div class="login-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2>Power Transformer Access</h2>
+            <p>กรุณาใส่รหัสผ่านเพื่อเข้าใช้งานแดชบอร์ด</p>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="accessPass" placeholder="ใส่รหัสผ่านที่นี่..." required autofocus>
+                </div>
+                <div id="loginError" class="login-error-msg"></div>
+                <button type="submit" class="btn-login">เข้าสู่ระบบ</button>
+            </form>
+            
+            <div class="login-hints">
+                <span><i class="fa-solid fa-circle-info"></i> ป้อนรหัส MasterKey หรือ Visitor เพื่อเข้าสู่ระบบ</span>
+            </div>
+        </div>
+    </div>
+
     <!-- ฉากหลังสีทึบตอนเปิดเมนูบนมือถือ -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
@@ -39,7 +63,6 @@
     <div class="main-wrapper">
         <header class="top-nav">
             <div class="nav-left">
-                <!-- ปุ่ม 3 ขีดสำหรับเปิดเมนูในมือถือ/แท็บเล็ต -->
                 <button class="btn-menu-toggle" onclick="toggleMobileSidebar()">
                     <i class="fa-solid fa-bars"></i>
                 </button>
@@ -48,19 +71,31 @@
                     <span>ยังไม่ได้เลือกหมวดหมู่</span>
                 </h1>
             </div>
+            
             <div class="nav-actions">
-                <button class="btn-clear-all" onclick="clearAllFiles()" title="ล้างข้อมูลทั้งหมด">
-                    <i class="fa-regular fa-trash-can"></i> <span class="btn-text">ล้างข้อมูล</span>
+                <!-- ป้ายแสดงสถานะสิทธิ์ -->
+                <span class="user-role-badge" id="roleBadge">Visitor</span>
+
+                <!-- ปุ่มของผู้ดูแล (ซ่อนอัตโนมัติหากเป็น Visitor) -->
+                <div id="adminActionButtons" class="admin-controls">
+                    <button class="btn-clear-all" onclick="clearAllFiles()" title="ล้างข้อมูลทั้งหมด">
+                        <i class="fa-regular fa-trash-can"></i> <span class="btn-text">ล้างข้อมูล</span>
+                    </button>
+                    <label class="btn-upload">
+                        <i class="fa-solid fa-plus"></i> <span class="btn-text">เพิ่มไฟล์ Excel</span>
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
+                    </label>
+                </div>
+
+                <!-- ปุ่มออกจากระบบ -->
+                <button class="btn-logout" onclick="logout()" title="ออกจากระบบ">
+                    <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
-                <label class="btn-upload">
-                    <i class="fa-solid fa-plus"></i> <span class="btn-text">เพิ่มไฟล์ Excel</span>
-                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
-                </label>
             </div>
         </header>
 
         <main class="content-container">
-            <!-- การ์ด KPI -->
+            <!-- การ์ดสรุป KPI -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon icon-all"><i class="fa-regular fa-rectangle-list"></i></div>
@@ -120,7 +155,7 @@
                             <tr>
                                 <td colspan="3" class="empty-state">
                                     <i class="fa-regular fa-file-excel" style="font-size: 2.2rem; margin-bottom: 12px; color: #cfd8d0;"></i>
-                                    <p>ยังไม่มีข้อมูลในระบบ กดปุ่ม <strong>"+ เพิ่มไฟล์ Excel"</strong> เพื่อเริ่มต้น</p>
+                                    <p>ยังไม่มีข้อมูลในระบบ</p>
                                 </td>
                             </tr>
                         </tbody>
