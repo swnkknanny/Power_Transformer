@@ -3,50 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Maintenance Dashboard</title>
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SheetJS Library for reading Excel files -->
+    <title>Power Transformer Dashboard</title>
+    <!-- Fonts & Modern Minimal Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SheetJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
-            --sidebar-width: 270px;
-            --primary-color: #1e293b;
-            --secondary-color: #0f172a;
-            --accent-color: #2563eb;
-            --bg-light: #f8fafc;
+            /* Minimal Sage & Forest Green Theme */
+            --sidebar-width: 260px;
+            --sidebar-bg: #1d2e28;
+            --sidebar-hover: rgba(255, 255, 255, 0.05);
+            --sidebar-text: #cbd5e1;
+            
+            --bg-canvas: #f4f6f4;
             --card-bg: #ffffff;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --tag-t-bg: #e0f2fe;
-            --tag-t-color: #0369a1;
-            --tag-l-bg: #fef3c7;
-            --tag-l-color: #b45309;
-            --tag-h-bg: #f1f5f9;
-            --tag-h-color: #475569;
+            
+            --accent-primary: #2d6a4f;      /* Forest Green */
+            --accent-soft: #d8f3dc;         /* Soft Mint */
+            --accent-text: #1b4332;
+            
+            --text-heading: #1e2922;
+            --text-body: #495057;
+            --text-muted: #87988f;
+            
+            --border-subtle: #e5eae6;
+            --border-light: #eff3f0;
+            
+            /* Clean Minimal Tags */
+            --tag-t-bg: #eaf4ed;
+            --tag-t-text: #2d6a4f;
+            --tag-l-bg: #fdf5e6;
+            --tag-l-text: #b5832a;
+            --tag-h-bg: #f0f2f1;
+            --tag-h-text: #59655f;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Sarabun', sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
         }
 
         body {
-            background-color: var(--bg-light);
-            color: var(--text-main);
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
             display: flex;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Sidebar */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--secondary-color);
+            background-color: var(--sidebar-bg);
             color: #ffffff;
             display: flex;
             flex-direction: column;
@@ -55,37 +68,48 @@
             z-index: 10;
         }
 
-        .sidebar-header {
-            padding: 24px 20px;
+        .sidebar-brand {
+            padding: 28px 24px 22px;
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .sidebar-header i {
-            font-size: 1.5rem;
-            color: var(--accent-color);
+        .brand-icon-box {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #40916c, #2d6a4f);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar-header h2 {
+        .sidebar-brand h2 {
             font-size: 1.05rem;
-            font-weight: 700;
+            font-weight: 600;
+            color: #f1f5f2;
+            letter-spacing: -0.2px;
         }
 
         .sidebar-menu {
             list-style: none;
-            padding: 16px 0;
+            padding: 20px 0;
             flex: 1;
             overflow-y: auto;
         }
 
         .menu-category {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            color: #94a3b8;
-            padding: 8px 24px;
+            color: #748c80;
+            padding: 6px 24px 10px;
             font-weight: 600;
+            letter-spacing: 0.8px;
         }
 
         .sidebar-menu li a {
@@ -93,33 +117,40 @@
             align-items: center;
             gap: 12px;
             padding: 12px 24px;
-            color: #cbd5e1;
+            color: #a3b899;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
-            transition: all 0.2s;
-            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
             cursor: pointer;
         }
 
-        .sidebar-menu li a:hover,
+        .sidebar-menu li a:hover {
+            background-color: var(--sidebar-hover);
+            color: #e2ede5;
+        }
+
         .sidebar-menu li a.active {
             background-color: rgba(255, 255, 255, 0.08);
             color: #ffffff;
-            border-left-color: var(--accent-color);
+            border-left-color: #52b788;
         }
 
         .sidebar-menu li a i {
             width: 18px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            opacity: 0.85;
         }
 
         .badge-count {
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.12);
+            color: #e0ece4;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 0.7rem;
             margin-left: auto;
+            font-weight: 500;
         }
 
         /* Main Wrapper */
@@ -133,42 +164,38 @@
 
         .top-nav {
             background-color: var(--card-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 14px 32px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 16px 36px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
         }
 
         .top-nav h1 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .upload-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            letter-spacing: -0.3px;
         }
 
         .btn-upload {
-            background-color: #10b981;
-            color: white;
-            padding: 9px 18px;
+            background-color: var(--accent-primary);
+            color: #ffffff;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
+            font-weight: 500;
+            font-size: 0.82rem;
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(45, 106, 79, 0.15);
         }
 
         .btn-upload:hover {
-            background-color: #059669;
+            background-color: #24553e;
+            transform: translateY(-1px);
         }
 
         .btn-upload input {
@@ -176,63 +203,65 @@
         }
 
         .content-container {
-            padding: 32px;
+            padding: 32px 36px;
             flex: 1;
         }
 
         /* Stats Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
             margin-bottom: 24px;
         }
 
         .stat-card {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
-            padding: 20px;
+            padding: 18px 20px;
             display: flex;
             align-items: center;
             gap: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.05rem;
         }
 
         .stat-info h3 {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
             margin-bottom: 4px;
             font-weight: 500;
         }
 
         .stat-info p {
-            font-size: 1.5rem;
+            font-size: 1.45rem;
             font-weight: 700;
-            color: var(--primary-color);
+            color: var(--text-heading);
+            letter-spacing: -0.5px;
         }
 
-        /* Table Card & Tools */
+        /* Table Card */
         .table-card {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
             overflow: hidden;
         }
 
         .table-header-tools {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
@@ -243,7 +272,7 @@
         .search-box {
             position: relative;
             flex: 1;
-            max-width: 420px;
+            max-width: 380px;
         }
 
         .search-box i {
@@ -252,45 +281,49 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
+            font-size: 0.85rem;
         }
 
         .search-box input {
             width: 100%;
-            padding: 10px 16px 10px 40px;
-            border: 1px solid var(--border-color);
+            padding: 9px 14px 9px 38px;
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
             outline: none;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
+            background-color: #fafbfa;
+            color: var(--text-heading);
             transition: all 0.2s;
         }
 
         .search-box input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            border-color: #52b788;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.15);
         }
 
         .filter-group {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border: 1px solid var(--border-subtle);
             background-color: #ffffff;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 500;
             color: var(--text-muted);
             transition: all 0.2s;
         }
 
         .filter-btn:hover,
         .filter-btn.active {
-            background-color: var(--accent-color);
+            background-color: var(--accent-primary);
             color: #ffffff;
-            border-color: var(--accent-color);
+            border-color: var(--accent-primary);
         }
 
         /* Table */
@@ -303,57 +336,58 @@
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         thead th {
             position: sticky;
             top: 0;
-            background-color: #f1f5f9;
-            color: var(--primary-color);
+            background-color: #f8faf8;
+            color: var(--text-heading);
             font-weight: 600;
             padding: 14px 24px;
-            border-bottom: 2px solid var(--border-color);
+            border-bottom: 1px solid var(--border-subtle);
             z-index: 1;
+            font-size: 0.82rem;
+            letter-spacing: 0.3px;
         }
 
         tbody td {
-            padding: 14px 24px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 13px 24px;
+            border-bottom: 1px solid var(--border-light);
             vertical-align: middle;
         }
 
         tbody tr:hover {
-            background-color: #f8fafc;
+            background-color: #fbfdfb;
         }
 
         .tag {
             display: inline-flex;
             align-items: center;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
             margin-right: 8px;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
-        .tag-t { background-color: var(--tag-t-bg); color: var(--tag-t-color); }
-        .tag-l { background-color: var(--tag-l-bg); color: var(--tag-l-color); }
-        .tag-h { background-color: var(--tag-h-bg); color: var(--tag-h-color); }
+        .tag-t { background-color: var(--tag-t-bg); color: var(--tag-t-text); }
+        .tag-l { background-color: var(--tag-l-bg); color: var(--tag-l-text); }
+        .tag-h { background-color: var(--tag-h-bg); color: var(--tag-h-text); }
 
         .desc-text {
-            color: var(--text-main);
+            color: var(--text-heading);
             font-weight: 500;
         }
 
         .failure-text {
-            color: #475569;
+            color: var(--text-body);
         }
 
-        /* Empty / Alert Message */
         .empty-state {
-            padding: 40px;
+            padding: 48px;
             text-align: center;
             color: var(--text-muted);
         }
@@ -363,12 +397,14 @@
 
     <!-- Left Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <i class="fa-solid fa-file-excel"></i>
-            <h2>ระบบบำรุงรักษา</h2>
+        <div class="sidebar-brand">
+            <div class="brand-icon-box">
+                <i class="fa-solid fa-chart-simple"></i>
+            </div>
+            <h2>Power Transformer</h2>
         </div>
         <ul class="sidebar-menu" id="sidebarMenu">
-            <div class="menu-category">Sheet ข้อมูล</div>
+            <div class="menu-category">Categories</div>
             <!-- Category list auto-generated from Excel Sheets -->
         </ul>
     </aside>
@@ -376,10 +412,10 @@
     <!-- Main Content Area -->
     <div class="main-wrapper">
         <header class="top-nav">
-            <h1 id="pageTitle"><i class="fa-solid fa-list-check" style="margin-right: 10px; color: var(--accent-color);"></i>รอเลือกเมนู</h1>
-            <div class="upload-wrapper">
+            <h1 id="pageTitle"><i class="fa-regular fa-folder-open" style="margin-right: 10px; color: var(--accent-primary);"></i>Select Category</h1>
+            <div>
                 <label class="btn-upload">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> นำเข้าไฟล์ Excel (.xlsx)
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i> นำเข้าไฟล์ Excel
                     <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
                 </label>
             </div>
@@ -389,35 +425,35 @@
             <!-- KPI Summary Cards -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #eff6ff; color: #2563eb;">
-                        <i class="fa-solid fa-database"></i>
+                    <div class="stat-icon" style="background-color: #eef6f1; color: #2d6a4f;">
+                        <i class="fa-regular fa-rectangle-list"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รายการใน Sheet นี้</h3>
+                        <h3>รายการทั้งหมดในหน้านี้</h3>
                         <p id="totalRecords">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #ecfeff; color: #0891b2;">
+                    <div class="stat-icon" style="background-color: #edf7f3; color: #40916c;">
                         <i class="fa-solid fa-microchip"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รหัสอุปกรณ์ T (Transformer)</h3>
+                        <h3>รหัสอุปกรณ์ T (หม้อแปลง/รีเลย์)</h3>
                         <p id="totalT">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #fffbeb; color: #d97706;">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    <div class="stat-icon" style="background-color: #fef8ee; color: #b5832a;">
+                        <i class="fa-regular fa-clock"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>รหัสอุปกรณ์ L</h3>
+                        <h3>รหัสอุปกรณ์ L (รออะไหล่/ระบบ)</h3>
                         <p id="totalL">0</p>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon" style="background-color: #f1f5f9; color: #475569;">
-                        <i class="fa-solid fa-wrench"></i>
+                    <div class="stat-icon" style="background-color: #f4f5f4; color: #59655f;">
+                        <i class="fa-solid fa-sliders"></i>
                     </div>
                     <div class="stat-info">
                         <h3>รหัสอุปกรณ์ H / อื่นๆ</h3>
@@ -445,16 +481,16 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 80px; text-align: center;">ลำดับ</th>
-                                <th style="width: 50%;">Failure Code</th>
+                                <th style="width: 70px; text-align: center;">#</th>
+                                <th style="width: 52%;">Failure Code</th>
                                 <th style="width: 40%;">Description</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
                             <tr>
                                 <td colspan="3" class="empty-state">
-                                    <i class="fa-solid fa-file-excel" style="font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1;"></i>
-                                    <p>ยังไม่มีข้อมูล กรุณากดปุ่ม <strong>"นำเข้าไฟล์ Excel"</strong> ด้านบนขวา</p>
+                                    <i class="fa-regular fa-file-excel" style="font-size: 2.2rem; margin-bottom: 12px; color: #c4d4ca;"></i>
+                                    <p>ยังไม่มีข้อมูล กรุณากดปุ่ม <strong>"นำเข้าไฟล์ Excel"</strong> เพื่อเริ่มต้น</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -471,14 +507,12 @@
         let currentFilter = 'ALL';
         let searchQuery = '';
 
-        // ดึง Device Code เช่น T001, L106, H204
         function extractDeviceCode(desc) {
             if (!desc) return '';
             const match = String(desc).match(/^([TLH]\d+)/);
             return match ? match[1] : '';
         }
 
-        // จัดการเมื่อเลือกไฟล์ Excel
         document.getElementById('excelFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -491,12 +525,10 @@
                 workbookData = {};
                 workbook.SheetNames.forEach(sheetName => {
                     const sheet = workbook.Sheets[sheetName];
-                    // แปลง Sheet เป็น JSON array
                     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                     
                     if (rows.length > 0) {
                         const parsedRows = [];
-                        // ข้าม Header แถวแรก
                         for (let i = 1; i < rows.length; i++) {
                             const row = rows[i];
                             if (row && (row[0] || row[1])) {
@@ -512,23 +544,19 @@
                     }
                 });
 
-                // บันทึกลง LocalStorage ให้ไม่ต้องกดอัปโหลดใหม่ทุกรอบ
                 try {
                     localStorage.setItem('cachedMaintenanceExcel', JSON.stringify(workbookData));
-                } catch(e) {
-                    console.log('Cache storage full');
-                }
+                } catch(e) {}
 
                 buildMenu();
             };
             reader.readAsArrayBuffer(file);
         });
 
-        // สร้างเมนูด้านซ้ายจาก Sheet Names
         function buildMenu() {
             const sheetNames = Object.keys(workbookData);
             const menuEl = document.getElementById('sidebarMenu');
-            menuEl.innerHTML = '<div class="menu-category">Sheet ข้อมูล</div>';
+            menuEl.innerHTML = '<div class="menu-category">Categories</div>';
 
             if (sheetNames.length === 0) return;
 
@@ -537,7 +565,7 @@
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <a href="javascript:void(0)" class="${index === 0 ? 'active' : ''}" onclick="selectSheet('${name}')">
-                        <i class="fa-solid fa-layer-group"></i>
+                        <i class="fa-regular fa-circle-dot"></i>
                         <span>${name}</span>
                         <span class="badge-count">${count}</span>
                     </a>
@@ -545,18 +573,15 @@
                 menuEl.appendChild(li);
             });
 
-            // เลือกแท็บแรกอัตโนมัติ
             selectSheet(sheetNames[0]);
         }
 
-        // สลับเลือก Sheet
         function selectSheet(sheetName) {
             activeSheet = sheetName;
             currentFilter = 'ALL';
             searchQuery = '';
             document.getElementById('searchInput').value = '';
 
-            // Update UI Menu
             const links = document.querySelectorAll('#sidebarMenu li a');
             links.forEach(a => {
                 const span = a.querySelector('span');
@@ -567,10 +592,8 @@
                 }
             });
 
-            // Update Title
-            document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-layer-group" style="margin-right: 10px; color: var(--accent-color);"></i>${sheetName}`;
+            document.getElementById('pageTitle').innerHTML = `<i class="fa-regular fa-folder-open" style="margin-right: 10px; color: var(--accent-primary);"></i>${sheetName}`;
 
-            // Reset Filter Buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.innerText.includes('ทั้งหมด'));
             });
@@ -603,7 +626,7 @@
             const data = workbookData[activeSheet] || [];
 
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลใน Sheet นี้</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลในหน้านี้</td></tr>`;
                 return;
             }
 
@@ -623,7 +646,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
                 return;
             }
 
@@ -642,7 +665,7 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">${index + 1}</td>
+                    <td style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">${index + 1}</td>
                     <td class="failure-text">${item.code}</td>
                     <td>
                         ${tagHtml}
@@ -669,7 +692,6 @@
             renderTable();
         });
 
-        // โหลดข้อมูลเดิมที่เคยบันทึกไว้ในเบราว์เซอร์อัตโนมัติ (ถ้ามี)
         window.addEventListener('DOMContentLoaded', () => {
             const cached = localStorage.getItem('cachedMaintenanceExcel');
             if (cached) {
