@@ -4,10 +4,33 @@ let currentActiveCategory = '';
 let currentFilter = 'ALL';
 let searchQuery = '';
 
-// ตัวแปรเก็บสิทธิ์: 'MasterKey', 'Visitor', หรือ null
+let selectedLoginRole = 'MasterKey'; // ค่าเริ่มต้นในหน้าต่าง Login
 let currentUserRole = sessionStorage.getItem('user_role') || null;
 
-// --- ระบบยืนยันตัวตน (Authentication) ---
+// สลับบทบาทในหน้าต่าง Login (MasterKey / Visitor)
+function selectLoginRole(role) {
+    selectedLoginRole = role;
+    const btnMaster = document.getElementById('btnRoleMaster');
+    const btnVisitor = document.getElementById('btnRoleVisitor');
+    const hint = document.getElementById('roleHintText');
+    const passInput = document.getElementById('accessPass');
+
+    if (role === 'MasterKey') {
+        btnMaster.classList.add('active');
+        btnVisitor.classList.remove('active');
+        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> MasterKey: Administrative & modification privilege';
+        passInput.placeholder = 'Enter MasterKey Code...';
+    } else {
+        btnVisitor.classList.add('active');
+        btnMaster.classList.remove('active');
+        hint.innerHTML = '<i class="fa-regular fa-eye"></i> Visitor: Inspection & telemetry read-only mode';
+        passInput.placeholder = 'Enter Visitor Passcode...';
+    }
+    document.getElementById('loginError').innerText = '';
+    passInput.focus();
+}
+
+// ตรวจสอบสิทธิ์การเข้าใช้งาน
 function checkAuth() {
     const modal = document.getElementById('loginModal');
     const badge = document.getElementById('roleBadge');
@@ -37,25 +60,31 @@ function handleLogin(e) {
     const errorEl = document.getElementById('loginError');
     const pass = passInput.value.trim();
 
-    if (pass === '13102547') {
-        currentUserRole = 'MasterKey';
-        sessionStorage.setItem('user_role', 'MasterKey');
-        errorEl.innerText = '';
-        passInput.value = '';
-        checkAuth();
-    } else if (pass === '66002288') {
-        currentUserRole = 'Visitor';
-        sessionStorage.setItem('user_role', 'Visitor');
-        errorEl.innerText = '';
-        passInput.value = '';
-        checkAuth();
-    } else {
-        errorEl.innerText = 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
+    if (selectedLoginRole === 'MasterKey') {
+        if (pass === '13102547') {
+            currentUserRole = 'MasterKey';
+            sessionStorage.setItem('user_role', 'MasterKey');
+            errorEl.innerText = '';
+            passInput.value = '';
+            checkAuth();
+        } else {
+            errorEl.innerText = 'Invalid MasterKey authorization code.';
+        }
+    } else if (selectedLoginRole === 'Visitor') {
+        if (pass === '66002288') {
+            currentUserRole = 'Visitor';
+            sessionStorage.setItem('user_role', 'Visitor');
+            errorEl.innerText = '';
+            passInput.value = '';
+            checkAuth();
+        } else {
+            errorEl.innerText = 'Invalid Visitor passcode.';
+        }
     }
 }
 
 function logout() {
-    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+    if (confirm('Terminate current active session?')) {
         sessionStorage.removeItem('user_role');
         currentUserRole = null;
         document.getElementById('accessPass').value = '';
@@ -64,7 +93,7 @@ function logout() {
     }
 }
 
-// --- ระบบบันทึกฐานข้อมูล IndexedDB ---
+// --- IndexedDB Persistence ---
 const DB_NAME = 'TransformerDashboardDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'filesData';
@@ -136,7 +165,7 @@ function categorizeRawText(codeText) {
 
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
-        alert('เฉพาะ MasterKey เท่านั้นที่สามารถเพิ่มหรือแก้ไขข้อมูลได้');
+        alert('Permission Denied: Administrative rights required.');
         return;
     }
 
@@ -195,10 +224,10 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             
             await saveToDB();
             renderSidebar();
-            alert(`เพิ่มไฟล์ "${file.name}" สำเร็จ!`);
+            alert(`Dataset "${file.name}" imported successfully.`);
 
         } catch (err) {
-            alert('เกิดข้อผิดพลาดในการอ่านไฟล์: ' + err.message);
+            alert('File parse exception: ' + err.message);
         }
     };
     reader.readAsArrayBuffer(file);
@@ -208,11 +237,11 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
 async function deleteFile(fileName, event) {
     event.stopPropagation();
     if (currentUserRole !== 'MasterKey') {
-        alert('เฉพาะ MasterKey เท่านั้นที่สามารถลบไฟล์ได้');
+        alert('Permission Denied: Administrative rights required.');
         return;
     }
 
-    if (confirm(`คุณต้องการนำไฟล์ "${fileName}" ออกจากระบบใช่หรือไม่?`)) {
+    if (confirm(`Purge dataset "${fileName}" from system storage?`)) {
         delete allFilesData[fileName];
         await saveToDB();
         const fileNames = Object.keys(allFilesData);
@@ -226,11 +255,11 @@ async function deleteFile(fileName, event) {
 
 async function clearAllFiles() {
     if (currentUserRole !== 'MasterKey') {
-        alert('เฉพาะ MasterKey เท่านั้นที่สามารถล้างข้อมูลได้');
+        alert('Permission Denied: Administrative rights required.');
         return;
     }
-    if (Object.keys(allFilesData).length === 0) return alert('ไม่มีไฟล์ในระบบ');
-    if (confirm('คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?')) {
+    if (Object.keys(allFilesData).length === 0) return alert('Storage empty.');
+    if (confirm('Execute complete dataset purge? This action cannot be reversed.')) {
         allFilesData = {};
         currentActiveFile = '';
         currentActiveCategory = '';
@@ -249,9 +278,9 @@ function renderSidebar() {
     categoryMenuEl.innerHTML = '';
 
     if (fileNames.length === 0) {
-        fileListEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">ไม่มีไฟล์</li>`;
-        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">ไม่มีหมวดหมู่</li>`;
-        document.getElementById('pageTitle').innerHTML = `<i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i><span>ยังไม่ได้เลือกหมวดหมู่</span>`;
+        fileListEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">No active sets</li>`;
+        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">No categories</li>`;
+        document.getElementById('pageTitle').innerHTML = `<i class="fa-regular fa-folder-open" style="color: var(--accent-primary);"></i><span>No Classification Selected</span>`;
         updateStats();
         renderTable();
         return;
@@ -265,9 +294,8 @@ function renderSidebar() {
         const li = document.createElement('li');
         li.className = `file-item ${fName === currentActiveFile ? 'active' : ''}`;
         
-        // ถ้าเป็น MasterKey ให้แสดงปุ่มถังขยะลบไฟล์ แต่ถ้าเป็น Visitor จะไม่แสดงปุ่มถังขยะ
         const deleteBtnHtml = (currentUserRole === 'MasterKey') 
-            ? `<i class="fa-regular fa-trash-can btn-delete-file" onclick="deleteFile('${fName}', event)" title="ลบไฟล์นี้"></i>`
+            ? `<i class="fa-regular fa-trash-can btn-delete-file" onclick="deleteFile('${fName}', event)" title="Purge dataset"></i>`
             : '';
 
         li.innerHTML = `
@@ -284,7 +312,7 @@ function renderSidebar() {
     const categories = Object.keys(activeFileCategories);
 
     if (categories.length === 0) {
-        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">ไม่พบข้อมูล</li>`;
+        categoryMenuEl.innerHTML = `<li style="padding: 10px 22px; font-size: 0.78rem; color: var(--text-muted);">Empty category set</li>`;
         currentActiveCategory = '';
     } else {
         if (!currentActiveCategory || !activeFileCategories[currentActiveCategory]) {
@@ -342,7 +370,7 @@ function selectCategory(catName) {
     `;
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText.includes('ทั้งหมด'));
+        btn.classList.toggle('active', btn.innerText.includes('All'));
     });
 
     updateStats();
@@ -378,7 +406,7 @@ function renderTable() {
     const data = getCurrentData();
 
     if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><i class="fa-regular fa-folder" style="font-size: 2rem; margin-bottom: 8px; color: #cbd5e1;"></i><p>ไม่มีข้อมูล</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><i class="fa-regular fa-folder" style="font-size: 2rem; margin-bottom: 8px; color: #cbd5e1;"></i><p>No telemetry data available.</p></td></tr>`;
         return;
     }
 
@@ -398,7 +426,7 @@ function renderTable() {
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-state">No matching units found.</td></tr>`;
         return;
     }
 
@@ -432,9 +460,8 @@ function filterData(category) {
     currentFilter = category;
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
-        if(btn.innerText.includes(category === 'ALL' ? 'ทั้งหมด' : category)) {
-            btn.classList.add('active');
-        }
+        if(category === 'ALL' && btn.innerText.includes('All')) btn.classList.add('active');
+        if(category !== 'ALL' && btn.innerText.includes(category)) btn.classList.add('active');
     });
     renderTable();
 }
