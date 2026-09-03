@@ -215,7 +215,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. Layout, FMEA Sorting & Table Rendering
+// 5. Normalization, FMEA Sorting & Rendering
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -359,7 +359,6 @@ function processTableData(data) {
         return;
     }
 
-    // กำหนดลำดับเป้าหมายแบบ normalized
     const desiredOrder = [
         'code', 'subsystem', 'component', 'description', 'cause',
         'severitys', 'occurrenceo', 'detectiond', 'rpn',
@@ -369,7 +368,6 @@ function processTableData(data) {
     const sourceColumns = Object.keys(data[0]);
     let finalColumns = [];
 
-    // ดึงคอลัมน์ตามลำดับ FMEA
     desiredOrder.forEach(target => {
         const found = sourceColumns.find(c => normalizeCol(c) === target);
         if (found && !finalColumns.includes(found)) {
@@ -377,14 +375,12 @@ function processTableData(data) {
         }
     });
 
-    // ใส่คอลัมน์อื่นๆ ที่เหลือต่อท้าย
     sourceColumns.forEach(c => {
         if (!finalColumns.includes(c)) {
             finalColumns.push(c);
         }
     });
 
-    // เรียงแถวตาม RPN มากไปน้อย
     let processedRows = [...data];
     const rpnKey = sourceColumns.find(c => normalizeCol(c) === 'rpn');
     if (rpnKey) {
@@ -453,11 +449,13 @@ function renderDynamicTable(columns, rows) {
                 else if (lower.includes('med')) badgeClass = 'badge-risk-med';
                 td.innerHTML = `<span class="tag ${badgeClass}">${val}</span>`;
             } 
-            // Is Critical Column: เปลี่ยนทุกค่า Yes / Critical ให้เป็นป้าย Yes สีแดง
+            // Is Critical Column: แสดงเป็นตัวหนังสือ Yes / No ธรรมดา (ไม่มีสีแดง)
             else if (norm === 'iscritical') {
                 const lower = val.toLowerCase();
                 if (lower === 'yes' || lower === 'true' || lower === 'critical') {
-                    td.innerHTML = `<span class="tag badge-critical">Yes</span>`;
+                    td.innerText = 'Yes';
+                } else if (lower === 'no' || lower === 'false') {
+                    td.innerText = 'No';
                 } else {
                     td.innerText = val;
                 }
@@ -470,7 +468,7 @@ function renderDynamicTable(columns, rows) {
             else if (norm === 'remedy' && val !== '-') {
                 td.innerHTML = `<span class="tag tag-remedy">${val}</span>`;
             }
-            // RPN เน้นตัวเลขหนา
+            // RPN Column
             else if (norm === 'rpn') {
                 td.innerHTML = `<strong style="color: var(--text-primary);">${val}</strong>`;
             } 
