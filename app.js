@@ -6,21 +6,19 @@ const firebaseConfig = {
     authDomain: "power-transformer-db.firebaseapp.com",
     databaseURL: "https://power-transformer-db-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "power-transformer-db",
-    storageStorageBucket: "power-transformer-db.firebasestorage.app",
+    storageBucket: "power-transformer-db.firebasestorage.app",
     messagingSenderId: "752096858741",
     appId: "1:752096858741:web:2a047c764e317c830f5e3c"
 };
 
-// Initialize Firebase Realtime Database
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const filesRef = db.ref('shared_datasets');
 
-// Core Variables & Data Store
+// Core Variables
 let allFilesData = {};
 let currentActiveFile = '';
-let currentActiveCategory = '';
-let currentFilter = 'ALL';
+let currentActiveSheet = '';
 let searchQuery = '';
 let selectedLoginRole = 'MasterKey';
 let currentUserRole = sessionStorage.getItem('user_role') || null;
@@ -35,7 +33,7 @@ filesRef.on('value', (snapshot) => {
     const fileNames = Object.keys(allFilesData);
     if (!allFilesData[currentActiveFile]) {
         currentActiveFile = fileNames.length > 0 ? fileNames[0] : '';
-        currentActiveCategory = '';
+        currentActiveSheet = '';
     }
     
     renderSidebar();
@@ -44,19 +42,19 @@ filesRef.on('value', (snapshot) => {
 function saveToCloud() {
     if (currentUserRole !== 'MasterKey') return;
     filesRef.set(allFilesData).catch((err) => {
-        alert('Cloud synchronization error: ' + err.message);
+        alert('Cloud sync failed: ' + err.message);
     });
 }
 
 function clearCloud() {
     if (currentUserRole !== 'MasterKey') return;
     filesRef.remove().catch((err) => {
-        alert('Purge operation failed: ' + err.message);
+        alert('Purge failed: ' + err.message);
     });
 }
 
 // ==========================================
-// 3. Authentication & Access Control
+// 3. Authentication System
 // ==========================================
 function selectLoginRole(role) {
     selectedLoginRole = role;
@@ -143,23 +141,8 @@ function logout() {
 }
 
 // ==========================================
-// 4. Data Processing & Utilities
+// 4. Universal Multi-Sheet Excel Parser
 // ==========================================
-function extractDeviceCode(desc) {
-    if (!desc) return '';
-    const match = String(desc).match(/^([TLH]\d+)/);
-    return match ? match[1] : '';
-}
-
-function categorizeRawText(codeText) {
-    const text = String(codeText).toUpperCase();
-    if (text.includes("น้ำมัน") || text.includes("รั่ว") || text.includes("ซึม") || text.includes("OIL")) return "OIL LEAK";
-    if (text.includes("SILICAGEL") || text.includes("อุดตัน")) return "EXHAUSTION";
-    if (text.includes("ไม่ทำงาน") || text.includes("TRIP") || text.includes("ผิดปกติ") || text.includes("ค้าง") || text.includes("กลไก")) return "EQUIPMENT ERROR";
-    if (text.includes("ชำรุด") || text.includes("แตก") || text.includes("ขาด") || text.includes("เสื่อมสภาพ")) return "DAMAGED";
-    return "OTHERS";
-}
-
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
         alert('Permission Denied: Administrative rights required.');
@@ -174,57 +157,33 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
         try {
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const fileCategories = {};
+            const fileSheets = {};
 
-            if (workbook.SheetNames.length > 1) {
-                workbook.SheetNames.forEach(sheetName => {
-                    const sheet = workbook.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    if (rows && rows.length > 0) {
-                        const parsedRows = [];
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            if (row && (row[0] || row[1])) {
-                                if (i === 0 && String(row[0]).toLowerCase().includes('failure')) continue;
-                                parsedRows.push({
-                                    code: row[0] ? String(row[0]).trim() : '-',
-                                    desc: row[1] ? String(row[1]).trim() : '-'
-                                });
-                            }
-                        }
-                        if (parsedRows.length > 0) fileCategories[sheetName] = parsedRows;
-                    }
-                });
-            } else {
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                // แปลง Sheet เป็น Array of Objects โดยอัตโนมัติ
+                const rows = XLSX.utils.sheet_to_json(sheet, { defval: '-' });
                 if (rows && rows.length > 0) {
-                    for (let i = 0; i < rows.length; i++) {
-                        const row = rows[i];
-                        if (row && (row[0] || row[1])) {
-                            if (i === 0 && String(row[0]).toLowerCase().includes('failure')) continue;
-                            const code = row[0] ? String(row[0]).trim() : '-';
-                            const desc = row[1] ? String(row[1]).trim() : '-';
-                            const category = categorizeRawText(code);
-
-                            if (!fileCategories[category]) fileCategories[category] = [];
-                            fileCategories[category].push({ code, desc });
-                        }
-                    }
+                    fileSheets[sheetName] = rows;
                 }
+            });
+
+            if (Object.keys(fileSheets).length === 0) {
+                alert('No readable data rows found in this file.');
+                return;
             }
 
-            const safeFileName = file.name.replace(/\./g, '_');
-            allFilesData[safeFileName] = fileCategories;
+            // แทนที่เครื่องหมายพิเศษในชื่อไฟล์สำหรับ Firebase Key
+            const safeFileName = file.name.replace(/[\.\#\$\[\]\/]/g, '_');
+            allFilesData[safeFileName] = fileSheets;
             currentActiveFile = safeFileName;
-            currentActiveCategory = '';
+            currentActiveSheet = Object.keys(fileSheets)[0];
             
             saveToCloud();
-            alert(`Dataset "${file.name}" imported successfully.`);
+            alert(`File "${file.name}" imported with ${Object.keys(fileSheets).length} worksheets!`);
 
         } catch (err) {
-            alert('File parse exception: ' + err.message);
+            alert('Excel parse exception: ' + err.message);
         }
     };
     reader.readAsArrayBuffer(file);
@@ -233,50 +192,49 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
 
 function deleteFile(fileName, event) {
     event.stopPropagation();
-    if (currentUserRole !== 'MasterKey') {
-        alert('Permission Denied: Administrative rights required.');
-        return;
-    }
+    if (currentUserRole !== 'MasterKey') return;
 
-    if (confirm(`Purge dataset "${fileName}" from Cloud storage?`)) {
+    if (confirm(`Purge dataset "${fileName}"?`)) {
         delete allFilesData[fileName];
+        if (currentActiveFile === fileName) {
+            const remaining = Object.keys(allFilesData);
+            currentActiveFile = remaining.length > 0 ? remaining[0] : '';
+            currentActiveSheet = '';
+        }
         saveToCloud();
     }
 }
 
 function clearAllFiles() {
-    if (currentUserRole !== 'MasterKey') {
-        alert('Permission Denied: Administrative rights required.');
-        return;
-    }
-    if (Object.keys(allFilesData).length === 0) return alert('Storage is currently empty.');
-    if (confirm('Execute complete dataset purge across all connected devices?')) {
+    if (currentUserRole !== 'MasterKey') return;
+    if (Object.keys(allFilesData).length === 0) return alert('Storage empty.');
+    if (confirm('Purge all datasets?')) {
         allFilesData = {};
         currentActiveFile = '';
-        currentActiveCategory = '';
+        currentActiveSheet = '';
         clearCloud();
     }
 }
 
 // ==========================================
-// 5. Visual Hierarchy & Rendering Engine
+// 5. Dynamic Rendering System
 // ==========================================
 function renderSidebar() {
     const fileListEl = document.getElementById('fileListContainer');
-    const categoryMenuEl = document.getElementById('categoryMenu');
+    const sheetMenuEl = document.getElementById('sheetMenuContainer');
     const fileNames = Object.keys(allFilesData);
 
     document.getElementById('fileCount').innerText = fileNames.length;
     fileListEl.innerHTML = '';
-    categoryMenuEl.innerHTML = '';
+    sheetMenuEl.innerHTML = '';
 
     if (fileNames.length === 0) {
-        fileListEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No active sets</li>`;
-        categoryMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No categories</li>`;
-        document.getElementById('pageTitle').innerHTML = `No Classification Selected`;
+        fileListEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No datasets loaded</li>`;
+        sheetMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">No sheets available</li>`;
+        document.getElementById('pageTitle').innerText = 'No Worksheet Selected';
         document.getElementById('headerRecordCount').innerText = '0';
-        updateStats();
-        renderTable();
+        updateDynamicStats([]);
+        renderDynamicTable([], []);
         return;
     }
 
@@ -294,7 +252,7 @@ function renderSidebar() {
 
         li.innerHTML = `
             <div class="file-name-click" onclick="selectFile('${fName}')" title="${fName}">
-                <i class="fa-regular fa-file"></i>
+                <i class="fa-regular fa-file-lines"></i>
                 <span>${fName}</span>
             </div>
             ${deleteBtnHtml}
@@ -302,161 +260,164 @@ function renderSidebar() {
         fileListEl.appendChild(li);
     });
 
-    const activeFileCategories = allFilesData[currentActiveFile] || {};
-    const categories = Object.keys(activeFileCategories);
+    const activeSheets = allFilesData[currentActiveFile] || {};
+    const sheetNames = Object.keys(activeSheets);
 
-    if (categories.length === 0) {
-        categoryMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">Empty category set</li>`;
-        currentActiveCategory = '';
+    if (sheetNames.length === 0) {
+        sheetMenuEl.innerHTML = `<li style="padding: 6px 20px; font-size: 12px; color: var(--text-muted);">Empty file</li>`;
+        currentActiveSheet = '';
     } else {
-        if (!currentActiveCategory || !activeFileCategories[currentActiveCategory]) {
-            currentActiveCategory = categories[0];
+        if (!currentActiveSheet || !activeSheets[currentActiveSheet]) {
+            currentActiveSheet = sheetNames[0];
         }
 
-        categories.forEach(catName => {
-            const count = activeFileCategories[catName].length;
+        sheetNames.forEach(sName => {
+            const rowCount = activeSheets[sName].length;
             const li = document.createElement('li');
             li.className = 'category-item';
             li.innerHTML = `
-                <a href="javascript:void(0)" class="${catName === currentActiveCategory ? 'active' : ''}" onclick="selectCategory('${catName}')">
-                    <span>${catName}</span>
-                    <span class="badge-count">${count}</span>
+                <a href="javascript:void(0)" class="${sName === currentActiveSheet ? 'active' : ''}" onclick="selectSheet('${sName}')">
+                    <span>${sName}</span>
+                    <span class="badge-count">${rowCount}</span>
                 </a>
             `;
-            categoryMenuEl.appendChild(li);
+            sheetMenuEl.appendChild(li);
         });
     }
 
-    if (currentActiveCategory) {
-        document.getElementById('pageTitle').innerHTML = `
-            ${currentActiveCategory}
-            <span class="dataset-source">/ ${currentActiveFile}</span>
-        `;
-    }
+    document.getElementById('pageTitle').innerHTML = `
+        ${currentActiveSheet || 'Select Sheet'}
+        <span class="dataset-source">/ ${currentActiveFile}</span>
+    `;
 
-    updateStats();
-    renderTable();
+    const sheetData = (activeSheets[currentActiveSheet]) || [];
+    updateDynamicStats(sheetData);
+    processTableData(sheetData);
 }
 
 function selectFile(fileName) {
     currentActiveFile = fileName;
-    currentActiveCategory = '';
+    currentActiveSheet = '';
     renderSidebar();
 }
 
-function selectCategory(catName) {
-    currentActiveCategory = catName;
-    currentFilter = 'ALL';
+function selectSheet(sheetName) {
+    currentActiveSheet = sheetName;
     searchQuery = '';
     document.getElementById('searchInput').value = '';
-
-    document.querySelectorAll('.category-item a').forEach(a => {
-        const span = a.querySelector('span');
-        a.classList.toggle('active', span && span.innerText === catName);
-    });
-
-    document.getElementById('pageTitle').innerHTML = `
-        ${catName}
-        <span class="dataset-source">/ ${currentActiveFile}</span>
-    `;
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText.includes('All'));
-    });
-
-    updateStats();
-    renderTable();
+    renderSidebar();
 }
 
-function getCurrentData() {
-    if (!currentActiveFile || !currentActiveCategory) return [];
-    return (allFilesData[currentActiveFile] && allFilesData[currentActiveFile][currentActiveCategory]) || [];
-}
+function updateDynamicStats(data) {
+    const total = data.length;
+    document.getElementById('headerRecordCount').innerText = total;
+    document.getElementById('kpiTotal').innerText = total;
 
-function updateStats() {
-    const data = getCurrentData();
-    let countT = 0, countL = 0, countH = 0;
+    if (total === 0) {
+        document.getElementById('kpiCols').innerText = 0;
+        document.getElementById('kpiH').innerText = 0;
+        document.getElementById('kpiOther').innerText = 0;
+        return;
+    }
 
-    data.forEach(item => {
-        const code = extractDeviceCode(item.desc);
-        const prefix = code ? code.charAt(0) : '';
-        if (prefix === 'T') countT++;
-        else if (prefix === 'L') countL++;
-        else if (prefix === 'H') countH++;
+    const columns = Object.keys(data[0]);
+    document.getElementById('kpiCols').innerText = columns.length;
+
+    // ตรวจนับ H-series จากคอลัมน์ใดๆ ที่มีคำว่า Code หรือรหัส
+    let countH = 0;
+    let countOther = 0;
+    data.forEach(row => {
+        const codeVal = String(row.Code || row.code || row.FAILURE_CODE || '');
+        if (codeVal.startsWith('H')) countH++;
+        else if (codeVal.startsWith('T') || codeVal.startsWith('L')) countOther++;
     });
 
-    document.getElementById('totalRecords').innerText = data.length;
-    document.getElementById('headerRecordCount').innerText = data.length;
-    document.getElementById('totalT').innerText = countT;
-    document.getElementById('totalL').innerText = countL;
-    document.getElementById('totalH').innerText = countH;
+    document.getElementById('kpiH').innerText = countH;
+    document.getElementById('kpiOther').innerText = countOther;
 }
 
-function renderTable() {
-    const tbody = document.getElementById('tableBody');
+function processTableData(data) {
+    if (!data || data.length === 0) {
+        renderDynamicTable([], []);
+        return;
+    }
+
+    const columns = Object.keys(data[0]);
+    
+    // Filter ด้วย Search Query
+    const filteredData = data.filter(row => {
+        if (!searchQuery) return true;
+        return columns.some(col => 
+            String(row[col]).toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    });
+
+    renderDynamicTable(columns, filteredData);
+}
+
+function renderDynamicTable(columns, rows) {
+    const thead = document.getElementById('dynamicTableHead');
+    const tbody = document.getElementById('dynamicTableBody');
+
+    thead.innerHTML = '';
     tbody.innerHTML = '';
-    const data = getCurrentData();
 
-    if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><p>No telemetry records found.</p></td></tr>`;
+    if (columns.length === 0 || rows.length === 0) {
+        thead.innerHTML = `<tr><th>#</th><th>Data Attribute</th></tr>`;
+        tbody.innerHTML = `<tr><td colspan="2" class="empty-state"><p>No records found in this worksheet.</p></td></tr>`;
         return;
     }
 
-    const filtered = data.filter(item => {
-        const devCode = extractDeviceCode(item.desc);
-        const prefix = devCode ? devCode.charAt(0) : '';
+    // สร้าง Header อัตโนมัติตาม Excel
+    const headerTr = document.createElement('tr');
+    
+    const thIdx = document.createElement('th');
+    thIdx.style.width = '48px';
+    thIdx.innerText = '#';
+    headerTr.appendChild(thIdx);
 
-        const matchesCategory = (currentFilter === 'ALL') || 
-                              (currentFilter === 'T' && prefix === 'T') ||
-                              (currentFilter === 'L' && prefix === 'L') ||
-                              (currentFilter === 'H' && (prefix === 'H' || prefix === ''));
-
-        const matchesSearch = item.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                              item.desc.toLowerCase().includes(searchQuery.toLowerCase());
-
-        return matchesCategory && matchesSearch;
+    columns.forEach(col => {
+        const th = document.createElement('th');
+        th.innerText = col.replace(/_/g, ' ');
+        headerTr.appendChild(th);
     });
+    thead.appendChild(headerTr);
 
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" class="empty-state"><p>No matching units found.</p></td></tr>`;
-        return;
-    }
+    // สร้างแถวข้อมูลแบบ Dynamic
+    rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        
+        const tdIdx = document.createElement('td');
+        tdIdx.style.color = 'var(--text-muted)';
+        tdIdx.innerText = idx + 1;
+        tr.appendChild(tdIdx);
 
-    filtered.forEach((item, index) => {
-        const devCode = extractDeviceCode(item.desc);
-        const descText = devCode ? item.desc.replace(devCode, '').trim() : item.desc;
+        columns.forEach(col => {
+            const td = document.createElement('td');
+            const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : '-';
 
-        let tagHtml = '';
-        if (devCode) {
-            tagHtml = `<span class="tag tag-badge">${devCode}</span>`;
-        }
+            // ถ้าเป็นคอลัมน์ Code ให้ติด Badge สวยๆ
+            if (col.toLowerCase().includes('code') && val !== '-') {
+                td.innerHTML = `<span class="tag tag-badge">${val}</span>`;
+            } 
+            // ถ้าเป็นคอลัมน์ Remedy หรือ Status ให้จัดทรงให้อ่านง่าย
+            else if (col.toLowerCase() === 'remedy' && val !== '-') {
+                td.innerHTML = `<span class="tag tag-remedy">${val}</span>`;
+            } else {
+                td.innerText = val;
+            }
+            tr.appendChild(td);
+        });
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td style="color: var(--text-muted); font-size: 12px;">${index + 1}</td>
-            <td class="failure-text">${item.code}</td>
-            <td>
-                ${tagHtml}
-                <span class="desc-text">${descText}</span>
-            </td>
-        `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
     });
-}
-
-function filterData(category) {
-    currentFilter = category;
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if(category === 'ALL' && btn.innerText.includes('All')) btn.classList.add('active');
-        if(category !== 'ALL' && btn.innerText.includes(category)) btn.classList.add('active');
-    });
-    renderTable();
 }
 
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchQuery = e.target.value;
-    renderTable();
+    const activeSheets = allFilesData[currentActiveFile] || {};
+    const sheetData = activeSheets[currentActiveSheet] || [];
+    processTableData(sheetData);
 });
 
 function toggleMobileSidebar() {
