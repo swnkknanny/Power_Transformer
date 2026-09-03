@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css?v=3.0">
+    <link rel="stylesheet" href="style.css?v=3.1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- Firebase SDK สำหรับ Realtime Database -->
@@ -135,7 +135,7 @@
                 </div>
             </section>
 
-            <!-- Dynamic Metrics Panel -->
+            <!-- Dynamic Metrics Panel (FMEA Specialized) -->
             <section class="metrics-panel">
                 <div class="metric-item">
                     <span class="metric-label">Total Sheet Records</span>
@@ -148,13 +148,13 @@
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">H-Series Items</span>
-                    <div class="metric-number" id="kpiH">0</div>
+                    <span class="metric-label">High Risk Items</span>
+                    <div class="metric-number" id="kpiHighRisk">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">T & Other Series</span>
-                    <div class="metric-number" id="kpiOther">0</div>
+                    <span class="metric-label">Max RPN</span>
+                    <div class="metric-number" id="kpiMaxRpn">0</div>
                 </div>
             </section>
 
