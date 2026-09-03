@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Power Transformer Telemetry</title>
+    <title>Power Transformer & Substation Telemetry</title>
     
-    <!-- Premium Industrial Typography: Inter + Noto Sans Thai -->
+    <!-- Premium Industrial Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="stylesheet" href="style.css?v=3.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- Firebase SDK สำหรับ Realtime Database -->
@@ -28,7 +28,7 @@
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <h2>Security Gateway</h2>
-                <p>Telemetry system authentication</p>
+                <p>Telemetry & RAM analysis authentication</p>
             </div>
             
             <form onsubmit="handleLogin(event)">
@@ -57,10 +57,10 @@
         </div>
     </div>
 
-    <!-- Mobile Sidebar Overlay Backdrop -->
+    <!-- Mobile Sidebar Backdrop -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
-    <!-- Minimalist Sidebar -->
+    <!-- Sidebar Structure -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-title-wrap">
@@ -75,7 +75,7 @@
         <div class="sidebar-content">
             <div class="menu-section">
                 <div class="menu-category">
-                    <span>Datasets</span>
+                    <span>Active Datasets</span>
                     <span class="count-pill" id="fileCount">0</span>
                 </div>
                 <ul class="file-list" id="fileListContainer"></ul>
@@ -83,16 +83,15 @@
 
             <div class="menu-section">
                 <div class="menu-category">
-                    <span>Classification</span>
+                    <span>Worksheets / Views</span>
                 </div>
-                <ul class="category-list" id="categoryMenu"></ul>
+                <ul class="category-list" id="sheetMenuContainer"></ul>
             </div>
         </div>
     </aside>
 
     <!-- Main Workspace -->
     <div class="main-wrapper">
-        <!-- Top Utility Bar -->
         <header class="top-nav">
             <div class="nav-left">
                 <button class="btn-menu-toggle" onclick="toggleMobileSidebar()" aria-label="Open Sidebar">
@@ -100,7 +99,7 @@
                 </button>
                 <div class="system-status-indicator">
                     <span class="status-dot"></span>
-                    <span class="system-label">Telemetry Live</span>
+                    <span class="system-label">RAM Analysis Live</span>
                 </div>
             </div>
             
@@ -125,37 +124,37 @@
         </header>
 
         <main class="content-container">
-            <!-- Dedicated Page Header Area -->
+            <!-- Dedicated Page Heading -->
             <section class="page-heading-section">
                 <div class="title-meta">
-                    <span class="classification-tag">CLASSIFICATION VIEW</span>
-                    <h1 id="pageTitle">No Classification Selected</h1>
+                    <span class="classification-tag">WORKSHEET TELEMETRY</span>
+                    <h1 id="pageTitle">No Worksheet Selected</h1>
                 </div>
-                <div class="header-records-indicator" id="headerRecordBadge">
-                    <span id="headerRecordCount">0</span> Active Records
+                <div class="header-records-indicator">
+                    <span id="headerRecordCount">0</span> Total Records
                 </div>
             </section>
 
-            <!-- Refined Metrics Panel -->
+            <!-- Dynamic Metrics Panel -->
             <section class="metrics-panel">
                 <div class="metric-item">
-                    <span class="metric-label">Total Active Records</span>
-                    <div class="metric-number" id="totalRecords">0</div>
+                    <span class="metric-label">Total Sheet Records</span>
+                    <div class="metric-number" id="kpiTotal">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">T-Series (Transformer / Relay)</span>
-                    <div class="metric-number" id="totalT">0</div>
+                    <span class="metric-label">Detected Attributes</span>
+                    <div class="metric-number" id="kpiCols">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">L-Series (Pending & Spares)</span>
-                    <div class="metric-number" id="totalL">0</div>
+                    <span class="metric-label">H-Series Items</span>
+                    <div class="metric-number" id="kpiH">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">H-Series & Auxiliary</span>
-                    <div class="metric-number" id="totalH">0</div>
+                    <span class="metric-label">T & Other Series</span>
+                    <div class="metric-number" id="kpiOther">0</div>
                 </div>
             </section>
 
@@ -164,32 +163,17 @@
                 <div class="table-toolbar">
                     <div class="search-box">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="searchInput" placeholder="Search failure code or description...">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <button class="filter-btn active" onclick="filterData('ALL')">All Units</button>
-                        <button class="filter-btn" onclick="filterData('T')">Class T</button>
-                        <button class="filter-btn" onclick="filterData('L')">Class L</button>
-                        <button class="filter-btn" onclick="filterData('H')">Class H</button>
+                        <input type="text" id="searchInput" placeholder="Search across all columns and records...">
                     </div>
                 </div>
 
                 <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 50px; text-align: left;">#</th>
-                                <th style="width: 44%; text-align: left;">Failure Code</th>
-                                <th style="width: 50%; text-align: left;">Description</th>
-                            </tr>
+                    <table id="dynamicDataTable">
+                        <thead id="dynamicTableHead">
+                            <tr><th style="width: 50px;">#</th><th>Data Attribute</th></tr>
                         </thead>
-                        <tbody id="tableBody">
-                            <tr>
-                                <td colspan="3" class="empty-state">
-                                    <p>No telemetry data available.</p>
-                                </td>
-                            </tr>
+                        <tbody id="dynamicTableBody">
+                            <tr><td colspan="2" class="empty-state"><p>No dataset imported yet.</p></td></tr>
                         </tbody>
                     </table>
                 </div>
