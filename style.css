@@ -3,7 +3,6 @@
    =================================================== */
 
 :root {
-    /* Color Palette */
     --bg-page: #F7F8F6;
     --surface: #FFFFFF;
     
@@ -14,7 +13,6 @@
     --border-subtle: #E5E9E6;
     --border-hover: #D5DAD6;
     
-    /* Green Accent Palette */
     --accent-primary: #356B50;
     --accent-secondary: #5F806B;
     --accent-light: #EAF2ED;
@@ -22,8 +20,7 @@
     
     --danger-color: #C04343;
     
-    /* Dimensions & Spacing */
-    --sidebar-width: 260px;
+    --sidebar-width: 270px;
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 10px;
@@ -199,13 +196,17 @@ body {
 }
 
 .badge-count {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-muted);
+    background: #eef2ef;
+    padding: 1px 6px;
+    border-radius: 10px;
 }
 
 .category-item a.active .badge-count {
+    background: var(--accent-light);
     color: var(--accent-primary);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* ===================================================
@@ -220,7 +221,6 @@ body {
     width: calc(100% - var(--sidebar-width));
 }
 
-/* Top Navigation */
 .top-nav {
     background-color: var(--surface);
     border-bottom: 1px solid var(--border-subtle);
@@ -277,7 +277,6 @@ body {
     font-weight: 500;
     padding: 4px 8px;
     border-radius: var(--radius-sm);
-    letter-spacing: 0.2px;
 }
 
 .role-master {
@@ -363,7 +362,6 @@ body {
     flex: 1;
 }
 
-/* Page Heading */
 .page-heading-section {
     display: flex;
     justify-content: space-between;
@@ -400,7 +398,7 @@ body {
     font-weight: 400;
 }
 
-/* Refined Metrics Strip */
+/* Metrics Panel */
 .metrics-panel {
     background-color: var(--surface);
     border: 1px solid var(--border-subtle);
@@ -438,7 +436,7 @@ body {
     margin: 0 24px;
 }
 
-/* Table Toolbar & Filters */
+/* Toolbar & Universal Table */
 .table-container {
     background-color: var(--surface);
     border: 1px solid var(--border-subtle);
@@ -452,13 +450,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
 }
 
 .search-box {
     position: relative;
     flex: 1;
-    max-width: 380px;
+    max-width: 420px;
 }
 
 .search-box i {
@@ -488,46 +485,17 @@ body {
     background-color: var(--surface);
 }
 
-.filter-group {
-    display: flex;
-    gap: 4px;
-}
-
-.filter-btn {
-    padding: 7px 14px;
-    border: none;
-    background-color: transparent;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    transition: all 0.15s ease;
-}
-
-.filter-btn:hover {
-    color: var(--text-primary);
-    background-color: var(--bg-page);
-}
-
-.filter-btn.active {
-    background-color: var(--accent-light);
-    color: var(--accent-primary);
-    font-weight: 600;
-}
-
-/* ===================================================
-   DATA TABLE (SPACIOUS & EXPANDED)
-   =================================================== */
+/* Horizontal Responsive Scroll Table */
 .table-responsive {
     max-height: 580px;
+    overflow-x: auto;
     overflow-y: auto;
     width: 100%;
 }
 
 table {
     width: 100%;
-    table-layout: fixed;
+    min-width: 800px; /* รองรับไฟล์ที่มีหลายคอลัมน์ไม่ให้เบียดกัน */
     border-collapse: collapse;
     text-align: left;
     font-size: 13px;
@@ -539,23 +507,20 @@ thead th {
     background-color: var(--surface);
     color: var(--text-muted);
     font-weight: 500;
-    padding: 14px 24px;
+    padding: 14px 20px;
     border-bottom: 1px solid var(--border-subtle);
     font-size: 12px;
     letter-spacing: 0.3px;
-    z-index: 1;
+    white-space: nowrap;
+    z-index: 2;
 }
 
 tbody td {
-    padding: 16px 24px;
+    padding: 14px 20px;
     border-bottom: 1px solid var(--border-subtle);
     vertical-align: middle;
     color: var(--text-secondary);
-    word-break: break-word;
-}
-
-tbody tr:last-child td {
-    border-bottom: none;
+    white-space: nowrap; /* อ่านข้อมูลทางวิศวกรรมได้สบายตา */
 }
 
 tbody tr:hover td {
@@ -563,15 +528,12 @@ tbody tr:hover td {
     color: var(--text-primary);
 }
 
-/* Failure Badge (Subtle Technical Label) */
 .tag {
     display: inline-block;
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     font-size: 11px;
     font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    margin-right: 10px;
     letter-spacing: 0.2px;
 }
 
@@ -580,15 +542,9 @@ tbody tr:hover td {
     color: var(--accent-primary);
 }
 
-.failure-text {
-    font-weight: 500;
-    color: var(--text-primary);
-    letter-spacing: -0.1px;
-    padding-right: 24px;
-}
-
-.desc-text {
-    color: var(--text-secondary);
+.tag-remedy {
+    background-color: #EEF2F6;
+    color: #334E68;
 }
 
 .empty-state {
@@ -598,7 +554,7 @@ tbody tr:hover td {
 }
 
 /* ===================================================
-   AUTHENTICATION MODAL (ENTERPRISE REDESIGN)
+   AUTHENTICATION MODAL
    =================================================== */
 .login-modal-overlay {
     position: fixed;
@@ -619,13 +575,12 @@ tbody tr:hover td {
     padding: 36px 32px 32px 32px;
     border-radius: 12px;
     border: 1px solid rgba(229, 233, 230, 0.9);
-    box-shadow: 0 16px 40px -12px rgba(18, 24, 20, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+    box-shadow: 0 16px 40px -12px rgba(18, 24, 20, 0.12);
     text-align: left;
 }
 
 .login-header {
     margin-bottom: 24px;
-    text-align: left;
 }
 
 .login-icon {
@@ -698,7 +653,6 @@ tbody tr:hover td {
     outline: none;
     background: #FAFBFA;
     transition: all 0.15s;
-    letter-spacing: 0.5px;
 }
 
 .input-group input:focus {
@@ -719,7 +673,6 @@ tbody tr:hover td {
     cursor: pointer;
     transition: background 0.15s;
     margin-top: 10px;
-    letter-spacing: 0.2px;
 }
 
 .btn-login:hover {
@@ -731,7 +684,6 @@ tbody tr:hover td {
     font-size: 11px;
     min-height: 18px;
     font-weight: 500;
-    margin-top: 4px;
 }
 
 .login-hints {
@@ -740,12 +692,10 @@ tbody tr:hover td {
     border-top: 1px solid var(--border-subtle);
     font-size: 11px;
     color: var(--text-muted);
-    text-align: left;
-    line-height: 1.4;
 }
 
 /* ===================================================
-   RESPONSIVE LAYOUTS
+   RESPONSIVE
    =================================================== */
 .sidebar-overlay {
     display: none;
@@ -810,15 +760,5 @@ tbody tr:hover td {
     .metric-item:not(:last-child) {
         border-bottom: 1px solid var(--border-subtle);
         padding-bottom: 12px;
-    }
-    .table-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .search-box {
-        max-width: 100%;
-    }
-    .filter-group {
-        overflow-x: auto;
     }
 }
