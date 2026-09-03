@@ -141,7 +141,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Universal Multi-Sheet Excel Parser
+// 4. Excel Ingestion
 // ==========================================
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
@@ -159,7 +159,7 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             const workbook = XLSX.read(data, { type: 'array' });
             const fileSheets = {};
 
-            // จัดเรียง SheetNames ให้ Summary_Overview ขึ้นก่อน
+            // ให้ Summary_Overview ขึ้นก่อนเสมอ
             const sortedSheetNames = [...workbook.SheetNames].sort((a, b) => {
                 if (a.toLowerCase().includes('summary')) return -1;
                 if (b.toLowerCase().includes('summary')) return 1;
@@ -187,7 +187,7 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             currentActiveSheet = Object.keys(fileSheets)[0];
             
             saveToCloud();
-            alert(`File "${file.name}" imported with ${Object.keys(fileSheets).length} worksheets!`);
+            alert(`File "${file.name}" imported successfully!`);
 
         } catch (err) {
             alert('Excel parse exception: ' + err.message);
@@ -224,7 +224,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. Layout, FMEA Sorting & Dynamic Table
+// 5. Layout & Rendering
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -280,7 +280,7 @@ function renderSidebar() {
 
     const activeSheets = allFilesData[currentActiveFile] || {};
     
-    // บังคับจัดลำดับชีต: Summary_Overview ขึ้นอันดับ 1 ตามด้วย Damaged และชีตอื่นๆ
+    // จัดให้ Summary_Overview ขึ้นก่อนเสมอ
     let sheetNames = Object.keys(activeSheets).sort((a, b) => {
         const aNorm = a.toLowerCase();
         const bNorm = b.toLowerCase();
@@ -340,17 +340,15 @@ function updateDynamicStats(data) {
     const total = data ? data.length : 0;
     document.getElementById('headerRecordCount').innerText = total;
 
-    // ตรวจสอบว่าเป็นชีต Summary_Overview หรือไม่
+    // ซ่อนกล่อง 4 ช่องเมื่อเลือกชีต Summary_Overview
     const metricsPanel = document.querySelector('.metrics-panel');
     const isSummarySheet = currentActiveSheet.toLowerCase().includes('summary');
 
     if (metricsPanel) {
         if (isSummarySheet) {
-            // ซ่อนกล่อง 4 ช่องสำหรับชีต Summary_Overview
             metricsPanel.style.display = 'none';
             return;
         } else {
-            // แสดงกล่อง 4 ช่องสำหรับชีต Damaged และชีตอื่นๆ
             metricsPanel.style.display = 'flex';
         }
     }
@@ -394,41 +392,14 @@ function processTableData(data) {
         return;
     }
 
-    const desiredOrder = [
-        'code', 'subsystem', 'component', 'description', 'cause',
-        'severitys', 'occurrenceo', 'detectiond', 'rpn',
-        'rpnrisklevel', 'remedy', 'department', 'iscritical'
-    ];
-
-    const sourceColumns = Object.keys(data[0]);
-    let finalColumns = [];
-
-    // ตรวจสอบว่ามีคอลัมน์ FMEA หรือไม่
-    const hasFmeaMarkers = sourceColumns.some(c => {
-        const norm = normalizeCol(c);
-        return norm === 'rpn' || norm === 'severitys' || norm === 'rpnrisklevel';
-    });
-
-    if (hasFmeaMarkers) {
-        desiredOrder.forEach(target => {
-            const found = sourceColumns.find(c => normalizeCol(c) === target);
-            if (found && !finalColumns.includes(found)) {
-                finalColumns.push(found);
-            }
-        });
-        sourceColumns.forEach(c => {
-            if (!finalColumns.includes(c)) {
-                finalColumns.push(c);
-            }
-        });
-    } else {
-        // หากเป็น Summary_Overview หรือตารางทั่วไป ให้คงลำดับคอลัมน์เดิมจาก Excel
-        finalColumns = sourceColumns;
-    }
+    // เรียงคอลัมน์ตามไฟล์ Excel เดิมเป๊ะๆ 100% ไม่สลับตำแหน่ง
+    const finalColumns = Object.keys(data[0]);
 
     let processedRows = [...data];
-    const rpnKey = sourceColumns.find(c => normalizeCol(c) === 'rpn');
-    if (rpnKey && hasFmeaMarkers) {
+
+    // ถ้าชีตนั้นมีคอลัมน์ RPN ให้จัดเรียงข้อมูลตาม RPN มากไปน้อย
+    const rpnKey = finalColumns.find(c => normalizeCol(c) === 'rpn');
+    if (rpnKey) {
         processedRows.sort((a, b) => parseRpnValue(b[rpnKey]) - parseRpnValue(a[rpnKey]));
     }
 
@@ -494,7 +465,7 @@ function renderDynamicTable(columns, rows) {
                 else if (lower.includes('med')) badgeClass = 'badge-risk-med';
                 td.innerHTML = `<span class="tag ${badgeClass}">${val}</span>`;
             } 
-            // Is Critical: ข้อความ Yes / No ธรรมดา (ไม่มีพื้นสีแดง)
+            // Is Critical: แสดง Yes / No ธรรมดา (ไม่ใส่สีแดง)
             else if (norm === 'iscritical') {
                 const lower = val.toLowerCase();
                 if (lower === 'yes' || lower === 'true' || lower === 'critical') {
