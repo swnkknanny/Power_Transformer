@@ -161,7 +161,6 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
 
             workbook.SheetNames.forEach(sheetName => {
                 const sheet = workbook.Sheets[sheetName];
-                // แปลง Sheet เป็น Array of Objects โดยอัตโนมัติ
                 const rows = XLSX.utils.sheet_to_json(sheet, { defval: '-' });
                 if (rows && rows.length > 0) {
                     fileSheets[sheetName] = rows;
@@ -173,7 +172,6 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
                 return;
             }
 
-            // แทนที่เครื่องหมายพิเศษในชื่อไฟล์สำหรับ Firebase Key
             const safeFileName = file.name.replace(/[\.\#\$\[\]\/]/g, '_');
             allFilesData[safeFileName] = fileSheets;
             currentActiveFile = safeFileName;
@@ -217,7 +215,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. Dynamic Rendering System
+// 5. Dynamic Rendering & FMEA Logic
 // ==========================================
 function renderSidebar() {
     const fileListEl = document.getElementById('fileListContainer');
@@ -308,32 +306,47 @@ function selectSheet(sheetName) {
     renderSidebar();
 }
 
+function parseRpnValue(val) {
+    if (val === undefined || val === null) return 0;
+    const cleaned = String(val).replace(/[^0-9.]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+}
+
 function updateDynamicStats(data) {
-    const total = data.length;
+    const total = data ? data.length : 0;
     document.getElementById('headerRecordCount').innerText = total;
     document.getElementById('kpiTotal').innerText = total;
 
-    if (total === 0) {
+    if (!data || total === 0) {
         document.getElementById('kpiCols').innerText = 0;
-        document.getElementById('kpiH').innerText = 0;
-        document.getElementById('kpiOther').innerText = 0;
+        document.getElementById('kpiHighRisk').innerText = 0;
+        document.getElementById('kpiMaxRpn').innerText = 0;
         return;
     }
 
     const columns = Object.keys(data[0]);
     document.getElementById('kpiCols').innerText = columns.length;
 
-    // ตรวจนับ H-series จากคอลัมน์ใดๆ ที่มีคำว่า Code หรือรหัส
-    let countH = 0;
-    let countOther = 0;
+    let highRiskCount = 0;
+    let maxRpn = 0;
+
     data.forEach(row => {
-        const codeVal = String(row.Code || row.code || row.FAILURE_CODE || '');
-        if (codeVal.startsWith('H')) countH++;
-        else if (codeVal.startsWith('T') || codeVal.startsWith('L')) countOther++;
+        const rpnRaw = row['RPN'] !== undefined ? row['RPN'] : (row['rpn'] !== undefined ? row['rpn'] : null);
+        const rpnVal = parseRpnValue(rpnRaw);
+
+        if (rpnVal > maxRpn) {
+            maxRpn = rpnVal;
+        }
+
+        const riskLevelStr = String(row['RPNRisk Level'] || row['Risk Level'] || row['risk_level'] || '').toLowerCase();
+        if (riskLevelStr.includes('high') || rpnVal >= 100) {
+            highRiskCount++;
+        }
     });
 
-    document.getElementById('kpiH').innerText = countH;
-    document.getElementById('kpiOther').innerText = countOther;
+    document.getElementById('kpiHighRisk').innerText = highRiskCount;
+    document.getElementById('kpiMaxRpn').innerText = maxRpn;
 }
 
 function processTableData(data) {
@@ -342,17 +355,50 @@ function processTableData(data) {
         return;
     }
 
-    const columns = Object.keys(data[0]);
-    
-    // Filter ด้วย Search Query
-    const filteredData = data.filter(row => {
-        if (!searchQuery) return true;
-        return columns.some(col => 
-            String(row[col]).toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    });
+    const fmeaTargetOrder = [
+        'Code', 'Sub System', 'Component', 'Description', 'Cause', 
+        'Severity S', 'Occurrence O', 'Detection D', 'RPN', 
+        'RPNRisk Level', 'Remedy', 'Department', 'Is Critical'
+    ];
 
-    renderDynamicTable(columns, filteredData);
+    const sourceColumns = Object.keys(data[0]);
+    let finalColumns = [];
+
+    const hasFmeaMarkers = sourceColumns.some(c => c === 'RPN' || c === 'Severity S' || c === 'RPNRisk Level');
+
+    if (hasFmeaMarkers) {
+        fmeaTargetOrder.forEach(col => {
+            if (sourceColumns.includes(col)) {
+                finalColumns.push(col);
+            }
+        });
+        sourceColumns.forEach(col => {
+            if (!finalColumns.includes(col)) {
+                finalColumns.push(col);
+            }
+        });
+    } else {
+        finalColumns = sourceColumns;
+    }
+
+    let processedRows = [...data];
+    if (sourceColumns.some(c => c.toLowerCase() === 'rpn')) {
+        processedRows.sort((a, b) => {
+            const valA = parseRpnValue(a['RPN'] !== undefined ? a['RPN'] : a['rpn']);
+            const valB = parseRpnValue(b['RPN'] !== undefined ? b['RPN'] : b['rpn']);
+            return valB - valA;
+        });
+    }
+
+    if (searchQuery) {
+        processedRows = processedRows.filter(row => {
+            return finalColumns.some(col => 
+                String(row[col]).toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        });
+    }
+
+    renderDynamicTable(finalColumns, processedRows);
 }
 
 function renderDynamicTable(columns, rows) {
@@ -368,7 +414,6 @@ function renderDynamicTable(columns, rows) {
         return;
     }
 
-    // สร้าง Header อัตโนมัติตาม Excel
     const headerTr = document.createElement('tr');
     
     const thIdx = document.createElement('th');
@@ -378,12 +423,15 @@ function renderDynamicTable(columns, rows) {
 
     columns.forEach(col => {
         const th = document.createElement('th');
-        th.innerText = col.replace(/_/g, ' ');
+        if (col === 'RPNRisk Level') {
+            th.innerText = 'Risk Level';
+        } else {
+            th.innerText = col.replace(/_/g, ' ');
+        }
         headerTr.appendChild(th);
     });
     thead.appendChild(headerTr);
 
-    // สร้างแถวข้อมูลแบบ Dynamic
     rows.forEach((row, idx) => {
         const tr = document.createElement('tr');
         
@@ -396,16 +444,32 @@ function renderDynamicTable(columns, rows) {
             const td = document.createElement('td');
             const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : '-';
 
-            // ถ้าเป็นคอลัมน์ Code ให้ติด Badge สวยๆ
-            if (col.toLowerCase().includes('code') && val !== '-') {
+            if (col === 'RPNRisk Level' || col === 'Risk Level') {
+                const lower = val.toLowerCase();
+                let badgeClass = 'badge-risk-low';
+                if (lower.includes('high')) {
+                    badgeClass = 'badge-risk-high';
+                } else if (lower.includes('medium') || lower.includes('med')) {
+                    badgeClass = 'badge-risk-med';
+                }
+                td.innerHTML = `<span class="tag ${badgeClass}">${val}</span>`;
+            } 
+            else if (col.toLowerCase() === 'code' && val !== '-') {
                 td.innerHTML = `<span class="tag tag-badge">${val}</span>`;
             } 
-            // ถ้าเป็นคอลัมน์ Remedy หรือ Status ให้จัดทรงให้อ่านง่าย
             else if (col.toLowerCase() === 'remedy' && val !== '-') {
                 td.innerHTML = `<span class="tag tag-remedy">${val}</span>`;
-            } else {
+            }
+            else if (col.toLowerCase().includes('critical') && (val.toLowerCase() === 'true' || val.toLowerCase() === 'yes')) {
+                td.innerHTML = `<span class="tag badge-critical">Critical</span>`;
+            }
+            else if (col === 'RPN') {
+                td.innerHTML = `<strong style="color: var(--text-primary);">${val}</strong>`;
+            } 
+            else {
                 td.innerText = val;
             }
+
             tr.appendChild(td);
         });
 
