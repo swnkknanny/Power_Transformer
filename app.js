@@ -141,7 +141,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Excel Ingestion
+// 4. Excel Ingestion (Strict Column Order)
 // ==========================================
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
@@ -159,7 +159,7 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             const workbook = XLSX.read(data, { type: 'array' });
             const fileSheets = {};
 
-            // ให้ Summary_Overview ขึ้นก่อนเสมอ
+            // Summary_Overview ขึ้นก่อนเสมอ
             const sortedSheetNames = [...workbook.SheetNames].sort((a, b) => {
                 if (a.toLowerCase().includes('summary')) return -1;
                 if (b.toLowerCase().includes('summary')) return 1;
@@ -170,9 +170,20 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
 
             sortedSheetNames.forEach(sheetName => {
                 const sheet = workbook.Sheets[sheetName];
+                
+                // 1. ดึงหัวคอลัมน์แถวแรกตามลำดับ Excel จริง
+                const rawHeaderRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                const headers = (rawHeaderRows && rawHeaderRows.length > 0) 
+                    ? rawHeaderRows[0].filter(h => h !== undefined && h !== null && String(h).trim() !== '') 
+                    : [];
+
+                // 2. แปลงข้อมูลแถว
                 const rows = XLSX.utils.sheet_to_json(sheet, { defval: '-' });
                 if (rows && rows.length > 0) {
-                    fileSheets[sheetName] = rows;
+                    fileSheets[sheetName] = {
+                        columns: headers,
+                        rows: rows
+                    };
                 }
             });
 
@@ -224,7 +235,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. Layout & Rendering
+// 5. Sidebar & Dynamic Table Rendering
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -235,6 +246,18 @@ function parseRpnValue(val) {
     const cleaned = String(val).replace(/[^0-9.]/g, '');
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
+}
+
+function getSheetContent(sheetObj) {
+    if (!sheetObj) return { columns: [], rows: [] };
+    if (Array.isArray(sheetObj)) {
+        const cols = sheetObj.length > 0 ? Object.keys(sheetObj[0]) : [];
+        return { columns: cols, rows: sheetObj };
+    }
+    return {
+        columns: sheetObj.columns || (sheetObj.rows && sheetObj.rows.length > 0 ? Object.keys(sheetObj.rows[0]) : []),
+        rows: sheetObj.rows || []
+    };
 }
 
 function renderSidebar() {
@@ -280,7 +303,7 @@ function renderSidebar() {
 
     const activeSheets = allFilesData[currentActiveFile] || {};
     
-    // จัดให้ Summary_Overview ขึ้นก่อนเสมอ
+    // เรียง Summary_Overview ขึ้นก่อนเสมอ
     let sheetNames = Object.keys(activeSheets).sort((a, b) => {
         const aNorm = a.toLowerCase();
         const bNorm = b.toLowerCase();
@@ -300,7 +323,8 @@ function renderSidebar() {
         }
 
         sheetNames.forEach(sName => {
-            const rowCount = activeSheets[sName].length;
+            const content = getSheetContent(activeSheets[sName]);
+            const rowCount = content.rows.length;
             const li = document.createElement('li');
             li.className = 'category-item';
             li.innerHTML = `
@@ -318,9 +342,9 @@ function renderSidebar() {
         <span class="dataset-source">/ ${currentActiveFile}</span>
     `;
 
-    const sheetData = (activeSheets[currentActiveSheet]) || [];
-    updateDynamicStats(sheetData);
-    processTableData(sheetData);
+    const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
+    updateDynamicStats(sheetContent.rows, sheetContent.columns);
+    processTableData(sheetContent.rows, sheetContent.columns);
 }
 
 function selectFile(fileName) {
@@ -336,11 +360,11 @@ function selectSheet(sheetName) {
     renderSidebar();
 }
 
-function updateDynamicStats(data) {
-    const total = data ? data.length : 0;
+function updateDynamicStats(rows, columns) {
+    const total = rows ? rows.length : 0;
     document.getElementById('headerRecordCount').innerText = total;
 
-    // ซ่อนกล่อง 4 ช่องเมื่อเลือกชีต Summary_Overview
+    // ซ่อนแถบกล่อง 4 เหลี่ยมเมื่ออยู่หน้า Summary_Overview
     const metricsPanel = document.querySelector('.metrics-panel');
     const isSummarySheet = currentActiveSheet.toLowerCase().includes('summary');
 
@@ -355,20 +379,19 @@ function updateDynamicStats(data) {
 
     document.getElementById('kpiTotal').innerText = total;
 
-    if (!data || total === 0) {
+    if (!rows || total === 0) {
         document.getElementById('kpiCols').innerText = 0;
         document.getElementById('kpiHighRisk').innerText = 0;
         document.getElementById('kpiMaxRpn').innerText = 0;
         return;
     }
 
-    const columns = Object.keys(data[0]);
-    document.getElementById('kpiCols').innerText = columns.length;
+    document.getElementById('kpiCols').innerText = columns ? columns.length : Object.keys(rows[0]).length;
 
     let highRiskCount = 0;
     let maxRpn = 0;
 
-    data.forEach(row => {
+    rows.forEach(row => {
         let rpnVal = 0;
         let riskLevelStr = '';
 
@@ -386,18 +409,18 @@ function updateDynamicStats(data) {
     document.getElementById('kpiMaxRpn').innerText = maxRpn;
 }
 
-function processTableData(data) {
-    if (!data || data.length === 0) {
+function processTableData(rows, columns) {
+    if (!rows || rows.length === 0) {
         renderDynamicTable([], []);
         return;
     }
 
-    // เรียงคอลัมน์ตามไฟล์ Excel เดิมเป๊ะๆ 100% ไม่สลับตำแหน่ง
-    const finalColumns = Object.keys(data[0]);
+    // เรียงลำดับคอลัมน์ตามไฟล์ Excel 100%
+    const finalColumns = (columns && columns.length > 0) ? columns : Object.keys(rows[0]);
 
-    let processedRows = [...data];
+    let processedRows = [...rows];
 
-    // ถ้าชีตนั้นมีคอลัมน์ RPN ให้จัดเรียงข้อมูลตาม RPN มากไปน้อย
+    // จัดเรียงแถวตาม RPN (ถ้ามีคอลัมน์ RPN)
     const rpnKey = finalColumns.find(c => normalizeCol(c) === 'rpn');
     if (rpnKey) {
         processedRows.sort((a, b) => parseRpnValue(b[rpnKey]) - parseRpnValue(a[rpnKey]));
@@ -502,8 +525,8 @@ function renderDynamicTable(columns, rows) {
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchQuery = e.target.value;
     const activeSheets = allFilesData[currentActiveFile] || {};
-    const sheetData = activeSheets[currentActiveSheet] || [];
-    processTableData(sheetData);
+    const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
+    processTableData(sheetContent.rows, sheetContent.columns);
 });
 
 function toggleMobileSidebar() {
