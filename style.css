@@ -495,7 +495,7 @@ body {
 
 table {
     width: 100%;
-    min-width: 800px; /* รองรับไฟล์ที่มีหลายคอลัมน์ไม่ให้เบียดกัน */
+    min-width: 800px;
     border-collapse: collapse;
     text-align: left;
     font-size: 13px;
@@ -520,7 +520,7 @@ tbody td {
     border-bottom: 1px solid var(--border-subtle);
     vertical-align: middle;
     color: var(--text-secondary);
-    white-space: nowrap; /* อ่านข้อมูลทางวิศวกรรมได้สบายตา */
+    white-space: nowrap;
 }
 
 tbody tr:hover td {
@@ -545,6 +545,32 @@ tbody tr:hover td {
 .tag-remedy {
     background-color: #EEF2F6;
     color: #334E68;
+}
+
+/* FMEA Risk Level Badges */
+.badge-risk-high {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    font-weight: 600;
+}
+
+.badge-risk-med {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    font-weight: 600;
+}
+
+.badge-risk-low {
+    background-color: #d1fae5 !important;
+    color: #047857 !important;
+    font-weight: 600;
+}
+
+.badge-critical {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca;
+    font-weight: 600;
 }
 
 .empty-state {
