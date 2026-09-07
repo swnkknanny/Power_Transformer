@@ -566,7 +566,7 @@ tbody tr:hover td {
     font-weight: 600;
 }
 
-/* RAM Simulation Inputs & Badges (Dynamic Availability) */
+/* Inputs สำหรับ MTBF, MTTR */
 .table-input {
     width: 100px;
     padding: 6px 10px;
@@ -586,35 +586,41 @@ tbody tr:hover td {
     box-shadow: 0 0 0 2px rgba(53, 107, 80, 0.15);
 }
 
-/* Availability >= 96% (สีเขียว) */
-.tag-avail-pass {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
+/* Input สำหรับ Availability (กำหนดค่าเองได้ + สีตามเกณฑ์ 96%) */
+.avail-input {
+    width: 95px;
+    padding: 5px 8px;
     font-size: 12px;
     font-weight: 600;
+    text-align: center;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+/* Availability >= 96% (เขียว) */
+.avail-input-pass {
     background-color: #d1fae5 !important;
     color: #047857 !important;
-    border: 1px solid #a7f3d0;
-    min-width: 80px;
-    text-align: center;
+    border: 1px solid #a7f3d0 !important;
 }
 
-/* Availability < 96% (สีแดง) */
-.tag-avail-fail {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-weight: 600;
+.avail-input-pass:focus {
+    box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.2);
+}
+
+/* Availability < 96% (แดง) */
+.avail-input-fail {
     background-color: #fee2e2 !important;
     color: #b91c1c !important;
-    border: 1px solid #fecaca;
-    min-width: 80px;
-    text-align: center;
+    border: 1px solid #fecaca !important;
 }
 
-/* Maintenance Improvement Recommendation Box */
+.avail-input-fail:focus {
+    box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2);
+}
+
+/* กล่องแนะนำมาตรการบำรุงรักษาเมื่อ Availability < 96% */
 .ram-recommendation-box {
     margin-top: 16px;
     padding: 16px 20px;
