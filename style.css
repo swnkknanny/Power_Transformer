@@ -441,7 +441,7 @@ body {
     background-color: var(--surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow: visible; /* ให้ Tooltip ลอยพ้นขอบตารางได้ */
 }
 
 .table-toolbar {
@@ -491,6 +491,7 @@ body {
     overflow-x: auto;
     overflow-y: auto;
     width: 100%;
+    padding-bottom: 30px;
 }
 
 table {
@@ -586,7 +587,14 @@ tbody tr:hover td {
     box-shadow: 0 0 0 2px rgba(53, 107, 80, 0.15);
 }
 
-/* Input สำหรับ Availability (กำหนดค่าเองได้ + สีตามเกณฑ์ 96%) */
+/* ===================================================
+   AVAILABILITY WRAPPER & HOVER TOOLTIP
+   =================================================== */
+.avail-cell-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .avail-input {
     width: 95px;
     padding: 5px 8px;
@@ -596,6 +604,7 @@ tbody tr:hover td {
     border-radius: var(--radius-sm);
     outline: none;
     transition: all 0.15s ease;
+    cursor: pointer;
 }
 
 /* Availability >= 96% (เขียว) */
@@ -605,46 +614,88 @@ tbody tr:hover td {
     border: 1px solid #a7f3d0 !important;
 }
 
-.avail-input-pass:focus {
-    box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.2);
-}
-
 /* Availability < 96% (แดง) */
 .avail-input-fail {
     background-color: #fee2e2 !important;
     color: #b91c1c !important;
     border: 1px solid #fecaca !important;
+    box-shadow: 0 0 4px rgba(185, 28, 28, 0.2);
 }
 
-.avail-input-fail:focus {
-    box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.2);
+/* กล่อง Tooltip ที่เด้งขึ้นเมื่อชี้เมาส์ */
+.avail-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1E293B;
+    color: #F8FAFC;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: normal;
+    width: 260px;
+    z-index: 9999;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
 }
 
-/* กล่องแนะนำมาตรการบำรุงรักษาเมื่อ Availability < 96% */
-.ram-recommendation-box {
-    margin-top: 16px;
-    padding: 16px 20px;
-    background-color: #FEF8F8;
-    border: 1px solid #FCD4D4;
-    border-radius: var(--radius-md);
-    display: none;
+/* ลูกศรชี้ลงของ Tooltip */
+.avail-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1E293B transparent transparent transparent;
 }
 
-.ram-rec-header {
+/* แสดง Tooltip เมื่อ Hover ช่องสีแดง */
+.avail-cell-wrapper:hover .avail-tooltip.show-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+.avail-tooltip-title {
+    font-weight: 700;
+    color: #F87171;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    color: #991B1B;
+    gap: 6px;
     margin-bottom: 6px;
-    font-size: 13px;
+    font-size: 11.5px;
 }
 
-.ram-rec-list {
-    margin-left: 20px;
-    color: #7F1D1D;
-    font-size: 12px;
-    line-height: 1.6;
+.avail-tooltip ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.avail-tooltip li {
+    margin-bottom: 4px;
+    padding-left: 12px;
+    position: relative;
+}
+
+.avail-tooltip li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #38BDF8;
+    font-weight: bold;
+}
+
+.avail-tooltip strong {
+    color: #38BDF8;
 }
 
 .empty-state {
