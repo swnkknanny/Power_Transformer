@@ -44,6 +44,30 @@ body {
 }
 
 /* ===================================================
+   ADMIN INLINE EDITABLE LABELS
+   =================================================== */
+.admin-editable {
+    transition: background 0.15s ease, outline 0.15s ease;
+    border-radius: 4px;
+    padding: 1px 4px;
+}
+
+body.role-is-admin .admin-editable {
+    cursor: pointer;
+}
+
+body.role-is-admin .admin-editable:hover {
+    background: rgba(53, 107, 80, 0.08);
+    outline: 1px dashed var(--accent-secondary);
+}
+
+.admin-editable:focus {
+    background: #FFFFFF !important;
+    outline: 2px solid var(--accent-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ===================================================
    SIDEBAR
    =================================================== */
 .sidebar {
@@ -441,7 +465,7 @@ body {
     background-color: var(--surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    overflow: visible; /* ให้ Tooltip ลอยพ้นขอบตารางได้ */
+    overflow: visible;
 }
 
 .table-toolbar {
@@ -645,7 +669,6 @@ tbody tr:hover td {
     pointer-events: none;
 }
 
-/* ลูกศรชี้ลงของ Tooltip */
 .avail-tooltip::after {
     content: "";
     position: absolute;
@@ -657,7 +680,6 @@ tbody tr:hover td {
     border-color: #1E293B transparent transparent transparent;
 }
 
-/* แสดง Tooltip เมื่อ Hover ช่องสีแดง */
 .avail-cell-wrapper:hover .avail-tooltip.show-tooltip {
     visibility: visible;
     opacity: 1;
