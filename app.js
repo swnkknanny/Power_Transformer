@@ -141,7 +141,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Excel Ingestion (Strict Column Order)
+// 4. Excel Ingestion (Strict Original Column Sequence)
 // ==========================================
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
@@ -159,7 +159,6 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             const workbook = XLSX.read(data, { type: 'array' });
             const fileSheets = {};
 
-            // Summary_Overview ขึ้นก่อนเสมอ
             const sortedSheetNames = [...workbook.SheetNames].sort((a, b) => {
                 if (a.toLowerCase().includes('summary')) return -1;
                 if (b.toLowerCase().includes('summary')) return 1;
@@ -171,13 +170,11 @@ document.getElementById('excelFileInput').addEventListener('change', function(e)
             sortedSheetNames.forEach(sheetName => {
                 const sheet = workbook.Sheets[sheetName];
                 
-                // 1. ดึงหัวคอลัมน์แถวแรกตามลำดับ Excel จริง
                 const rawHeaderRows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                 const headers = (rawHeaderRows && rawHeaderRows.length > 0) 
                     ? rawHeaderRows[0].filter(h => h !== undefined && h !== null && String(h).trim() !== '') 
                     : [];
 
-                // 2. แปลงข้อมูลแถว
                 const rows = XLSX.utils.sheet_to_json(sheet, { defval: '-' });
                 if (rows && rows.length > 0) {
                     fileSheets[sheetName] = {
@@ -235,7 +232,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. Sidebar & Dynamic Table Rendering
+// 5. RAM Simulation Engine & UI Rendering
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -246,6 +243,52 @@ function parseRpnValue(val) {
     const cleaned = String(val).replace(/[^0-9.]/g, '');
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
+}
+
+// แสดง Availability เป็นเปอร์เซ็นต์ ทศนิยม 2 ตำแหน่ง
+function formatAvailability(val) {
+    if (val === undefined || val === null || val === '-') return '-';
+    let num = parseFloat(String(val).replace(/[^0-9.]/g, ''));
+    if (isNaN(num)) return val;
+    if (num <= 1 && num > 0) {
+        num = num * 100;
+    }
+    return num.toFixed(2) + '%';
+}
+
+// จำลองการคำนวณ RAM สดๆ เมื่อแก้ MTTR หรือ MTBF บนหน้าเว็บ
+function handleRamChange(rowId, colName, newValue) {
+    const activeSheets = allFilesData[currentActiveFile] || {};
+    const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
+    const targetRow = sheetContent.rows.find(r => r.__rowId === rowId);
+
+    if (!targetRow) return;
+
+    targetRow[colName] = parseFloat(newValue) || 0;
+
+    const cols = Object.keys(targetRow);
+    const mtbfKey = cols.find(c => normalizeCol(c) === 'mtbf');
+    const mttrKey = cols.find(c => normalizeCol(c) === 'mttr');
+    const availKey = cols.find(c => normalizeCol(c) === 'availability');
+
+    if (mtbfKey && mttrKey && availKey) {
+        const mtbf = parseFloat(targetRow[mtbfKey]) || 0;
+        const mttr = parseFloat(targetRow[mttrKey]) || 0;
+
+        if (mtbf + mttr > 0) {
+            const calculatedAvailPercent = (mtbf / (mtbf + mttr)) * 100;
+            targetRow[availKey] = (calculatedAvailPercent / 100);
+
+            const availDisplay = document.getElementById(`avail-${rowId}`);
+            if (availDisplay) {
+                availDisplay.innerText = calculatedAvailPercent.toFixed(2) + '%';
+            }
+        }
+    }
+
+    if (currentUserRole === 'MasterKey') {
+        saveToCloud();
+    }
 }
 
 function getSheetContent(sheetObj) {
@@ -303,7 +346,6 @@ function renderSidebar() {
 
     const activeSheets = allFilesData[currentActiveFile] || {};
     
-    // เรียง Summary_Overview ขึ้นก่อนเสมอ
     let sheetNames = Object.keys(activeSheets).sort((a, b) => {
         const aNorm = a.toLowerCase();
         const bNorm = b.toLowerCase();
@@ -364,7 +406,6 @@ function updateDynamicStats(rows, columns) {
     const total = rows ? rows.length : 0;
     document.getElementById('headerRecordCount').innerText = total;
 
-    // ซ่อนแถบกล่อง 4 เหลี่ยมเมื่ออยู่หน้า Summary_Overview
     const metricsPanel = document.querySelector('.metrics-panel');
     const isSummarySheet = currentActiveSheet.toLowerCase().includes('summary');
 
@@ -415,12 +456,9 @@ function processTableData(rows, columns) {
         return;
     }
 
-    // เรียงลำดับคอลัมน์ตามไฟล์ Excel 100%
     const finalColumns = (columns && columns.length > 0) ? columns : Object.keys(rows[0]);
+    let processedRows = rows.map((r, idx) => ({ ...r, __rowId: idx }));
 
-    let processedRows = [...rows];
-
-    // จัดเรียงแถวตาม RPN (ถ้ามีคอลัมน์ RPN)
     const rpnKey = finalColumns.find(c => normalizeCol(c) === 'rpn');
     if (rpnKey) {
         processedRows.sort((a, b) => parseRpnValue(b[rpnKey]) - parseRpnValue(a[rpnKey]));
@@ -480,15 +518,31 @@ function renderDynamicTable(columns, rows) {
             const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : '-';
             const norm = normalizeCol(col);
 
+            // 1. MTBF & MTTR: ช่องแก้ไขตัวเลขสำหรับจำลองค่าคำนวณสด
+            if (norm === 'mtbf' || norm === 'mttr') {
+                const numericVal = parseFloat(val) || 0;
+                td.innerHTML = `
+                    <input type="number" 
+                           class="table-input" 
+                           value="${numericVal}" 
+                           step="any"
+                           oninput="handleRamChange(${row.__rowId}, '${col}', this.value)" 
+                           title="Change ${col} to recalculate Availability">
+                `;
+            }
+            // 2. Availability: แสดงผลเป็น % พร้อมทศนิยม 2 ตำแหน่ง
+            else if (norm === 'availability') {
+                td.innerHTML = `<span id="avail-${row.__rowId}" class="tag tag-avail">${formatAvailability(val)}</span>`;
+            }
             // Risk Level Badge
-            if (norm === 'rpnrisklevel' || norm === 'risklevel') {
+            else if (norm === 'rpnrisklevel' || norm === 'risklevel') {
                 const lower = val.toLowerCase();
                 let badgeClass = 'badge-risk-low';
                 if (lower.includes('high')) badgeClass = 'badge-risk-high';
                 else if (lower.includes('med')) badgeClass = 'badge-risk-med';
                 td.innerHTML = `<span class="tag ${badgeClass}">${val}</span>`;
             } 
-            // Is Critical: แสดง Yes / No ธรรมดา (ไม่ใส่สีแดง)
+            // Is Critical: ข้อความเรียบ Yes / No
             else if (norm === 'iscritical') {
                 const lower = val.toLowerCase();
                 if (lower === 'yes' || lower === 'true' || lower === 'critical') {
@@ -507,7 +561,7 @@ function renderDynamicTable(columns, rows) {
             else if (norm === 'remedy' && val !== '-') {
                 td.innerHTML = `<span class="tag tag-remedy">${val}</span>`;
             }
-            // RPN เน้นตัวเลขหนา
+            // RPN
             else if (norm === 'rpn') {
                 td.innerHTML = `<strong style="color: var(--text-primary);">${val}</strong>`;
             } 
