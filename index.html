@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css?v=2026_BIDIRECTIONAL_RAM">
+    <link rel="stylesheet" href="style.css?v=2026_ADMIN_EDIT_V1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- Firebase SDK สำหรับ Realtime Database -->
@@ -64,8 +64,8 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-title-wrap">
-                <span class="brand-system">ENGINEERING DASHBOARD</span>
-                <h2>Power Transformer</h2>
+                <span class="brand-system admin-editable" data-edit-key="brand_system">ENGINEERING DASHBOARD</span>
+                <h2 class="admin-editable" data-edit-key="brand_title">Power Transformer</h2>
             </div>
             <button class="btn-close-sidebar" onclick="toggleMobileSidebar()" aria-label="Close Sidebar">
                 <i class="fa-solid fa-xmark"></i>
@@ -75,7 +75,7 @@
         <div class="sidebar-content">
             <div class="menu-section">
                 <div class="menu-category">
-                    <span>Active Datasets</span>
+                    <span class="admin-editable" data-edit-key="menu_datasets">Active Datasets</span>
                     <span class="count-pill" id="fileCount">0</span>
                 </div>
                 <ul class="file-list" id="fileListContainer"></ul>
@@ -83,7 +83,7 @@
 
             <div class="menu-section">
                 <div class="menu-category">
-                    <span>Worksheets / Views</span>
+                    <span class="admin-editable" data-edit-key="menu_worksheets">Worksheets / Views</span>
                 </div>
                 <ul class="category-list" id="sheetMenuContainer"></ul>
             </div>
@@ -99,7 +99,7 @@
                 </button>
                 <div class="system-status-indicator">
                     <span class="status-dot"></span>
-                    <span class="system-label">RAM Analysis Live</span>
+                    <span class="system-label admin-editable" data-edit-key="status_label">RAM Analysis Live</span>
                 </div>
             </div>
             
@@ -127,7 +127,7 @@
             <!-- Dedicated Page Heading -->
             <section class="page-heading-section">
                 <div class="title-meta">
-                    <span class="classification-tag">WORKSHEET TELEMETRY</span>
+                    <span class="classification-tag admin-editable" data-edit-key="header_tag">WORKSHEET TELEMETRY</span>
                     <h1 id="pageTitle">No Worksheet Selected</h1>
                 </div>
                 <div class="header-records-indicator">
@@ -138,22 +138,22 @@
             <!-- Dynamic Metrics Panel (FMEA / RAM) -->
             <section class="metrics-panel">
                 <div class="metric-item">
-                    <span class="metric-label">Total Sheet Records</span>
+                    <span class="metric-label admin-editable" data-edit-key="metric_total_records">Total Sheet Records</span>
                     <div class="metric-number" id="kpiTotal">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">Detected Attributes</span>
+                    <span class="metric-label admin-editable" data-edit-key="metric_attributes">Detected Attributes</span>
                     <div class="metric-number" id="kpiCols">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">High Risk Items</span>
+                    <span class="metric-label admin-editable" data-edit-key="metric_high_risk">High Risk Items</span>
                     <div class="metric-number" id="kpiHighRisk">0</div>
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                    <span class="metric-label">Max RPN</span>
+                    <span class="metric-label admin-editable" data-edit-key="metric_max_rpn">Max RPN</span>
                     <div class="metric-number" id="kpiMaxRpn">0</div>
                 </div>
             </section>
@@ -178,23 +178,10 @@
                     </table>
                 </div>
             </section>
-
-            <!-- กล่องแนะนำมาตรการปรับปรุงบำรุงรักษาเมื่อ Availability < 96% -->
-            <div id="ramImprovementBox" class="ram-recommendation-box">
-                <div class="ram-rec-header">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>มาตรการปรับปรุงความพร้อมใช้งาน (Availability Improvement Strategy &lt; 96%)</span>
-                </div>
-                <ul class="ram-rec-list">
-                    <li><strong>ลดระยะเวลาแก้ไข (Reduce MTTR):</strong> จัดเตรียมอะไหล่สำรอง (Spare Parts) สำหรับชิ้นส่วนที่มีอัตราเสียหายบ่อย และซักซ้อมขั้นตอนเข้าบำรุงรักษาเพื่อลดเวลา Down Time</li>
-                    <li><strong>ยกระดับการบำรุงรักษาเชิงป้องกัน (Increase MTBF):</strong> ปรับรอบการตรวจเช็กและทดสอบสภาพฉนวน/กลไก ให้ถี่ขึ้นเพื่อป้องกันความเสียหายแบบฉับพลัน</li>
-                    <li><strong>จัดกลุ่มงานบำรุงรักษาตามสภาพ (CBM):</strong> นำค่า Telemetry และผลวิเคราะห์ DGA/Thermal Scan มาวางแผนบำรุงรักษาก่อนเกิด Failure</li>
-                </ul>
-            </div>
         </main>
     </div>
 
     <!-- บังคับโหลด JavaScript ใหม่เสมอ -->
-    <script src="app.js?v=2026_BIDIRECTIONAL_RAM"></script>
+    <script src="app.js?v=2026_ADMIN_EDIT_V1"></script>
 </body>
 </html>
