@@ -141,7 +141,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Excel Ingestion (Strict Column Order Preservation)
+// 4. Excel Ingestion (Strict Original Sequence)
 // ==========================================
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
@@ -232,7 +232,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. RAM Simulation Engine & Bidirectional Calculation
+// 5. RAM Simulation Engine & Hover Recommendation
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -260,31 +260,44 @@ function getAvailInputClass(percent) {
     return percent >= 96.0 ? 'avail-input avail-input-pass' : 'avail-input avail-input-fail';
 }
 
-function checkOverallAvailabilityThreshold() {
-    const recBox = document.getElementById('ramImprovementBox');
-    if (!recBox) return;
+// สร้างข้อความแนะนำปรับปรุงเชิงวิศวกรรมสำหรับ Tooltip
+function generateRecommendationHtml(mtbf, mttr, percent) {
+    if (percent === null || percent >= 96.0) return '';
 
-    const activeSheets = allFilesData[currentActiveFile] || {};
-    const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
-    const rows = sheetContent.rows || [];
+    // คำนวณค่าเป้าหมายทางวิศวกรรมเพื่อให้ได้ Availability >= 96%
+    // เกณฑ์ 96%: A = 0.96 -> MTTR ต้อง <= (MTBF * 0.04) / 0.96
+    const maxAllowedMttr = (mtbf > 0) ? Math.max(0.1, ((mtbf * 0.04) / 0.96)).toFixed(1) : 0;
+    // หรือ MTBF ต้อง >= (0.96 * MTTR) / 0.04
+    const minRequiredMtbf = (mttr > 0) ? Math.round((0.96 * mttr) / 0.04) : 0;
 
-    let hasCriticalAvail = false;
-    rows.forEach(r => {
-        const cols = Object.keys(r);
-        const availKey = cols.find(c => normalizeCol(c) === 'availability');
-        if (availKey) {
-            const p = getAvailPercentage(r[availKey]);
-            if (p !== null && p < 96.0) {
-                hasCriticalAvail = true;
-            }
-        }
-    });
-
-    recBox.style.display = hasCriticalAvail ? 'block' : 'none';
+    return `
+        <div class="avail-tooltip-title">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>ข้อแนะนำ: ปรับปรุงค่าให้ได้มาตรฐาน (&ge; 96%)</span>
+        </div>
+        <ul>
+            <li><strong>ลด MTTR:</strong> ต้องควบคุมเวลาบำรุงรักษาให้เสร็จไม่เกิน <strong>${maxAllowedMttr} ชม.</strong></li>
+            <li><strong>เพิ่ม MTBF:</strong> บำรุงรักษาเชิงป้องกันเพื่อยืดอายุใช้งานให้ถึง <strong>${minRequiredMtbf.toLocaleString()} ชม.</strong></li>
+            <li><strong>การจัดการ:</strong> เตรียม Spare Parts สำรอง และจัดทำ CBM ตรวจสอบสภาพฉนวนสม่ำเสมอ</li>
+        </ul>
+    `;
 }
 
-// คำนวณแบบ 2 ทาง:
-// กรณีแก้ MTBF หรือ MTTR -> คำนวณ Availability
+// อัปเดต Tooltip แบบ Real-time
+function updateTooltipContent(rowIndex, mtbf, mttr, percent) {
+    const tooltipEl = document.getElementById(`avail-tooltip-${rowIndex}`);
+    if (!tooltipEl) return;
+
+    if (percent !== null && percent < 96.0) {
+        tooltipEl.innerHTML = generateRecommendationHtml(mtbf, mttr, percent);
+        tooltipEl.classList.add('show-tooltip');
+    } else {
+        tooltipEl.innerHTML = '';
+        tooltipEl.classList.remove('show-tooltip');
+    }
+}
+
+// คำนวณเมื่อแก้ MTBF หรือ MTTR
 function handleRamChange(rowIndex, colName, newValue) {
     const activeSheets = allFilesData[currentActiveFile] || {};
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
@@ -312,17 +325,18 @@ function handleRamChange(rowIndex, colName, newValue) {
                 availInput.value = calculatedPercent.toFixed(2);
                 availInput.className = getAvailInputClass(calculatedPercent);
             }
+
+            // อัปเดตข้อความ Tooltip คำแนะนำทันที
+            updateTooltipContent(rowIndex, mtbf, mttr, calculatedPercent);
         }
     }
-
-    checkOverallAvailabilityThreshold();
 
     if (currentUserRole === 'MasterKey') {
         saveToCloud();
     }
 }
 
-// กรณีผู้ใช้พิมพ์กำหนด Availability เองโดยตรง (ล็อก MTTR -> คำนวณ MTBF)
+// คำนวณเมื่อกำหนด Availability เองโดยตรง (ล็อก MTTR -> คำนวณ MTBF)
 function handleAvailabilityCustomChange(rowIndex, newAvailPercent) {
     const activeSheets = allFilesData[currentActiveFile] || {};
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
@@ -342,27 +356,25 @@ function handleAvailabilityCustomChange(rowIndex, newAvailPercent) {
         const mttr = parseFloat(targetRow[mttrKey]) || 0;
         const A = percent / 100;
 
-        // สูตรล็อก MTTR: MTBF = (A * MTTR) / (1 - A)
         if (1 - A > 0 && mttr > 0) {
             const calculatedMtbf = Math.round((A * mttr) / (1 - A));
             targetRow[mtbfKey] = calculatedMtbf;
             targetRow[availKey] = A;
 
-            // อัปเดตช่อง MTBF บนหน้าเว็บให้ทันที
             const mtbfInput = document.getElementById(`mtbf-input-${rowIndex}`);
             if (mtbfInput) {
                 mtbfInput.value = calculatedMtbf;
             }
 
-            // เปลี่ยนสีช่อง Availability ตามเกณฑ์ 96%
             const availInput = document.getElementById(`avail-input-${rowIndex}`);
             if (availInput) {
                 availInput.className = getAvailInputClass(percent);
             }
+
+            // อัปเดตข้อความ Tooltip คำแนะนำทันที
+            updateTooltipContent(rowIndex, calculatedMtbf, mttr, percent);
         }
     }
-
-    checkOverallAvailabilityThreshold();
 
     if (currentUserRole === 'MasterKey') {
         saveToCloud();
@@ -465,7 +477,6 @@ function renderSidebar() {
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
     updateDynamicStats(sheetContent.rows, sheetContent.columns);
     processTableData(sheetContent.rows, sheetContent.columns);
-    checkOverallAvailabilityThreshold();
 }
 
 function selectFile(fileName) {
@@ -596,6 +607,12 @@ function renderDynamicTable(columns, rows) {
 
         const targetRealIdx = (row.__realIndex !== undefined) ? row.__realIndex : idx;
 
+        // ดึงค่า MTBF / MTTR ของแถวนี้มาเตรียมคำนวณ Tooltip
+        const mtbfColKey = columns.find(c => normalizeCol(c) === 'mtbf');
+        const mttrColKey = columns.find(c => normalizeCol(c) === 'mttr');
+        const rowMtbf = mtbfColKey ? (parseFloat(row[mtbfColKey]) || 0) : 0;
+        const rowMttr = mttrColKey ? (parseFloat(row[mttrColKey]) || 0) : 0;
+
         columns.forEach(col => {
             const td = document.createElement('td');
             const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : '-';
@@ -627,21 +644,27 @@ function renderDynamicTable(columns, rows) {
                            title="Change MTTR to recalculate Availability">
                 `;
             }
-            // 3. ช่องกรอก Availability (กำหนดเองได้ + เปลี่ยนสีสด + ล็อก MTTR คำนวณ MTBF)
+            // 3. ช่องกรอก Availability + Tooltip เด้งบอกวิธีปรับปรุงเมื่อเป็นสีแดง
             else if (norm === 'availability') {
                 const p = getAvailPercentage(val);
                 const displayVal = (p !== null) ? p.toFixed(2) : '';
                 const inputClass = getAvailInputClass(p);
+                const isFailed = (p !== null && p < 96.0);
+
                 td.innerHTML = `
-                    <input type="number" 
-                           id="avail-input-${targetRealIdx}"
-                           class="${inputClass}" 
-                           value="${displayVal}" 
-                           step="0.01"
-                           min="0"
-                           max="99.99"
-                           oninput="handleAvailabilityCustomChange(${targetRealIdx}, this.value)" 
-                           title="Enter target Availability % (Locks MTTR & recalculates MTBF)">
+                    <div class="avail-cell-wrapper">
+                        <input type="number" 
+                               id="avail-input-${targetRealIdx}"
+                               class="${inputClass}" 
+                               value="${displayVal}" 
+                               step="0.01"
+                               min="0"
+                               max="99.99"
+                               oninput="handleAvailabilityCustomChange(${targetRealIdx}, this.value)">
+                        <div id="avail-tooltip-${targetRealIdx}" class="avail-tooltip ${isFailed ? 'show-tooltip' : ''}">
+                            ${generateRecommendationHtml(rowMtbf, rowMttr, p)}
+                        </div>
+                    </div>
                 `;
             }
             // 4. Risk Level Badge
