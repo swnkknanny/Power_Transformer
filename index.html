@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <link rel="stylesheet" href="style.css?v=2026_RAM_v1">
+    <link rel="stylesheet" href="style.css?v=2026_AVAIL_FIX_V2">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- Firebase SDK สำหรับ Realtime Database -->
@@ -178,10 +178,23 @@
                     </table>
                 </div>
             </section>
+
+            <!-- กล่องแนะนำมาตรการปรับปรุงบำรุงรักษาเมื่อ Availability < 96% -->
+            <div id="ramImprovementBox" class="ram-recommendation-box">
+                <div class="ram-rec-header">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>มาตรการปรับปรุงความพร้อมใช้งาน (Availability Improvement Strategy &lt; 96%)</span>
+                </div>
+                <ul class="ram-rec-list">
+                    <li><strong>ลดระยะเวลาแก้ไข (Reduce MTTR):</strong> จัดเตรียมอะไหล่สำรอง (Spare Parts) สำหรับชิ้นส่วนที่มีอัตราเสียหายบ่อย และซักซ้อมขั้นตอนเข้าบำรุงรักษาเพื่อลดเวลา Down Time</li>
+                    <li><strong>ยกระดับการบำรุงรักษาเชิงป้องกัน (Increase MTBF):</strong> ปรับรอบการตรวจเช็กและทดสอบสภาพฉนวน/กลไก ให้ถี่ขึ้นเพื่อป้องกันความเสียหายแบบฉับพลัน</li>
+                    <li><strong>จัดกลุ่มงานบำรุงรักษาตามสภาพ (CBM):</strong> นำค่า Telemetry และผลวิเคราะห์ DGA/Thermal Scan มาวางแผนบำรุงรักษาก่อนเกิด Failure</li>
+                </ul>
+            </div>
         </main>
     </div>
 
-    <!-- บังคับโหลดสคริปต์เวอร์ชันใหม่เสมอ -->
-    <script src="app.js?v=2026_RAM_LIVE_v1"></script>
+    <!-- บังคับโหลด JavaScript ใหม่เสมอ -->
+    <script src="app.js?v=2026_AVAIL_FIX_V2"></script>
 </body>
 </html>
