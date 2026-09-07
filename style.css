@@ -566,11 +566,36 @@ tbody tr:hover td {
     font-weight: 600;
 }
 
-.badge-critical {
-    background-color: #fef2f2 !important;
-    color: #dc2626 !important;
-    border: 1px solid #fecaca;
+/* RAM Simulation Inputs & Badges */
+.table-input {
+    width: 95px;
+    padding: 5px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background-color: #FAFBFA;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.table-input:focus {
+    border-color: var(--accent-primary);
+    background-color: var(--surface);
+    box-shadow: 0 0 0 2px rgba(53, 107, 80, 0.12);
+}
+
+.tag-avail {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
     font-weight: 600;
+    background-color: var(--accent-light);
+    color: var(--accent-primary);
+    min-width: 75px;
+    text-align: center;
 }
 
 .empty-state {
