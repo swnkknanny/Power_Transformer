@@ -14,9 +14,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const filesRef = db.ref('shared_datasets');
+const uiLabelsRef = db.ref('ui_custom_labels');
 
 // Core Variables
 let allFilesData = {};
+let uiCustomLabels = {};
 let currentActiveFile = '';
 let currentActiveSheet = '';
 let searchQuery = '';
@@ -39,6 +41,20 @@ filesRef.on('value', (snapshot) => {
     renderSidebar();
 });
 
+uiLabelsRef.on('value', (snapshot) => {
+    uiCustomLabels = snapshot.val() || {};
+    applyCustomLabelsToUI();
+});
+
+function applyCustomLabelsToUI() {
+    document.querySelectorAll('.admin-editable').forEach(el => {
+        const key = el.getAttribute('data-edit-key');
+        if (key && uiCustomLabels[key]) {
+            el.innerText = uiCustomLabels[key];
+        }
+    });
+}
+
 function saveToCloud() {
     if (currentUserRole !== 'MasterKey') return;
     filesRef.set(allFilesData).catch((err) => {
@@ -54,7 +70,49 @@ function clearCloud() {
 }
 
 // ==========================================
-// 3. Authentication System
+// 3. Admin Inline Name/Label Editing
+// ==========================================
+function setupInlineEditing() {
+    const editables = document.querySelectorAll('.admin-editable');
+    const isAdmin = (currentUserRole === 'MasterKey');
+
+    if (isAdmin) {
+        document.body.classList.add('role-is-admin');
+    } else {
+        document.body.classList.remove('role-is-admin');
+    }
+
+    editables.forEach(el => {
+        if (isAdmin) {
+            el.setAttribute('contenteditable', 'true');
+            el.title = 'Double-click or click to edit name';
+
+            el.onblur = function() {
+                const key = el.getAttribute('data-edit-key');
+                const newVal = el.innerText.trim();
+                if (key && newVal) {
+                    uiCustomLabels[key] = newVal;
+                    uiLabelsRef.set(uiCustomLabels);
+                }
+            };
+
+            el.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    el.blur();
+                }
+            };
+        } else {
+            el.removeAttribute('contenteditable');
+            el.title = '';
+            el.onblur = null;
+            el.onkeydown = null;
+        }
+    });
+}
+
+// ==========================================
+// 4. Authentication System
 // ==========================================
 function selectLoginRole(role) {
     selectedLoginRole = role;
@@ -97,6 +155,7 @@ function checkAuth() {
             badge.className = 'user-role-badge role-visitor';
             adminControls.style.display = 'none';
         }
+        setupInlineEditing();
         renderSidebar();
     }
 }
@@ -141,7 +200,7 @@ function logout() {
 }
 
 // ==========================================
-// 4. Excel Ingestion (Strict Original Sequence)
+// 5. Excel Ingestion (Strict Original Sequence)
 // ==========================================
 document.getElementById('excelFileInput').addEventListener('change', function(e) {
     if (currentUserRole !== 'MasterKey') {
@@ -232,7 +291,7 @@ function clearAllFiles() {
 }
 
 // ==========================================
-// 5. RAM Simulation Engine & Hover Recommendation
+// 6. RAM Simulation Engine & Real-time Calc
 // ==========================================
 function normalizeCol(col) {
     return String(col || '').toLowerCase().replace(/[\s_\-]/g, '');
@@ -260,14 +319,10 @@ function getAvailInputClass(percent) {
     return percent >= 96.0 ? 'avail-input avail-input-pass' : 'avail-input avail-input-fail';
 }
 
-// สร้างข้อความแนะนำปรับปรุงเชิงวิศวกรรมสำหรับ Tooltip
 function generateRecommendationHtml(mtbf, mttr, percent) {
     if (percent === null || percent >= 96.0) return '';
 
-    // คำนวณค่าเป้าหมายทางวิศวกรรมเพื่อให้ได้ Availability >= 96%
-    // เกณฑ์ 96%: A = 0.96 -> MTTR ต้อง <= (MTBF * 0.04) / 0.96
     const maxAllowedMttr = (mtbf > 0) ? Math.max(0.1, ((mtbf * 0.04) / 0.96)).toFixed(1) : 0;
-    // หรือ MTBF ต้อง >= (0.96 * MTTR) / 0.04
     const minRequiredMtbf = (mttr > 0) ? Math.round((0.96 * mttr) / 0.04) : 0;
 
     return `
@@ -283,7 +338,6 @@ function generateRecommendationHtml(mtbf, mttr, percent) {
     `;
 }
 
-// อัปเดต Tooltip แบบ Real-time
 function updateTooltipContent(rowIndex, mtbf, mttr, percent) {
     const tooltipEl = document.getElementById(`avail-tooltip-${rowIndex}`);
     if (!tooltipEl) return;
@@ -297,7 +351,6 @@ function updateTooltipContent(rowIndex, mtbf, mttr, percent) {
     }
 }
 
-// คำนวณเมื่อแก้ MTBF หรือ MTTR
 function handleRamChange(rowIndex, colName, newValue) {
     const activeSheets = allFilesData[currentActiveFile] || {};
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
@@ -326,7 +379,6 @@ function handleRamChange(rowIndex, colName, newValue) {
                 availInput.className = getAvailInputClass(calculatedPercent);
             }
 
-            // อัปเดตข้อความ Tooltip คำแนะนำทันที
             updateTooltipContent(rowIndex, mtbf, mttr, calculatedPercent);
         }
     }
@@ -336,7 +388,6 @@ function handleRamChange(rowIndex, colName, newValue) {
     }
 }
 
-// คำนวณเมื่อกำหนด Availability เองโดยตรง (ล็อก MTTR -> คำนวณ MTBF)
 function handleAvailabilityCustomChange(rowIndex, newAvailPercent) {
     const activeSheets = allFilesData[currentActiveFile] || {};
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
@@ -371,7 +422,6 @@ function handleAvailabilityCustomChange(rowIndex, newAvailPercent) {
                 availInput.className = getAvailInputClass(percent);
             }
 
-            // อัปเดตข้อความ Tooltip คำแนะนำทันที
             updateTooltipContent(rowIndex, calculatedMtbf, mttr, percent);
         }
     }
@@ -477,6 +527,8 @@ function renderSidebar() {
     const sheetContent = getSheetContent(activeSheets[currentActiveSheet]);
     updateDynamicStats(sheetContent.rows, sheetContent.columns);
     processTableData(sheetContent.rows, sheetContent.columns);
+    setupInlineEditing();
+    applyCustomLabelsToUI();
 }
 
 function selectFile(fileName) {
@@ -607,7 +659,6 @@ function renderDynamicTable(columns, rows) {
 
         const targetRealIdx = (row.__realIndex !== undefined) ? row.__realIndex : idx;
 
-        // ดึงค่า MTBF / MTTR ของแถวนี้มาเตรียมคำนวณ Tooltip
         const mtbfColKey = columns.find(c => normalizeCol(c) === 'mtbf');
         const mttrColKey = columns.find(c => normalizeCol(c) === 'mttr');
         const rowMtbf = mtbfColKey ? (parseFloat(row[mtbfColKey]) || 0) : 0;
@@ -618,7 +669,7 @@ function renderDynamicTable(columns, rows) {
             const val = row[col] !== undefined && row[col] !== null ? String(row[col]) : '-';
             const norm = normalizeCol(col);
 
-            // 1. ช่องกรอก MTBF
+            // 1. MTBF
             if (norm === 'mtbf') {
                 const numericVal = parseFloat(val) || 0;
                 td.innerHTML = `
@@ -631,7 +682,7 @@ function renderDynamicTable(columns, rows) {
                            title="Change MTBF to recalculate Availability">
                 `;
             }
-            // 2. ช่องกรอก MTTR
+            // 2. MTTR
             else if (norm === 'mttr') {
                 const numericVal = parseFloat(val) || 0;
                 td.innerHTML = `
@@ -644,7 +695,7 @@ function renderDynamicTable(columns, rows) {
                            title="Change MTTR to recalculate Availability">
                 `;
             }
-            // 3. ช่องกรอก Availability + Tooltip เด้งบอกวิธีปรับปรุงเมื่อเป็นสีแดง
+            // 3. Availability
             else if (norm === 'availability') {
                 const p = getAvailPercentage(val);
                 const displayVal = (p !== null) ? p.toFixed(2) : '';
@@ -667,7 +718,7 @@ function renderDynamicTable(columns, rows) {
                     </div>
                 `;
             }
-            // 4. Risk Level Badge
+            // 4. Risk Level
             else if (norm === 'rpnrisklevel' || norm === 'risklevel') {
                 const lower = val.toLowerCase();
                 let badgeClass = 'badge-risk-low';
@@ -675,7 +726,7 @@ function renderDynamicTable(columns, rows) {
                 else if (lower.includes('med')) badgeClass = 'badge-risk-med';
                 td.innerHTML = `<span class="tag ${badgeClass}">${val}</span>`;
             } 
-            // 5. Is Critical (ข้อความเรียบ Yes / No)
+            // 5. Is Critical
             else if (norm === 'iscritical') {
                 const lower = val.toLowerCase();
                 if (lower === 'yes' || lower === 'true' || lower === 'critical') {
@@ -686,11 +737,11 @@ function renderDynamicTable(columns, rows) {
                     td.innerText = val;
                 }
             }
-            // 6. Code Badge
+            // 6. Code
             else if (norm === 'code' || norm === 'failurecode') {
                 td.innerHTML = `<span class="tag tag-badge">${val}</span>`;
             } 
-            // 7. Remedy Badge
+            // 7. Remedy
             else if (norm === 'remedy' && val !== '-') {
                 td.innerHTML = `<span class="tag tag-remedy">${val}</span>`;
             }
