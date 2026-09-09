@@ -2,21 +2,34 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
+// ระบบความปลอดภัย: รหัสผ่านเริ่มต้น (สามารถเปลี่ยนรหัสนี้ได้ตามต้องการ)
+const ADMIN_PASSWORD = '1234'; 
+let isAdmin = false;
+
+const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
+
+// Elements
 const fileInput = document.getElementById('excelFile');
 const sheetSelect = document.getElementById('sheetSelect');
-const subsystemControl = document.getElementById('subsystemControl');
 const tableContainer = document.getElementById('tableContainer');
 const currentSheetTitle = document.getElementById('currentSheetTitle');
 const searchInput = document.getElementById('searchInput');
+const editNotice = document.getElementById('editNotice');
+const modeBadge = document.getElementById('modeBadge');
 
-const avgAvailElem = document.getElementById('avgAvail');
-const avgMtbfElem = document.getElementById('avgMtbf');
-const avgMttrElem = document.getElementById('avgMttr');
-const totalModesElem = document.getElementById('totalModes');
-const worstAvailElem = document.getElementById('worstAvail');
-const worstMttrElem = document.getElementById('worstMttr');
+const adminUploadWidget = document.getElementById('adminUploadWidget');
+const saveExcelBtn = document.getElementById('saveExcelBtn');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const userProfile = document.getElementById('userProfile');
 
-// Modal Elements
+const loginModal = document.getElementById('loginModal');
+const closeLoginModal = document.getElementById('closeLoginModal');
+const cancelLoginModal = document.getElementById('cancelLoginModal');
+const submitLoginBtn = document.getElementById('submitLoginBtn');
+const adminPasswordInput = document.getElementById('adminPassword');
+const loginError = document.getElementById('loginError');
+
 const exportModal = document.getElementById('exportModal');
 const openExportModalBtn = document.getElementById('openExportModalBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
@@ -25,28 +38,49 @@ const confirmPrintBtn = document.getElementById('confirmPrintBtn');
 const sheetOptionsList = document.getElementById('sheetOptionsList');
 const printContainer = document.getElementById('printContainer');
 
+const avgAvailElem = document.getElementById('avgAvail');
+const avgMtbfElem = document.getElementById('avgMtbf');
+const avgMttrElem = document.getElementById('avgMttr');
+const totalModesElem = document.getElementById('totalModes');
+const worstAvailElem = document.getElementById('worstAvail');
+const worstMttrElem = document.getElementById('worstMttr');
+
+// โหลดไฟล์เริ่มต้นอัตโนมัติ
+async function autoLoadDefaultExcel() {
+  try {
+    const response = await fetch(DEFAULT_EXCEL_FILE);
+    if (!response.ok) return;
+    const arrayBuffer = await response.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    handleWorkbookData(data);
+  } catch (err) {
+    console.error('Auto-load failed:', err);
+  }
+}
+document.addEventListener('DOMContentLoaded', autoLoadDefaultExcel);
+
+function handleWorkbookData(data) {
+  currentWorkbook = XLSX.read(data, { type: 'array' });
+
+  sheetSelect.innerHTML = '';
+  currentWorkbook.SheetNames.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    sheetSelect.appendChild(option);
+  });
+
+  const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
+  sheetSelect.value = defaultSheet;
+  loadRamSheet(defaultSheet);
+}
+
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const data = new Uint8Array(evt.target.result);
-    currentWorkbook = XLSX.read(data, { type: 'array' });
-
-    sheetSelect.innerHTML = '';
-    currentWorkbook.SheetNames.forEach(name => {
-      const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name;
-      sheetSelect.appendChild(option);
-    });
-
-    subsystemControl.style.display = 'block';
-
-    const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
-    sheetSelect.value = defaultSheet;
-    loadRamSheet(defaultSheet);
+    handleWorkbookData(new Uint8Array(evt.target.result));
   };
   reader.readAsArrayBuffer(file);
 });
@@ -57,6 +91,70 @@ sheetSelect.addEventListener('change', function(e) {
   }
 });
 
+/* ============================================================
+   ADMIN AUTHENTICATION LOGIC
+   ============================================================ */
+loginBtn.addEventListener('click', () => {
+  loginModal.classList.add('show');
+  adminPasswordInput.value = '';
+  loginError.style.display = 'none';
+  adminPasswordInput.focus();
+});
+
+function closeLogin() {
+  loginModal.classList.remove('show');
+}
+closeLoginModal.addEventListener('click', closeLogin);
+cancelLoginModal.addEventListener('click', closeLogin);
+
+submitLoginBtn.addEventListener('click', checkAdminPassword);
+adminPasswordInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') checkAdminPassword();
+});
+
+function checkAdminPassword() {
+  if (adminPasswordInput.value === ADMIN_PASSWORD) {
+    isAdmin = true;
+    updateAuthUI();
+    closeLogin();
+    // รีเรนเดอร์ตารางให้เป็นโหมดแก้ไขได้
+    if (currentWorkbook) loadRamSheet(sheetSelect.value);
+  } else {
+    loginError.style.display = 'block';
+  }
+}
+
+logoutBtn.addEventListener('click', () => {
+  isAdmin = false;
+  updateAuthUI();
+  if (currentWorkbook) loadRamSheet(sheetSelect.value);
+});
+
+function updateAuthUI() {
+  if (isAdmin) {
+    loginBtn.style.display = 'none';
+    userProfile.style.display = 'flex';
+    adminUploadWidget.style.display = 'block';
+    saveExcelBtn.style.display = 'flex';
+    modeBadge.textContent = 'ADMIN MODE (EDITABLE)';
+    modeBadge.classList.add('admin');
+    editNotice.textContent = '✏️ โหมดแอดมิน: ดับเบิลคลิกที่ช่องในตารางเพื่อแก้ไขข้อมูลได้โดยตรง';
+    editNotice.style.color = '#b84a39';
+  } else {
+    loginBtn.style.display = 'flex';
+    userProfile.style.display = 'none';
+    adminUploadWidget.style.display = 'none';
+    saveExcelBtn.style.display = 'none';
+    modeBadge.textContent = 'VIEWER MODE';
+    modeBadge.classList.remove('admin');
+    editNotice.textContent = 'โหมดอ่านอย่างเดียว (Viewer Mode)';
+    editNotice.style.color = 'var(--text-muted)';
+  }
+}
+
+/* ============================================================
+   METRICS & TABLE RENDERING
+   ============================================================ */
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
   let totalMttr = 0, countMttr = 0;
@@ -78,7 +176,6 @@ function calculateSheetMetrics(rows) {
       totalMtbf += Number(r[mtbfKey]);
       countMtbf++;
     }
-
     if (mttrKey && !isNaN(r[mttrKey])) {
       const mttrVal = Number(r[mttrKey]);
       totalMttr += mttrVal;
@@ -88,7 +185,6 @@ function calculateSheetMetrics(rows) {
         maxMttrItem = `${compName} (${mttrVal} ชม.)`;
       }
     }
-
     if (availKey && !isNaN(r[availKey])) {
       let availVal = Number(r[availKey]);
       if (availVal <= 1) availVal = availVal * 100;
@@ -103,23 +199,17 @@ function calculateSheetMetrics(rows) {
     if (causeKey && r[causeKey]) {
       const rawCauses = r[causeKey].toString().split(/[,、]/);
       rawCauses.forEach(c => {
-        const cleanCause = c.trim();
-        if (cleanCause) {
-          causeCounts[cleanCause] = (causeCounts[cleanCause] || 0) + 1;
-        }
+        const clean = c.trim();
+        if (clean) causeCounts[clean] = (causeCounts[clean] || 0) + 1;
       });
     }
   });
 
-  const avgAvail = countAvail > 0 ? (totalAvail / countAvail) : 0;
-  const avgMtbf = countMtbf > 0 ? Math.round(totalMtbf / countMtbf) : 0;
-  const avgMttr = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : 0;
-
   return {
     totalModes: rows.length,
-    avgAvail: countAvail > 0 ? avgAvail.toFixed(2) : '-',
-    avgMtbf: countMtbf > 0 ? avgMtbf.toLocaleString() : '-',
-    avgMttr: countMttr > 0 ? avgMttr : '-',
+    avgAvail: countAvail > 0 ? (totalAvail / countAvail).toFixed(2) : '-',
+    avgMtbf: countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-',
+    avgMttr: countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-',
     minAvailItem: minAvail !== Infinity ? minAvailItem : '-',
     maxMttrItem: maxMttr !== -Infinity ? maxMttrItem : '-',
     causeCounts
@@ -141,13 +231,8 @@ function loadRamSheet(sheetName) {
 
   avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
   avgAvailElem.classList.remove('status-green', 'status-red');
-  
   if (metrics.avgAvail !== '-') {
-    if (parseFloat(metrics.avgAvail) >= 96) {
-      avgAvailElem.classList.add('status-green');
-    } else {
-      avgAvailElem.classList.add('status-red');
-    }
+    avgAvailElem.classList.add(parseFloat(metrics.avgAvail) >= 96 ? 'status-green' : 'status-red');
   }
 
   totalModesElem.textContent = metrics.totalModes.toLocaleString();
@@ -157,7 +242,7 @@ function loadRamSheet(sheetName) {
   worstMttrElem.textContent = metrics.maxMttrItem;
 
   renderCauseChart(metrics.causeCounts);
-  renderFormattedTable(sheet);
+  renderFormattedTable(sheet, sheetName);
 }
 
 function renderCauseChart(causeCounts) {
@@ -173,9 +258,7 @@ function renderCauseChart(causeCounts) {
     data.push(others);
   }
 
-  if (currentChart) {
-    currentChart.destroy();
-  }
+  if (currentChart) currentChart.destroy();
 
   currentChart = new Chart(ctx, {
     type: 'doughnut',
@@ -192,17 +275,14 @@ function renderCauseChart(causeCounts) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'right',
-          labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } }
-        }
+        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } } }
       },
       cutout: '68%'
     }
   });
 }
 
-function renderFormattedTable(sheet) {
+function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   if (jsonData.length === 0) return;
 
@@ -236,8 +316,7 @@ function renderFormattedTable(sheet) {
 
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i];
-    let rowAvail = 100;
-    let rowMttr = 0;
+    let rowAvail = 100, rowMttr = 0;
 
     if (availColIndex !== -1 && row[availColIndex] !== undefined) {
       let v = Number(row[availColIndex]);
@@ -247,18 +326,21 @@ function renderFormattedTable(sheet) {
       rowMttr = Number(row[mttrColIndex]);
     }
 
-    tableHtml += `<tr data-avail="${rowAvail}" data-mttr="${rowMttr}">`;
+    tableHtml += `<tr data-row="${i}" data-avail="${rowAvail}" data-mttr="${rowMttr}">`;
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
+
+      // ถ้าเป็น Admin จะเปิด contenteditable ให้แก้ไขได้
+      const editableAttr = isAdmin ? 'contenteditable="true"' : '';
 
       if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
         const valNum = Number(cellValue);
         const percentVal = valNum <= 1 ? valNum * 100 : valNum;
         const badgeClass = percentVal >= 96 ? 'badge-pass' : 'badge-fail';
-        tableHtml += `<td class="${colClass}"><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
+        tableHtml += `<td class="${colClass}" data-col="${j}"><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
       } else {
-        tableHtml += `<td class="${colClass}">${cellValue}</td>`;
+        tableHtml += `<td class="${colClass}" data-col="${j}" ${editableAttr}>${cellValue}</td>`;
       }
     }
     tableHtml += '</tr>';
@@ -266,12 +348,49 @@ function renderFormattedTable(sheet) {
 
   tableHtml += '</tbody></table>';
   tableContainer.innerHTML = tableHtml;
+
+  // ถ้าเป็น Admin ให้ผูก Event การแก้ไขข้อมูลในเซลล์แบบ Real-time
+  if (isAdmin) {
+    bindCellEditEvents(sheetName);
+  }
+
   applyTableFilter();
 }
 
+function bindCellEditEvents(sheetName) {
+  const editableCells = document.querySelectorAll('#ramTable td[contenteditable="true"]');
+  editableCells.forEach(cell => {
+    cell.addEventListener('blur', function() {
+      const rowIdx = parseInt(this.parentElement.getAttribute('data-row'));
+      const colIdx = parseInt(this.getAttribute('data-col'));
+      const newVal = this.textContent.trim();
+
+      // บันทึกลงใน Memory Sheet ของ XLSX ทันที
+      const sheet = currentWorkbook.Sheets[sheetName];
+      const cellAddress = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
+
+      if (!sheet[cellAddress]) sheet[cellAddress] = {};
+      sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
+      sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
+
+      // รีคำนวณสถิติ KPI ด้านบนใหม่ทันที
+      const updatedRows = XLSX.utils.sheet_to_json(sheet);
+      const metrics = calculateSheetMetrics(updatedRows);
+      avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
+      avgMtbfElem.textContent = metrics.avgMtbf;
+      avgMttrElem.textContent = metrics.avgMttr;
+    });
+  });
+}
+
+// ปุ่มบันทึกและดาวน์โหลด Excel หลัง Admin แก้ไข
+saveExcelBtn.addEventListener('click', function() {
+  if (!currentWorkbook) return;
+  XLSX.writeFile(currentWorkbook, 'ALL_RAM_Updated.xlsx');
+});
+
 function resetMetrics() {
   avgAvailElem.textContent = '-%';
-  avgAvailElem.classList.remove('status-green', 'status-red');
   avgMtbfElem.textContent = '-';
   avgMttrElem.textContent = '-';
   totalModesElem.textContent = '0';
@@ -292,11 +411,8 @@ function applyTableFilter() {
     const matchesSearch = text.includes(query);
     let matchesFilter = true;
 
-    if (currentActiveFilter === 'critical') {
-      matchesFilter = avail < 96;
-    } else if (currentActiveFilter === 'high-mttr') {
-      matchesFilter = mttr > 10;
-    }
+    if (currentActiveFilter === 'critical') matchesFilter = avail < 96;
+    else if (currentActiveFilter === 'high-mttr') matchesFilter = mttr > 10;
 
     tr.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
   });
@@ -314,18 +430,17 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   LOGIC MODAL & PRINT SPECIFIC SHEET
+   EXPORT PDF MODAL & PRINT LOGIC
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
-    alert('กรุณาเลือกไฟล์ Excel ก่อนทำการพิมพ์');
+    alert('กรุณารอข้อมูลโหลดเสร็จสิ้นก่อนสั่งพิมพ์');
     return;
   }
 
   const currentSheet = sheetSelect.value;
   sheetOptionsList.innerHTML = '';
 
-  // ตัวเลือกชีตปัจจุบัน
   const currentOption = `
     <label class="sheet-radio-item">
       <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
@@ -334,7 +449,6 @@ openExportModalBtn.addEventListener('click', function() {
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
 
-  // ตัวเลือกชีตอื่นๆ
   currentWorkbook.SheetNames.forEach(name => {
     if (name !== currentSheet) {
       const item = `
@@ -347,9 +461,8 @@ openExportModalBtn.addEventListener('click', function() {
     }
   });
 
-  // ตัวเลือกพิมพ์ทั้งหมด
   const allOption = `
-    <label class="sheet-radio-item" style="border-top: 1.5px dashed #d4d2cb; margin-top: 6px; padding-top: 12px;">
+    <label class="sheet-radio-item" style="border-top: 1.5px dashed #d4d2cb; margin-top: 6px; padding-top: 10px;">
       <input type="radio" name="printSheetTarget" value="__ALL__" />
       <span><strong>ทุกระบบพร้อมกัน (All Subsystems)</strong></span>
     </label>
@@ -359,27 +472,19 @@ openExportModalBtn.addEventListener('click', function() {
   exportModal.classList.add('show');
 });
 
-function closeModal() {
-  exportModal.classList.remove('show');
-}
+function closeModal() { exportModal.classList.remove('show'); }
 closeModalBtn.addEventListener('click', closeModal);
 cancelModalBtn.addEventListener('click', closeModal);
 
-// เมื่อกดยืนยันการพิมพ์
 confirmPrintBtn.addEventListener('click', function() {
   const selectedRadio = document.querySelector('input[name="printSheetTarget"]:checked');
   if (!selectedRadio) return;
 
   const targetSheet = selectedRadio.value;
   closeModal();
-
-  // สร้าง HTML สำหรับหน้าพิมพ์โดยเฉพาะ
   buildPrintView(targetSheet);
 
-  // สั่งเปิดหน้าต่าง Print
-  setTimeout(() => {
-    window.print();
-  }, 300);
+  setTimeout(() => { window.print(); }, 300);
 });
 
 function buildPrintView(targetSheet) {
@@ -404,7 +509,7 @@ function buildPrintView(targetSheet) {
             <h2>รายงานการวิเคราะห์ RAM: ระบบ ${sName}</h2>
             <span style="font-size: 0.75rem; color: #787774;">Substation Reliability & Maintenance Analysis</span>
           </div>
-          <div class="meta">
+          <div style="text-align: right; font-size: 0.75rem; color: #787774;">
             <div>ผู้จัดทำ: <strong>Suwanan K. (Reliability Engineer)</strong></div>
             <div>วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</div>
           </div>
@@ -430,13 +535,10 @@ function buildPrintView(targetSheet) {
         </div>
 
         <table class="print-table">
-          <thead>
-            <tr>
+          <thead><tr>
     `;
 
-    headers.forEach(h => {
-      pageHtml += `<th>${h || ''}</th>`;
-    });
+    headers.forEach(h => { pageHtml += `<th>${h || ''}</th>`; });
     pageHtml += `</tr></thead><tbody>`;
 
     for (let i = 1; i < jsonData.length; i++) {
