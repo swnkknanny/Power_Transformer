@@ -3,7 +3,7 @@ let currentChart = null;
 let currentActiveFilter = 'all';
 
 // ระบบความปลอดภัย: รหัสผ่านเริ่มต้น (สามารถเปลี่ยนรหัสนี้ได้ตามต้องการ)
-const ADMIN_PASSWORD = '1234'; 
+const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
