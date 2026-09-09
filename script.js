@@ -2,13 +2,13 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// รหัสผ่านแอดมินเริ่มต้น
+// Security Protocol Credentials
 const ADMIN_PASSWORD = '1234'; 
 let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 
-// Elements
+// DOM Elements
 const fileInput = document.getElementById('excelFile');
 const sheetSelect = document.getElementById('sheetSelect');
 const tableContainer = document.getElementById('tableContainer');
@@ -45,29 +45,24 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-// 1. ระบบ Auto Fetch: พยายามดึงไฟล์อัตโนมัติ ถ้าไม่เจอให้แสดงปุ่มเลือกไฟล์ทันที
+// Fetch Initial Repository Data
 async function autoLoadDefaultExcel() {
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
-    if (!response.ok) {
-      throw new Error('File not found');
-    }
+    if (!response.ok) throw new Error('File not detected');
     const arrayBuffer = await response.arrayBuffer();
-    const data = new Uint8Array(arrayBuffer);
-    handleWorkbookData(data);
+    handleWorkbookData(new Uint8Array(arrayBuffer));
   } catch (err) {
-    console.warn('ยังไม่พบไฟล์เริ่มต้นบนเซิร์ฟเวอร์:', err);
     showManualUploadPrompt();
   }
 }
 
-// ถ้าหาไฟล์ไม่เจอ ให้แสดงหน้าจอให้คลิกเลือกไฟล์เอง
 function showManualUploadPrompt() {
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
-      <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: #2b825b; margin-bottom: 12px;"></i>
-      <p style="font-weight: 600; color: #222; margin-bottom: 4px;">คลิกที่นี่เพื่อเปิดไฟล์ ALL_RAM.xlsx</p>
-      <span style="font-size: 0.78rem; color: #787774;">(ยังไม่พบไฟล์บนเซิร์ฟเวอร์ กรุณาเลือกไฟล์จากเครื่องเพื่อเริ่มใช้งาน)</span>
+      <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.4rem; color: #8E7C93; margin-bottom: 12px;"></i>
+      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Select Substation Worksheet (ALL_RAM.xlsx)</p>
+      <span style="font-size: 0.75rem; color: #888E94;">Click anywhere in this container to load local file telemetry</span>
     </div>
   `;
 }
@@ -81,7 +76,7 @@ function handleWorkbookData(data) {
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = name;
+    option.textContent = `Subsystem: ${name}`;
     sheetSelect.appendChild(option);
   });
 
@@ -107,7 +102,7 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 /* ============================================================
-   ADMIN AUTHENTICATION LOGIC
+   ADMIN GATEWAY AUTHENTICATION
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -150,24 +145,24 @@ function updateAuthUI() {
     userProfile.style.display = 'flex';
     adminUploadWidget.style.display = 'block';
     saveExcelBtn.style.display = 'flex';
-    modeBadge.textContent = 'ADMIN MODE (EDITABLE)';
+    modeBadge.textContent = 'ADMIN CONSOLE (UNLOCKED)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = '✏️ โหมดแอดมิน: ดับเบิลคลิกที่ช่องในตารางเพื่อแก้ไขข้อมูลได้โดยตรง';
-    editNotice.style.color = '#b84a39';
+    editNotice.textContent = 'Active Edit Mode: Click on data cells to modify values';
+    editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
     userProfile.style.display = 'none';
     adminUploadWidget.style.display = 'none';
     saveExcelBtn.style.display = 'none';
-    modeBadge.textContent = 'VIEWER MODE';
+    modeBadge.textContent = 'VIEWER CONSOLE';
     modeBadge.classList.remove('admin');
-    editNotice.textContent = 'โหมดอ่านอย่างเดียว (Viewer Mode)';
-    editNotice.style.color = 'var(--text-muted)';
+    editNotice.textContent = 'Read-Only Observation Mode';
+    editNotice.style.color = 'var(--text-secondary)';
   }
 }
 
 /* ============================================================
-   METRICS & TABLE RENDERING
+   EXECUTIVE METRICS & COMPUTATION ENGINE
    ============================================================ */
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
@@ -184,7 +179,7 @@ function calculateSheetMetrics(rows) {
     const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
     const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
 
-    const compName = r[compKey] || 'Unknown';
+    const compName = r[compKey] || 'Unknown Equipment';
 
     if (mtbfKey && !isNaN(r[mtbfKey])) {
       totalMtbf += Number(r[mtbfKey]);
@@ -196,7 +191,7 @@ function calculateSheetMetrics(rows) {
       countMttr++;
       if (mttrVal > maxMttr) {
         maxMttr = mttrVal;
-        maxMttrItem = `${compName} (${mttrVal} ชม.)`;
+        maxMttrItem = `${compName} (${mttrVal} hrs)`;
       }
     }
     if (availKey && !isNaN(r[availKey])) {
@@ -231,12 +226,12 @@ function calculateSheetMetrics(rows) {
 }
 
 function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `รายการวิเคราะห์ RAM: ระบบ ${sheetName}`;
+  currentSheetTitle.textContent = `Diagnostic Matrix: Subsystem ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: #787774;">ไม่มีข้อมูลในระบบนี้</p>';
+    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">No records registered for this subsystem domain.</p>';
     resetMetrics();
     return;
   }
@@ -259,6 +254,10 @@ function loadRamSheet(sheetName) {
   renderFormattedTable(sheet, sheetName);
 }
 
+/* ============================================================
+   CHART.JS: EXECUTIVE CALM PALETTE ENGINE
+   Palette: Muted Amethyst (#8E7C93), Sage (#66756B), Champagne (#B7A58A), Charcoal Accent (#495057)
+   ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
   const sorted = Object.entries(causeCounts).sort((a, b) => b[1] - a[1]);
@@ -268,7 +267,7 @@ function renderCauseChart(causeCounts) {
   const labels = top4.map(i => i[0]);
   const data = top4.map(i => i[1]);
   if (others > 0) {
-    labels.push('อื่นๆ');
+    labels.push('Other Determinants');
     data.push(others);
   }
 
@@ -280,22 +279,49 @@ function renderCauseChart(causeCounts) {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ['#2b825b', '#3568a8', '#b57a22', '#b84a39', '#a8a29e'],
+        backgroundColor: [
+          '#8E7C93', // Muted Amethyst (Primary Accent)
+          '#66756B', // Muted Sage (Normal/Balanced)
+          '#B7A58A', // Champagne (Refined highlight)
+          '#5F666D', // Charcoal Soft
+          '#C5C2BA'  // Soft Warm Stone
+        ],
         borderWidth: 2,
-        borderColor: '#ffffff'
+        borderColor: '#FFFFFF'
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } } }
+        legend: {
+          position: 'right',
+          labels: {
+            boxWidth: 8,
+            boxHeight: 8,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: { size: 11, family: 'Plus Jakarta Sans, Sarabun', weight: '500' },
+            color: '#5F666D',
+            padding: 14
+          }
+        },
+        tooltip: {
+          backgroundColor: '#343A40',
+          titleFont: { size: 11, family: 'Plus Jakarta Sans' },
+          bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
+          padding: 10,
+          cornerRadius: 6
+        }
       },
-      cutout: '68%'
+      cutout: '72%'
     }
   });
 }
 
+/* ============================================================
+   TABLE RENDERING WITH AUTO-FIT & LIVE INLINE RE-COMPUTATION
+   ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   if (jsonData.length === 0) return;
@@ -383,6 +409,7 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
+      // Recompute metrics instantly
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
@@ -394,7 +421,7 @@ function bindCellEditEvents(sheetName) {
 
 saveExcelBtn.addEventListener('click', function() {
   if (!currentWorkbook) return;
-  XLSX.writeFile(currentWorkbook, 'ALL_RAM_Updated.xlsx');
+  XLSX.writeFile(currentWorkbook, 'Substation_RAM_Intelligence_Export.xlsx');
 });
 
 function resetMetrics() {
@@ -439,11 +466,11 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   EXPORT PDF MODAL & PRINT LOGIC
+   EXECUTIVE BRIEF PRINT SCOPE
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
-    alert('กรุณารอข้อมูลโหลดเสร็จสิ้นก่อนสั่งพิมพ์');
+    alert('Please ensure data telemetry is loaded prior to generating documentation.');
     return;
   }
 
@@ -453,7 +480,7 @@ openExportModalBtn.addEventListener('click', function() {
   const currentOption = `
     <label class="sheet-radio-item">
       <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-      <span><strong>ระบบที่กำลังเปิดดูอยู่ (${currentSheet})</strong></span>
+      <span><strong>Active Workspace Subsystem (${currentSheet})</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
@@ -463,7 +490,7 @@ openExportModalBtn.addEventListener('click', function() {
       const item = `
         <label class="sheet-radio-item">
           <input type="radio" name="printSheetTarget" value="${name}" />
-          <span>ระบบ ${name}</span>
+          <span>Subsystem Scope: ${name}</span>
         </label>
       `;
       sheetOptionsList.insertAdjacentHTML('beforeend', item);
@@ -471,9 +498,9 @@ openExportModalBtn.addEventListener('click', function() {
   });
 
   const allOption = `
-    <label class="sheet-radio-item" style="border-top: 1.5px dashed #d4d2cb; margin-top: 6px; padding-top: 10px;">
+    <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
       <input type="radio" name="printSheetTarget" value="__ALL__" />
-      <span><strong>ทุกระบบพร้อมกัน (All Subsystems)</strong></span>
+      <span><strong>Consolidated Substation Fleet (All Subsystems)</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
@@ -515,31 +542,31 @@ function buildPrintView(targetSheet) {
       <div class="print-page">
         <div class="print-header">
           <div>
-            <h2>รายงานการวิเคราะห์ RAM: ระบบ ${sName}</h2>
-            <span style="font-size: 0.75rem; color: #787774;">Substation Reliability & Maintenance Analysis</span>
+            <h2>RAM Analytics Operational Brief: Subsystem ${sName}</h2>
+            <span style="font-size: 0.72rem; color: #666;">Substation Reliability, Availability & Maintenance Performance Data</span>
           </div>
-          <div style="text-align: right; font-size: 0.75rem; color: #787774;">
-            <div>ผู้จัดทำ: <strong>Suwanan K. (Reliability Engineer)</strong></div>
-            <div>วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</div>
+          <div class="meta">
+            <div>Lead Analyst: <strong>Suwanan K. (Reliability Engineer)</strong></div>
+            <div>Documentation Timestamp: ${new Date().toLocaleDateString('en-GB')}</div>
           </div>
         </div>
 
         <div class="print-kpi-grid">
           <div class="print-kpi-item">
-            <span>Avg. Availability (≥ 96%)</span>
+            <span>Fleet Availability (Target ≥ 96%)</span>
             <strong>${metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-'}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Avg. MTBF</span>
-            <strong>${metrics.avgMtbf} ชม.</strong>
+            <span>Mean Time Between Failures</span>
+            <strong>${metrics.avgMtbf} hrs</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Avg. MTTR</span>
-            <strong>${metrics.avgMttr} ชม.</strong>
+            <span>Mean Time to Restore</span>
+            <strong>${metrics.avgMttr} hrs</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Total Failure Modes</span>
-            <strong>${metrics.totalModes} รายการ</strong>
+            <span>Cataloged Failure Modes</span>
+            <strong>${metrics.totalModes} Modes</strong>
           </div>
         </div>
 
@@ -558,7 +585,7 @@ function buildPrintView(targetSheet) {
         if (j === availColIndex && !isNaN(val) && val !== '') {
           const num = Number(val);
           const pVal = num <= 1 ? num * 100 : num;
-          const color = pVal >= 96 ? '#2b825b' : '#c84444';
+          const color = pVal >= 96 ? '#66756B' : '#A65D57';
           pageHtml += `<td style="color: ${color}; font-weight: bold; text-align: center;">${pVal.toFixed(4)}%</td>`;
         } else {
           pageHtml += `<td>${val}</td>`;
