@@ -1,187 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Power Transformer & Substation Telemetry</title>
-    
-    <!-- Premium Industrial Typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <link rel="stylesheet" href="style.css?v=2026_ADMIN_EDIT_V1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Viewer</title>
 
-    <!-- Firebase SDK สำหรับ Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- เชื่อมต่อไปยังไฟล์ CSS สำหรับแต่งฟอนต์และดีไซน์ -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- ไลบรารีสำหรับอ่านไฟล์ Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-    <!-- Professional Gateway Overlay -->
-    <div class="login-modal-overlay" id="loginModal">
-        <div class="login-box">
-            <div class="login-header">
-                <div class="login-icon">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h2>Security Gateway</h2>
-                <p>Telemetry & RAM analysis authentication</p>
-            </div>
-            
-            <form onsubmit="handleLogin(event)">
-                <div class="role-selector">
-                    <button type="button" class="role-btn active" id="btnRoleMaster" onclick="selectLoginRole('MasterKey')">
-                        MasterKey
-                    </button>
-                    <button type="button" class="role-btn" id="btnRoleVisitor" onclick="selectLoginRole('Visitor')">
-                        Visitor
-                    </button>
-                </div>
+  <div class="container">
+    <h2>อัปโหลดไฟล์ Excel</h2>
 
-                <div class="input-group">
-                    <input type="password" id="accessPass" placeholder="Enter Access Code..." required autofocus>
-                </div>
-                <div id="loginError" class="login-error-msg"></div>
-                
-                <button type="submit" class="btn-login">
-                    Authenticate
-                </button>
-            </form>
-            
-            <div class="login-hints">
-                <span id="roleHintText">MasterKey: Administrative & modification privilege</span>
-            </div>
-        </div>
-    </div>
+    <input type="file" id="excelFile" accept=".xlsx, .xls" />
 
-    <!-- Mobile Sidebar Backdrop -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
+    <div id="tableContainer"></div>
+  </div>
 
-    <!-- Sidebar Structure -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-title-wrap">
-                <span class="brand-system admin-editable" data-edit-key="brand_system">ENGINEERING DASHBOARD</span>
-                <h2 class="admin-editable" data-edit-key="brand_title">Power Transformer</h2>
-            </div>
-            <button class="btn-close-sidebar" onclick="toggleMobileSidebar()" aria-label="Close Sidebar">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        
-        <div class="sidebar-content">
-            <div class="menu-section">
-                <div class="menu-category">
-                    <span class="admin-editable" data-edit-key="menu_datasets">Active Datasets</span>
-                    <span class="count-pill" id="fileCount">0</span>
-                </div>
-                <ul class="file-list" id="fileListContainer"></ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-category">
-                    <span class="admin-editable" data-edit-key="menu_worksheets">Worksheets / Views</span>
-                </div>
-                <ul class="category-list" id="sheetMenuContainer"></ul>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Main Workspace -->
-    <div class="main-wrapper">
-        <header class="top-nav">
-            <div class="nav-left">
-                <button class="btn-menu-toggle" onclick="toggleMobileSidebar()" aria-label="Open Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="system-status-indicator">
-                    <span class="status-dot"></span>
-                    <span class="system-label admin-editable" data-edit-key="status_label">RAM Analysis Live</span>
-                </div>
-            </div>
-            
-            <div class="nav-actions">
-                <span class="user-role-badge" id="roleBadge">Visitor</span>
-
-                <div id="adminActionButtons" class="admin-controls">
-                    <button class="btn-clear-all" onclick="clearAllFiles()" title="Purge Datasets">
-                        Purge Data
-                    </button>
-                    <label class="btn-upload">
-                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                        <span>Import Excel</span>
-                        <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv">
-                    </label>
-                </div>
-
-                <button class="btn-logout" onclick="logout()" title="Terminate Session">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                </button>
-            </div>
-        </header>
-
-        <main class="content-container">
-            <!-- Dedicated Page Heading -->
-            <section class="page-heading-section">
-                <div class="title-meta">
-                    <span class="classification-tag admin-editable" data-edit-key="header_tag">WORKSHEET TELEMETRY</span>
-                    <h1 id="pageTitle">No Worksheet Selected</h1>
-                </div>
-                <div class="header-records-indicator">
-                    <span id="headerRecordCount">0</span> Total Records
-                </div>
-            </section>
-
-            <!-- Dynamic Metrics Panel (FMEA / RAM) -->
-            <section class="metrics-panel">
-                <div class="metric-item">
-                    <span class="metric-label admin-editable" data-edit-key="metric_total_records">Total Sheet Records</span>
-                    <div class="metric-number" id="kpiTotal">0</div>
-                </div>
-                <div class="metric-divider"></div>
-                <div class="metric-item">
-                    <span class="metric-label admin-editable" data-edit-key="metric_attributes">Detected Attributes</span>
-                    <div class="metric-number" id="kpiCols">0</div>
-                </div>
-                <div class="metric-divider"></div>
-                <div class="metric-item">
-                    <span class="metric-label admin-editable" data-edit-key="metric_high_risk">High Risk Items</span>
-                    <div class="metric-number" id="kpiHighRisk">0</div>
-                </div>
-                <div class="metric-divider"></div>
-                <div class="metric-item">
-                    <span class="metric-label admin-editable" data-edit-key="metric_max_rpn">Max RPN</span>
-                    <div class="metric-number" id="kpiMaxRpn">0</div>
-                </div>
-            </section>
-
-            <!-- Table Container -->
-            <section class="table-container">
-                <div class="table-toolbar">
-                    <div class="search-box">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="searchInput" placeholder="Search across all columns and records...">
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table id="dynamicDataTable">
-                        <thead id="dynamicTableHead">
-                            <tr><th style="width: 50px;">#</th><th>Data Attribute</th></tr>
-                        </thead>
-                        <tbody id="dynamicTableBody">
-                            <tr><td colspan="2" class="empty-state"><p>No dataset imported yet.</p></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- บังคับโหลด JavaScript ใหม่เสมอ -->
-    <script src="app.js?v=2026_ADMIN_EDIT_V1"></script>
+  <!-- เชื่อมต่อไปยังไฟล์ JS สำหรับจัดการข้อมูล -->
+  <script src="script.js"></script>
 </body>
 </html>
