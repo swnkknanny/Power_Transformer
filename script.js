@@ -2,36 +2,26 @@ let currentWorkbook = null;
 
 const fileInput = document.getElementById('excelFile');
 const sheetSelect = document.getElementById('sheetSelect');
-const fileDetails = document.getElementById('fileDetails');
-const fileNameSpan = document.getElementById('fileName');
-const fileSizeSpan = document.getElementById('fileSize');
-
-const rowCountElem = document.getElementById('rowCount');
-const colCountElem = document.getElementById('colCount');
-const totalSheetsElem = document.getElementById('totalSheets');
-const currentSheetTitle = document.getElementById('currentSheetTitle');
+const fileControls = document.getElementById('fileControls');
 const tableContainer = document.getElementById('tableContainer');
+const currentSheetTitle = document.getElementById('currentSheetTitle');
 const searchInput = document.getElementById('searchInput');
 
-// Event: อัปโหลดไฟล์
+// Metric Elements
+const avgAvailElem = document.getElementById('avgAvail');
+const avgMtbfElem = document.getElementById('avgMtbf');
+const avgMttrElem = document.getElementById('avgMttr');
+const totalModesElem = document.getElementById('totalModes');
+
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
-
-  // แสดงข้อมูลไฟล์เบื้องต้น
-  fileNameSpan.textContent = file.name;
-  fileSizeSpan.textContent = (file.size / 1024).toFixed(1) + ' KB';
-  fileDetails.style.display = 'block';
 
   const reader = new FileReader();
   reader.onload = function(evt) {
     const data = new Uint8Array(evt.target.result);
     currentWorkbook = XLSX.read(data, { type: 'array' });
 
-    // สรุปจำนวน Sheet
-    totalSheetsElem.textContent = currentWorkbook.SheetNames.length;
-
-    // เคลียร์และสร้างตัวเลือก Sheet
     sheetSelect.innerHTML = '';
     currentWorkbook.SheetNames.forEach(name => {
       const option = document.createElement('option');
@@ -40,54 +30,86 @@ fileInput.addEventListener('change', function(e) {
       sheetSelect.appendChild(option);
     });
 
-    // แสดงชีตแรกเริ่มต้น
-    loadSheetData(currentWorkbook.SheetNames[0]);
+    fileControls.style.display = 'block';
+
+    // ถ้ามี Sheet TR ให้เปิด TR ก่อน ถ้าไม่มีให้เปิด Sheet แรก
+    const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
+    sheetSelect.value = defaultSheet;
+    loadRamSheet(defaultSheet);
   };
   reader.readAsArrayBuffer(file);
 });
 
-// Event: สลับเลือก Sheet
 sheetSelect.addEventListener('change', function(e) {
   if (currentWorkbook) {
-    loadSheetData(e.target.value);
+    loadRamSheet(e.target.value);
   }
 });
 
-// ฟังก์ชันแปลงข้อมูล Sheet และสรุปตัวเลข
-function loadSheetData(sheetName) {
-  currentSheetTitle.textContent = `ตารางข้อมูล: ${sheetName}`;
+function loadRamSheet(sheetName) {
+  currentSheetTitle.textContent = `ตารางวิเคราะห์ RAM: ระบบ ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
+  
+  // แปลงข้อมูลเป็น JSON Object
+  const rows = XLSX.utils.sheet_to_json(sheet);
 
-  // แปลงเป็น Array เพื่อคำนวณจำนวนแถว/คอลัมน์
-  const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-  if (jsonData.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 20px; text-align: center;">ไม่มีข้อมูลใน Sheet นี้</p>';
-    rowCountElem.textContent = '0';
-    colCountElem.textContent = '0';
+  if (rows.length === 0) {
+    tableContainer.innerHTML = '<p style="padding: 20px; text-align: center;">ไม่มีข้อมูลในระบบนี้</p>';
+    resetMetrics();
     return;
   }
 
-  // อัปเดตตัวเลขแถว และคอลัมน์สูงสุด
-  rowCountElem.textContent = (jsonData.length - 1).toLocaleString();
-  const maxCols = Math.max(...jsonData.map(row => row.length));
-  colCountElem.textContent = maxCols.toLocaleString();
+  // คำนวณค่า RAM Metrics
+  let totalMtbf = 0, countMtbf = 0;
+  let totalMttr = 0, countMttr = 0;
+  let totalAvail = 0, countAvail = 0;
 
-  // แปลงเป็น Table แสดงผล
-  const htmlTable = XLSX.utils.sheet_to_html(sheet, { id: 'dataTable' });
+  rows.forEach(r => {
+    // ดึงค่า MTBF, MTTR, Availability (ป้องกัน whitespace ในชื่อคอลัมน์)
+    const mtbfKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTBF');
+    const mttrKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTTR');
+    const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
+
+    if (mtbfKey && !isNaN(r[mtbfKey])) {
+      totalMtbf += Number(r[mtbfKey]);
+      countMtbf++;
+    }
+    if (mttrKey && !isNaN(r[mttrKey])) {
+      totalMttr += Number(r[mttrKey]);
+      countMttr++;
+    }
+    if (availKey && !isNaN(r[availKey])) {
+      totalAvail += Number(r[availKey]);
+      countAvail++;
+    }
+  });
+
+  // อัปเดตตัวเลขแสดงผลบน Dashboard
+  totalModesElem.textContent = rows.length.toLocaleString();
+  avgMtbfElem.textContent = countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-';
+  avgMttrElem.textContent = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-';
+  avgAvailElem.textContent = countAvail > 0 ? ((totalAvail / countAvail) * 100).toFixed(4) + '%' : '-';
+
+  // แปลงและแสดงผล HTML Table
+  const htmlTable = XLSX.utils.sheet_to_html(sheet, { id: 'ramTable' });
   tableContainer.innerHTML = htmlTable;
 }
 
-// Event: ระบบ Search ค้นหาคำในตารางแบบ Real-time
+function resetMetrics() {
+  avgAvailElem.textContent = '-%';
+  avgMtbfElem.textContent = '-';
+  avgMttrElem.textContent = '-';
+  totalModesElem.textContent = '0';
+}
+
+// ระบบค้นหา Real-time
 searchInput.addEventListener('input', function(e) {
-  const filter = e.target.value.toLowerCase();
-  const rows = document.querySelectorAll('#dataTable tr');
+  const query = e.target.value.toLowerCase();
+  const trs = document.querySelectorAll('#ramTable tr');
 
-  rows.forEach((row, index) => {
-    // ข้ามหัวตาราง (index 0 หรือ row ที่มี <th>)
-    if (index === 0 || row.querySelector('th')) return;
-
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(filter) ? '' : 'none';
+  trs.forEach((tr, idx) => {
+    if (idx === 0 || tr.querySelector('th')) return;
+    const text = tr.textContent.toLowerCase();
+    tr.style.display = text.includes(query) ? '' : 'none';
   });
 });
