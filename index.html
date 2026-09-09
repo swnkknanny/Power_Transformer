@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RAM SYSTEM | Substation Reliability Intelligence</title>
   
-  <!-- ฟอนต์สำหรับการแสดงผลระดับผู้บริหาร -->
+  <!-- Executive Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
 
   <div class="app-layout">
     
-    <!-- เมนูด้านซ้าย (Sidebar) -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">
@@ -36,36 +36,36 @@
       </div>
 
       <nav class="nav-menu">
-        <span class="nav-heading">เมนูหลัก</span>
+        <span class="nav-heading">INTELLIGENCE CONSOLE</span>
         <a href="#" class="nav-item active">
           <i class="fa-solid fa-chart-line"></i>
-          <span>ภาพรวมระบบ (Overview)</span>
+          <span>Overview</span>
         </a>
         <a href="#" class="nav-item">
           <i class="fa-solid fa-layer-group"></i>
-          <span>ระบบย่อย (Subsystems)</span>
+          <span>Subsystems</span>
         </a>
         <a href="#" class="nav-item">
           <i class="fa-solid fa-sliders"></i>
-          <span>การบำรุงรักษา (Maintenance)</span>
+          <span>Maintenance</span>
         </a>
       </nav>
 
-      <!-- ส่วนเลือกระบบย่อย -->
+      <!-- Subsystem Filter Dropdown -->
       <div class="control-panel">
-        <span class="panel-label">เลือกระบบย่อย (SUBSYSTEM)</span>
+        <span class="panel-label">SUBSYSTEM DOMAIN</span>
         <div id="subsystemControl" class="select-wrapper">
           <select id="sheetSelect" class="custom-select" aria-label="Select Subsystem"></select>
         </div>
       </div>
 
-      <!-- ส่วนอัปโหลดไฟล์ (แสดงเฉพาะเมื่อเข้าสู่ระบบแอดมิน) -->
+      <!-- Admin Upload Panel (Protected) -->
       <div class="upload-widget admin-only" id="adminUploadWidget" style="display: none;">
-        <span class="widget-label">การจัดการข้อมูลแอดมิน</span>
+        <span class="widget-label">ADMIN DATA OVERRIDE</span>
         <div class="drop-box">
           <i class="fa-solid fa-arrow-up-from-bracket"></i>
-          <span class="drop-box-text">นำเข้าไฟล์ Excel ใหม่</span>
-          <span class="drop-box-hint">รองรับไฟล์ .xlsx / .xls</span>
+          <span class="drop-box-text">Import New Dataset</span>
+          <span class="drop-box-hint">Supports .xlsx / .xls</span>
           <input type="file" id="excelFile" accept=".xlsx, .xls" />
         </div>
       </div>
@@ -75,43 +75,43 @@
           <span class="badge-dot"></span>
           <span>ISO 14224 COMPLIANT</span>
         </div>
-        <p class="footer-desc">ระบบวิเคราะห์ความน่าเชื่อถือและการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า</p>
+        <p class="footer-desc">Substation equipment reliability & maintenance lifecycle management system.</p>
       </div>
     </aside>
 
-    <!-- พื้นที่แสดงผลหลัก (Main Viewport) -->
+    <!-- Main Viewport -->
     <main class="main-body">
       
-      <!-- แถบด้านบน -->
+      <!-- Top Navigation & Action Controls -->
       <header class="topbar">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" placeholder="ค้นหาอุปกรณ์, รหัสข้อบกพร่อง, สาเหตุ..." />
+          <input type="text" id="searchInput" placeholder="Search equipment, failure codes, root causes..." />
         </div>
         
         <div class="topbar-actions">
-          <button class="btn-action" id="openExportModalBtn" title="พิมพ์หรือส่งออกรายงานสรุป">
+          <button class="btn-action" id="openExportModalBtn" title="Export Executive Summary Brief">
             <i class="fa-regular fa-file-pdf"></i>
-            <span>Export PDF</span>
+            <span>Export Brief</span>
           </button>
 
           <button class="btn-action btn-save-excel admin-only" id="saveExcelBtn" style="display: none;">
             <i class="fa-solid fa-arrow-down-to-bracket"></i>
-            <span>บันทึก Excel</span>
+            <span>Commit Excel</span>
           </button>
 
           <div class="auth-box">
             <button class="btn-login" id="loginBtn">
               <i class="fa-solid fa-shield-halved"></i>
-              <span>เข้าสู่ระบบแอดมิน</span>
+              <span>Admin Gateway</span>
             </button>
             <div class="user-profile" id="userProfile" style="display: none;">
               <div class="avatar">SK</div>
               <div class="user-info">
                 <span class="user-name">Suwanan K.</span>
-                <span class="user-role badge-admin">แอดมิน (วิศวกร)</span>
+                <span class="user-role badge-admin">Lead Reliability Eng.</span>
               </div>
-              <button class="btn-logout" id="logoutBtn" title="ออกจากระบบแอดมิน">
+              <button class="btn-logout" id="logoutBtn" title="Terminate Admin Session">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
               </button>
             </div>
@@ -119,100 +119,100 @@
         </div>
       </header>
 
-      <!-- แบนเนอร์หัวเรื่อง -->
+      <!-- Welcome Banner -->
       <section class="welcome-banner">
         <div class="banner-top">
-          <span class="status-indicator" id="modeBadge">VIEWER MODE (โหมดดูข้อมูล)</span>
+          <span class="status-indicator" id="modeBadge">VIEWER CONSOLE</span>
           <span class="status-divider">•</span>
           <span class="system-time">TELEMETRY ACTIVE</span>
         </div>
         <div class="banner-content">
           <div>
             <h1>Substation Reliability & Performance Intelligence</h1>
-            <p>ระบบติดตามความพร้อมใช้งาน การกระจายตัวของข้อบกพร่อง และประสิทธิภาพการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า</p>
+            <p>Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.</p>
           </div>
         </div>
       </section>
 
-      <!-- การ์ดตัวชี้วัดหลัก 4 ค่า (KPIs) -->
+      <!-- Executive KPI Cards -->
       <section class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">ความพร้อมใช้งาน (Availability)</span>
-            <span class="kpi-target">เป้าหมาย ≥ 96.00%</span>
+            <span class="kpi-title">Fleet Availability</span>
+            <span class="kpi-target">Target ≥ 96.00%</span>
           </div>
           <div class="kpi-body">
             <h2 id="avgAvail">-%</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-shield-check"></i></div>
           </div>
-          <div class="kpi-footer">เกณฑ์มาตรฐานความพร้อมใช้งาน</div>
+          <div class="kpi-footer">Operational uptime benchmark</div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">ระยะเวลาเฉลี่ยก่อนเสียหาย (MTBF)</span>
-            <span class="kpi-target">ดัชนีความน่าเชื่อถือ</span>
+            <span class="kpi-title">Mean Time Between Failures</span>
+            <span class="kpi-target">MTBF Metric</span>
           </div>
           <div class="kpi-body">
             <div class="val-group">
               <h2 id="avgMtbf">-</h2>
-              <span class="kpi-unit">ชม.</span>
+              <span class="kpi-unit">hrs</span>
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-clock-rotate-left"></i></div>
           </div>
-          <div class="kpi-footer">ระยะเวลาทำงานเฉลี่ยระหว่างรอบชำรุด</div>
+          <div class="kpi-footer">Average operating hours between failures</div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">ระยะเวลาเฉลี่ยในการบำรุงรักษา (MTTR)</span>
-            <span class="kpi-target">เกณฑ์ &le; 10 ชม.</span>
+            <span class="kpi-title">Mean Time to Restore</span>
+            <span class="kpi-target">MTTR Limit &le; 10h</span>
           </div>
           <div class="kpi-body">
             <div class="val-group">
               <h2 id="avgMttr">-</h2>
-              <span class="kpi-unit">ชม.</span>
+              <span class="kpi-unit">hrs</span>
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-screwdriver-wrench"></i></div>
           </div>
-          <div class="kpi-footer">เวลาเฉลี่ยที่ใช้ในการแก้ไขบำรุงรักษา</div>
+          <div class="kpi-footer">Average corrective maintenance latency</div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-header">
-            <span class="kpi-title">ลักษณะข้อบกพร่องที่พบ (Failure Modes)</span>
-            <span class="kpi-target">รายการที่บันทึก</span>
+            <span class="kpi-title">Cataloged Failure Modes</span>
+            <span class="kpi-target">Active Registry</span>
           </div>
           <div class="kpi-body">
             <h2 id="totalModes">-</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-list-check"></i></div>
           </div>
-          <div class="kpi-footer">จำนวนรายการข้อบกพร่องในระบบย่อย</div>
+          <div class="kpi-footer">Total failure mechanisms monitored</div>
         </div>
       </section>
 
-      <!-- ส่วนวิเคราะห์จุดวิกฤตและกราฟวงกลม -->
+      <!-- Key Insights & Donut Chart -->
       <section class="insights-grid">
         <div class="insight-card">
           <div class="card-meta">
-            <span class="card-tag">จุดที่ต้องเฝ้าระวังสูงสุด</span>
-            <h3>อุปกรณ์ที่ต้องติดตามเป็นพิเศษ</h3>
+            <span class="card-tag">RISK PRIORITIZATION</span>
+            <h3>Subsystem Attention Vectors</h3>
           </div>
           <div class="attention-stream">
             <div class="attention-block">
               <div class="attention-indicator indicator-warn"></div>
               <div class="attention-details">
-                <span class="attention-label">ความพร้อมใช้งานต่ำสุด (Lowest Availability)</span>
+                <span class="attention-label">Lowest Availability Component</span>
                 <span class="attention-val" id="worstAvail">-</span>
-                <p class="attention-note">ควรจัดลำดับความสำคัญในการตรวจสอบเพื่อลดความเสี่ยงที่ระบบจะหยุดชะงัก</p>
+                <p class="attention-note">Priority candidate for condition-based maintenance to prevent unplanned outages.</p>
               </div>
             </div>
             <div class="attention-block">
               <div class="attention-indicator indicator-accent"></div>
               <div class="attention-details">
-                <span class="attention-label">ใช้เวลาบำรุงรักษานานที่สุด (Peak MTTR)</span>
+                <span class="attention-label">Maximum Repair Latency (Peak MTTR)</span>
                 <span class="attention-val" id="worstMttr">-</span>
-                <p class="attention-note">ควรเตรียมความพร้อมด้านเครื่องมือพิเศษและสำรองอะไหล่ล่วงหน้า</p>
+                <p class="attention-note">Consider stocking specialized spares and optimizing maintenance staging procedures.</p>
               </div>
             </div>
           </div>
@@ -220,8 +220,8 @@
 
         <div class="insight-card">
           <div class="card-meta">
-            <span class="card-tag">การกระจายตัวของสาเหตุ</span>
-            <h3>สัดส่วนสาเหตุข้อบกพร่อง (Failure Cause)</h3>
+            <span class="card-tag">ROOT CAUSE SPECTRUM</span>
+            <h3>Failure Cause Distribution</h3>
           </div>
           <div class="chart-wrapper">
             <canvas id="causeChart"></canvas>
@@ -229,28 +229,28 @@
         </div>
       </section>
 
-      <!-- ส่วนตารางข้อมูล -->
+      <!-- Detailed RAM Matrix Table -->
       <section class="table-section">
         <div class="section-header">
           <div class="title-wrap">
             <div class="table-title-group">
-              <h3 id="currentSheetTitle">ตารางวิเคราะห์การบำรุงรักษาและ RAM</h3>
-              <span class="table-status-pill" id="editNotice">โหมดอ่านอย่างเดียว (Viewer Mode)</span>
+              <h3 id="currentSheetTitle">System Diagnostics & RAM Matrix</h3>
+              <span class="table-status-pill" id="editNotice">Read-Only Observation Mode</span>
             </div>
-            <span class="sub-title">ข้อมูลจำแนกตามมาตรฐานลักษณะข้อบกพร่องของอุปกรณ์สถานีไฟฟ้า</span>
+            <span class="sub-title">Equipment failure classification according to IEEE and standard substation reliability taxonomy.</span>
           </div>
 
           <div class="filter-group">
-            <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-            <button class="filter-btn" data-filter="critical">วิกฤต (&lt; 96%)</button>
-            <button class="filter-btn" data-filter="high-mttr">MTTR สูง (&gt; 10 ชม.)</button>
+            <button class="filter-btn active" data-filter="all">All Items</button>
+            <button class="filter-btn" data-filter="critical">Avail &lt; 96%</button>
+            <button class="filter-btn" data-filter="high-mttr">MTTR &gt; 10 hrs</button>
           </div>
         </div>
 
         <div class="table-frame" id="tableContainer">
           <div class="empty-state">
             <div class="spinner-ring"></div>
-            <p>กำลังเตรียมตารางวิเคราะห์ข้อมูล...</p>
+            <p>Initializing reliability matrix...</p>
           </div>
         </div>
       </section>
@@ -258,59 +258,58 @@
     </main>
   </div>
 
-  <!-- หน้าต่างเข้าสู่ระบบแอดมิน (Modal) -->
+  <!-- Admin Verification Modal -->
   <div class="modal-overlay" id="loginModal">
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-icon"><i class="fa-solid fa-lock"></i></div>
         <div>
-          <h3>เข้าสู่ระบบแอดมิน</h3>
+          <h3>Engineering Gateway</h3>
           <span class="modal-sub">Administrative Access Protocol</span>
         </div>
         <button class="modal-close" id="closeLoginModal">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">กรุณากรอกรหัสผ่านเพื่อปลดล็อกการแก้ไขข้อมูลและนำเข้าไฟล์:</p>
+        <p class="modal-desc">Enter your authorization credentials to unlock live worksheet modification and schema updates:</p>
         <div class="input-container">
-          <input type="password" id="adminPassword" placeholder="กรอกรหัสผ่านแอดมิน" class="modal-input" />
+          <input type="password" id="adminPassword" placeholder="Enter Authorization Code" class="modal-input" />
         </div>
         <p class="error-msg" id="loginError" style="display: none;">
-          <i class="fa-solid fa-circle-exclamation"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+          <i class="fa-solid fa-circle-exclamation"></i> Invalid credential token. Access rejected.
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn-tertiary" id="cancelLoginModal">ยกเลิก</button>
-        <button class="btn-primary" id="submitLoginBtn">ยืนยัน</button>
+        <button class="btn-tertiary" id="cancelLoginModal">Cancel</button>
+        <button class="btn-primary" id="submitLoginBtn">Authenticate</button>
       </div>
     </div>
   </div>
 
-  <!-- หน้าต่างเลือกหน้าที่ต้องการ Export PDF -->
+  <!-- Executive Print / Export Modal -->
   <div class="modal-overlay" id="exportModal">
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-icon"><i class="fa-regular fa-file-lines"></i></div>
         <div>
-          <h3>เลือกหน้าที่ต้องการ Export PDF</h3>
-          <span class="modal-sub">Executive Brief Export</span>
+          <h3>Executive Brief Export</h3>
+          <span class="modal-sub">Documentation Scope</span>
         </div>
         <button class="modal-close" id="closeModalBtn">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">เลือกระบบย่อยที่ต้องการสรุปเป็นเอกสาร PDF:</p>
+        <p class="modal-desc">Select subsystem domain to compile formatted operational brief:</p>
         <div class="sheet-options-list" id="sheetOptionsList"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn-tertiary" id="cancelModalBtn">ยกเลิก</button>
-        <button class="btn-primary" id="confirmPrintBtn">พิมพ์รายงาน</button>
+        <button class="btn-tertiary" id="cancelModalBtn">Dismiss</button>
+        <button class="btn-primary" id="confirmPrintBtn">Generate Brief</button>
       </div>
     </div>
   </div>
 
-  <!-- กล่องสำหรับพิมพ์งาน -->
   <div id="printContainer" class="print-container"></div>
 
-  <!-- เรียกใช้ script.js พร้อมพารามิเตอร์ ?v=2 เพื่อป้องกันปัญหาจำรหัสผ่านเก่า -->
-  <script src="script.js?v=3"></script>
+  <!-- Cache-busting script tag -->
+  <script src="script.js?v=4"></script>
 </body>
 </html>
