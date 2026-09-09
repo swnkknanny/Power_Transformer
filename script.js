@@ -25,7 +25,7 @@ let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 
-// Drill-Down Navigation State (Level 1 -> Level 2 -> Level 3)
+// Drill-Down Navigation State
 const drillHistory = [];
 let activeSegmentIndex = null;
 
@@ -157,7 +157,6 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
   sheetSelect.value = targetSheet;
   loadRamSheet(targetSheet);
 
-  // If a drawer is open, re-render dynamically
   if (detailDrawer.classList.contains('open') && drillHistory.length > 0) {
     const currentView = drillHistory[drillHistory.length - 1];
     renderDrillView(currentView, false);
@@ -182,7 +181,7 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 /* ============================================================
-   ADMIN AUTHENTICATION LOGIC
+   ADMIN AUTHENTICATION
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -227,7 +226,7 @@ function updateAuthUI() {
     saveExcelBtn.style.display = 'flex';
     modeBadge.textContent = 'ADMIN CONSOLE (LIVE CLOUD EDIT)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = 'Active Cloud Edit Mode: Edits sync live to all devices';
+    editNotice.textContent = 'Active Cloud Edit Mode: MTBF/MTTR edits auto-calculate Availability';
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
@@ -242,8 +241,14 @@ function updateAuthUI() {
 }
 
 /* ============================================================
-   CORE METRICS ENGINE & DATA NORMALIZER
+   CORE METRICS ENGINE & AUTO-CALCULATE RAM FORMULA
    ============================================================ */
+function calculateAvailabilityFormula(mtbf, mttr) {
+  if (mtbf + mttr === 0) return 100;
+  // Availability = MTBF / (MTBF + MTTR) * 100%
+  return (mtbf / (mtbf + mttr)) * 100;
+}
+
 function getNormalizedRows(sheetName) {
   if (!currentWorkbook || !currentWorkbook.Sheets[sheetName]) return [];
   const sheet = currentWorkbook.Sheets[sheetName];
@@ -258,14 +263,18 @@ function getNormalizedRows(sheetName) {
     const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
     const modeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('MODE'));
 
+    const mtbfVal = mtbfKey && !isNaN(r[mtbfKey]) ? Number(r[mtbfKey]) : 0;
+    const mttrVal = mttrKey && !isNaN(r[mttrKey]) ? Number(r[mttrKey]) : 0;
+
+    // คำนวณ Availability อัตโนมัติจาก MTBF และ MTTR ถ้ามีค่า หรืออ่านจาก Sheet
     let availVal = 100;
-    if (availKey && !isNaN(r[availKey])) {
+    if (mtbfVal > 0 || mttrVal > 0) {
+      availVal = calculateAvailabilityFormula(mtbfVal, mttrVal);
+    } else if (availKey && !isNaN(r[availKey])) {
       const parsed = Number(r[availKey]);
       availVal = parsed <= 1 ? parsed * 100 : parsed;
     }
 
-    const mtbfVal = mtbfKey && !isNaN(r[mtbfKey]) ? Number(r[mtbfKey]) : 0;
-    const mttrVal = mttrKey && !isNaN(r[mttrKey]) ? Number(r[mttrKey]) : 0;
     const compName = compKey && r[compKey] ? String(r[compKey]).trim() : 'Unassigned Equipment';
     const compId = idKey && r[idKey] ? String(r[idKey]).trim() : `EQ-${index + 1}`;
     const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'General Aging / Operational Stress';
@@ -275,9 +284,9 @@ function getNormalizedRows(sheetName) {
       rowIndex: index + 1,
       id: compId,
       component: compName,
-      mtbf: mtbfVal,
-      mttr: mttrVal,
-      availability: availVal,
+      mtbf: Number(mtbfVal.toFixed(2)),
+      mttr: Number(mttrVal.toFixed(2)),
+      availability: Number(availVal.toFixed(2)),
       cause: failureCause,
       mode: failureMode,
       subsystem: sheetName,
@@ -304,7 +313,7 @@ function calculateSheetMetrics(rows) {
       countMttr++;
       if (r.mttr > maxMttr) {
         maxMttr = r.mttr;
-        maxMttrItem = `${r.component} (${r.mttr} hrs)`;
+        maxMttrItem = `${r.component} (${r.mttr.toFixed(2)} hrs)`;
       }
     }
     if (r.availability > 0) {
@@ -312,7 +321,7 @@ function calculateSheetMetrics(rows) {
       countAvail++;
       if (r.availability < minAvail) {
         minAvail = r.availability;
-        minAvailItem = `${r.component} (${r.availability.toFixed(4)}%)`;
+        minAvailItem = `${r.component} (${r.availability.toFixed(2)}%)`;
       }
     }
 
@@ -328,8 +337,8 @@ function calculateSheetMetrics(rows) {
   return {
     totalModes: rows.length,
     avgAvail: countAvail > 0 ? (totalAvail / countAvail).toFixed(2) : '-',
-    avgMtbf: countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-',
-    avgMttr: countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-',
+    avgMtbf: countMtbf > 0 ? (totalMtbf / countMtbf).toFixed(2) : '-',
+    avgMttr: countMttr > 0 ? (totalMttr / countMttr).toFixed(2) : '-',
     minAvailItem: minAvail !== Infinity ? minAvailItem : '-',
     maxMttrItem: maxMttr !== -Infinity ? maxMttrItem : '-',
     causeCounts
@@ -365,7 +374,7 @@ function loadRamSheet(sheetName) {
 }
 
 /* ============================================================
-   CHART.JS ROOT CAUSE DONUT (CLICKABLE)
+   CHART.JS ROOT CAUSE DONUT
    ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
@@ -440,7 +449,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   TABLE RENDERING & PERSISTENCE
+   TABLE RENDERING & LIVE AUTO-CALCULATION
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -466,6 +475,7 @@ function renderFormattedTable(sheet, sheetName) {
   });
 
   const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
+  const mtbfColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'MTBF');
   const mttrColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'MTTR');
   const compColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'COMPONENT');
 
@@ -477,29 +487,31 @@ function renderFormattedTable(sheet, sheetName) {
 
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i];
-    let rowAvail = 100, rowMttr = 0;
-
-    if (availColIndex !== -1 && row[availColIndex] !== undefined) {
-      let v = Number(row[availColIndex]);
-      rowAvail = v <= 1 ? v * 100 : v;
-    }
-    if (mttrColIndex !== -1 && row[mttrColIndex] !== undefined) {
-      rowMttr = Number(row[mttrColIndex]);
-    }
+    let rowMtbf = mtbfColIndex !== -1 && !isNaN(row[mtbfColIndex]) ? Number(row[mtbfColIndex]) : 0;
+    let rowMttr = mttrColIndex !== -1 && !isNaN(row[mttrColIndex]) ? Number(row[mttrColIndex]) : 0;
+    
+    // คำนวณ Availability 2 ตำแหน่ง
+    let rowAvail = (rowMtbf > 0 || rowMttr > 0) 
+      ? calculateAvailabilityFormula(rowMtbf, rowMttr)
+      : (availColIndex !== -1 && !isNaN(row[availColIndex]) ? (Number(row[availColIndex]) <= 1 ? Number(row[availColIndex]) * 100 : Number(row[availColIndex])) : 100);
 
     const componentName = compColIndex !== -1 && row[compColIndex] ? String(row[compColIndex]) : `Equipment #${i}`;
 
-    tableHtml += `<tr data-row="${i}" data-component="${encodeURIComponent(componentName)}" data-avail="${rowAvail}" data-mttr="${rowMttr}">`;
+    tableHtml += `<tr data-row="${i}" data-component="${encodeURIComponent(componentName)}" data-avail="${rowAvail.toFixed(2)}" data-mttr="${rowMttr.toFixed(2)}">`;
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
-      const editableAttr = isAdmin ? 'contenteditable="true"' : '';
+      
+      // ช่อง Availability จะเป็น Auto-calculated ห้ามพิมพ์เอง
+      const isCalculatedCol = (j === availColIndex);
+      const editableAttr = (isAdmin && !isCalculatedCol) ? 'contenteditable="true"' : '';
 
-      if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
-        const valNum = Number(cellValue);
-        const percentVal = valNum <= 1 ? valNum * 100 : valNum;
-        const badgeClass = percentVal >= 96 ? 'badge-pass' : 'badge-fail';
-        tableHtml += `<td class="${colClass}" data-col="${j}"><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
+      if (j === availColIndex) {
+        const badgeClass = rowAvail >= 96 ? 'badge-pass' : 'badge-fail';
+        tableHtml += `<td class="${colClass} cell-avail" data-col="${j}"><span class="${badgeClass}">${rowAvail.toFixed(2)}%</span></td>`;
+      } else if (j === mtbfColIndex || j === mttrColIndex) {
+        const numVal = !isNaN(cellValue) && cellValue !== '' ? Number(cellValue).toFixed(2) : cellValue;
+        tableHtml += `<td class="${colClass}" data-col="${j}" ${editableAttr}>${numVal}</td>`;
       } else {
         tableHtml += `<td class="${colClass}" data-col="${j}" ${editableAttr}>${cellValue}</td>`;
       }
@@ -513,7 +525,6 @@ function renderFormattedTable(sheet, sheetName) {
   // Row click listener for Level 3 Equipment Drill
   document.querySelectorAll('#ramTable tbody tr').forEach(tr => {
     tr.addEventListener('click', function(e) {
-      // Don't drill down if Admin is actively editing cells
       if (isAdmin && e.target.hasAttribute('contenteditable')) return;
       const compName = decodeURIComponent(this.getAttribute('data-component'));
       openDrillEquipment(compName);
@@ -521,13 +532,13 @@ function renderFormattedTable(sheet, sheetName) {
   });
 
   if (isAdmin) {
-    bindCellEditEvents(sheetName);
+    bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, availColIndex);
   }
 
   applyTableFilter();
 }
 
-function bindCellEditEvents(sheetName) {
+function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, availColIndex) {
   const editableCells = document.querySelectorAll('#ramTable td[contenteditable="true"]');
   editableCells.forEach(cell => {
     cell.addEventListener('blur', function() {
@@ -539,16 +550,55 @@ function bindCellEditEvents(sheetName) {
       const cellAddress = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
 
       if (!sheet[cellAddress]) sheet[cellAddress] = {};
-      sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
+      sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(Number(newVal).toFixed(2)) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
+      // ============================================================
+      // LIVE AUTO-CALCULATION: เมื่อแก้ MTBF หรือ MTTR
+      // ============================================================
+      if (colIdx === mtbfColIndex || colIdx === mttrColIndex) {
+        const mtbfAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mtbfColIndex });
+        const mttrAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mttrColIndex });
+        const currentMtbf = sheet[mtbfAddr] && !isNaN(sheet[mtbfAddr].v) ? Number(sheet[mtbfAddr].v) : 0;
+        const currentMttr = sheet[mttrAddr] && !isNaN(sheet[mttrAddr].v) ? Number(sheet[mttrAddr].v) : 0;
+
+        const newAvail = calculateAvailabilityFormula(currentMtbf, currentMttr);
+
+        // บันทึก Availability กลับลง Sheet เพื่อซิงค์ขึ้น Cloud
+        if (availColIndex !== -1) {
+          const availAddr = XLSX.utils.encode_cell({ r: rowIdx, c: availColIndex });
+          if (!sheet[availAddr]) sheet[availAddr] = {};
+          sheet[availAddr].v = Number(newAvail.toFixed(2));
+          sheet[availAddr].t = 'n';
+        }
+
+        // อัปเดตการแสดงผลในแถวปัจจุบันทันที
+        const rowElem = this.parentElement;
+        rowElem.setAttribute('data-avail', newAvail.toFixed(2));
+        rowElem.setAttribute('data-mttr', currentMttr.toFixed(2));
+
+        const availCell = rowElem.querySelector('.cell-avail');
+        if (availCell) {
+          const badgeClass = newAvail >= 96 ? 'badge-pass' : 'badge-fail';
+          availCell.innerHTML = `<span class="${badgeClass}">${newAvail.toFixed(2)}%</span>`;
+        }
+      }
+
+      // ซิงค์ขึ้น Cloud Firestore
       syncWorkbookToCloud();
 
+      // Recalculate KPIs ด้านบนอัตโนมัติ (ทศนิยม 2 ตำแหน่ง)
       const rows = getNormalizedRows(sheetName);
       const metrics = calculateSheetMetrics(rows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
+      avgAvailElem.classList.remove('status-green', 'status-red');
+      if (metrics.avgAvail !== '-') {
+        avgAvailElem.classList.add(parseFloat(metrics.avgAvail) >= 96 ? 'status-green' : 'status-red');
+      }
       avgMtbfElem.textContent = metrics.avgMtbf;
       avgMttrElem.textContent = metrics.avgMttr;
+      worstAvailElem.textContent = metrics.minAvailItem;
+      worstMttrElem.textContent = metrics.maxMttrItem;
     });
   });
 }
@@ -600,7 +650,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   DRILL-DOWN ENGINE (LEVEL 1 -> LEVEL 2 -> LEVEL 3)
+   DRILL-DOWN ENGINE (ALL 2 DECIMAL PLACES)
    ============================================================ */
 
 function openDrawer() {
@@ -622,7 +672,7 @@ drawerBackdrop.addEventListener('click', closeDrawer);
 
 drawerBackBtn.addEventListener('click', () => {
   if (drillHistory.length > 1) {
-    drillHistory.pop(); // Pop current
+    drillHistory.pop();
     const prevView = drillHistory[drillHistory.length - 1];
     renderDrillView(prevView, false);
   } else {
@@ -650,7 +700,6 @@ function renderDrillView(viewState, shouldOpen = true) {
   if (shouldOpen) openDrawer();
 }
 
-// LEVEL 2: FAILURE CAUSE CATEGORY DRILL
 function openDrillCategory(categoryName) {
   pushDrillView({ type: 'category', category: categoryName, level: 2 });
 }
@@ -669,13 +718,12 @@ function renderCategoryDetail(categoryName) {
 
   const totalFailures = categoryRows.length;
   const totalSubsystemFailures = allRows.length;
-  const sharePct = totalSubsystemFailures > 0 ? ((totalFailures / totalSubsystemFailures) * 100).toFixed(1) : 0;
+  const sharePct = totalSubsystemFailures > 0 ? ((totalFailures / totalSubsystemFailures) * 100).toFixed(2) : '0.00';
   
   const avgDowntime = totalFailures > 0
-    ? (categoryRows.reduce((acc, r) => acc + r.mttr, 0) / totalFailures).toFixed(1)
-    : 0;
+    ? (categoryRows.reduce((acc, r) => acc + r.mttr, 0) / totalFailures).toFixed(2)
+    : '0.00';
 
-  // Affected Equipment Aggregation
   const eqMap = {};
   categoryRows.forEach(r => {
     eqMap[r.component] = (eqMap[r.component] || 0) + 1;
@@ -683,7 +731,6 @@ function renderCategoryDetail(categoryName) {
   const sortedEq = Object.entries(eqMap).sort((a, b) => b[1] - a[1]);
   const maxEqCount = sortedEq.length > 0 ? sortedEq[0][1] : 1;
 
-  // Sub-causes breakdown
   const causeBreakdown = {};
   categoryRows.forEach(r => {
     causeBreakdown[r.cause] = (causeBreakdown[r.cause] || 0) + 1;
@@ -781,7 +828,7 @@ function renderCategoryDetail(categoryName) {
       <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
         <td><strong>${r.component}</strong></td>
         <td>${r.mode}</td>
-        <td>${r.mttr} hrs</td>
+        <td>${r.mttr.toFixed(2)} hrs</td>
       </tr>
     `;
   });
@@ -798,7 +845,6 @@ function renderCategoryDetail(categoryName) {
   drawerContent.innerHTML = html;
 }
 
-// LEVEL 2: KPI CARDS DRILL
 document.getElementById('kpiCardAvail').addEventListener('click', () => openDrillKpi('availability'));
 document.getElementById('kpiCardMtbf').addEventListener('click', () => openDrillKpi('mtbf'));
 document.getElementById('kpiCardMttr').addEventListener('click', () => openDrillKpi('mttr'));
@@ -862,8 +908,8 @@ function renderKpiDetail(metric) {
       <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
         <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
         <td style="color:${availColor}; font-weight:700;">${r.availability.toFixed(2)}%</td>
-        <td>${r.mtbf}h</td>
-        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr}h</td>
+        <td>${r.mtbf.toFixed(2)}h</td>
+        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr.toFixed(2)}h</td>
       </tr>
     `;
   });
@@ -877,7 +923,6 @@ function renderKpiDetail(metric) {
   drawerContent.innerHTML = html;
 }
 
-// KEY INSIGHTS CLICKS
 document.getElementById('insightWorstAvail').addEventListener('click', () => {
   const currentSheet = sheetSelect.value;
   const rows = getNormalizedRows(currentSheet);
@@ -894,7 +939,6 @@ document.getElementById('insightWorstMttr').addEventListener('click', () => {
   if (worst) openDrillEquipment(worst.component);
 });
 
-// LEVEL 3: INDIVIDUAL EQUIPMENT DEEP-DIVE
 function openDrillEquipment(rawCompName) {
   const compName = decodeURIComponent(rawCompName);
   pushDrillView({ type: 'equipment', equipmentName: compName, level: 3 });
@@ -931,15 +975,15 @@ function renderEquipmentDetail(compName) {
     <div class="drawer-kpi-strip">
       <div class="drawer-mini-kpi">
         <span>Availability</span>
-        <strong style="color: ${primary.availability >= 96 ? '#66756B' : '#A65D57'};">${primary.availability.toFixed(4)}%</strong>
+        <strong style="color: ${primary.availability >= 96 ? '#66756B' : '#A65D57'};">${primary.availability.toFixed(2)}%</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>MTBF</span>
-        <strong>${primary.mtbf.toLocaleString()} hrs</strong>
+        <strong>${primary.mtbf.toFixed(2)} hrs</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>MTTR</span>
-        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr} hrs</strong>
+        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(2)} hrs</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>Failure Modes</span>
@@ -978,7 +1022,7 @@ function renderEquipmentDetail(compName) {
       <tr>
         <td><strong>${r.mode}</strong></td>
         <td>${r.cause}</td>
-        <td>${r.mttr}h</td>
+        <td>${r.mttr.toFixed(2)}h</td>
       </tr>
     `;
   });
@@ -992,7 +1036,6 @@ function renderEquipmentDetail(compName) {
   drawerContent.innerHTML = html;
 }
 
-// Quick filter sync from Level 2 to Main Matrix Table
 function applyCategoryFilterToMatrix(categoryName) {
   searchInput.value = categoryName === 'Other Determinants' ? '' : categoryName;
   applyTableFilter();
@@ -1001,7 +1044,7 @@ function applyCategoryFilterToMatrix(categoryName) {
 }
 
 /* ============================================================
-   EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape)
+   EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape - 2 Decimals)
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
@@ -1072,6 +1115,8 @@ function buildPrintView(targetSheet) {
 
     const headers = jsonData[0];
     const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
+    const mtbfColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'MTBF');
+    const mttrColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'MTTR');
 
     let pageHtml = `
       <div class="print-page">
@@ -1114,14 +1159,18 @@ function buildPrintView(targetSheet) {
 
     for (let i = 1; i < jsonData.length; i++) {
       const r = jsonData[i];
+      let rowMtbf = mtbfColIndex !== -1 && !isNaN(r[mtbfColIndex]) ? Number(r[mtbfColIndex]) : 0;
+      let rowMttr = mttrColIndex !== -1 && !isNaN(r[mttrColIndex]) ? Number(r[mttrColIndex]) : 0;
+      let rowAvail = (rowMtbf > 0 || rowMttr > 0) ? calculateAvailabilityFormula(rowMtbf, rowMttr) : 100;
+
       pageHtml += `<tr>`;
       for (let j = 0; j < headers.length; j++) {
         let val = r[j] !== undefined ? r[j] : '';
-        if (j === availColIndex && !isNaN(val) && val !== '') {
-          const num = Number(val);
-          const pVal = num <= 1 ? num * 100 : num;
-          const color = pVal >= 96 ? '#66756B' : '#A65D57';
-          pageHtml += `<td style="color: ${color}; font-weight: bold; text-align: center;">${pVal.toFixed(4)}%</td>`;
+        if (j === availColIndex) {
+          const color = rowAvail >= 96 ? '#66756B' : '#A65D57';
+          pageHtml += `<td style="color: ${color}; font-weight: bold; text-align: center;">${rowAvail.toFixed(2)}%</td>`;
+        } else if (j === mtbfColIndex || j === mttrColIndex) {
+          pageHtml += `<td>${!isNaN(val) && val !== '' ? Number(val).toFixed(2) : val}</td>`;
         } else {
           pageHtml += `<td>${val}</td>`;
         }
