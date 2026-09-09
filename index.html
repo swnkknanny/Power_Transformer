@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
   
   <!-- SheetJS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -44,9 +44,9 @@
           <i class="fa-solid fa-chart-line"></i>
           <span>Overview</span>
         </a>
-        <a href="#" class="nav-item">
-          <i class="fa-solid fa-layer-group"></i>
-          <span>Subsystems</span>
+        <a href="#simulatorSection" class="nav-item">
+          <i class="fa-solid fa-calculator"></i>
+          <span>What-If Simulator</span>
         </a>
         <a href="#" class="nav-item">
           <i class="fa-solid fa-sliders"></i>
@@ -277,6 +277,243 @@
         </div>
       </section>
 
+      <!-- ============================================================
+           NEW SECTION: RAM WHAT-IF SIMULATOR
+           ============================================================ -->
+      <section class="simulator-section" id="simulatorSection">
+        <div class="section-header">
+          <div class="title-wrap">
+            <div class="table-title-group">
+              <span class="card-tag">DECISION-SUPPORT SANDBOX</span>
+              <h3>RAM What-If Simulator</h3>
+            </div>
+            <span class="sub-title">Availability Target & Reliability Scenario Analysis — Simulate how variations in MTBF and MTTR affect equipment Availability under controlled assumptions.</span>
+          </div>
+          <button class="btn-action" id="simResetBtn" title="Reset to simulated baseline parameters">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset Scenario</span>
+          </button>
+        </div>
+
+        <!-- Simulation Notice -->
+        <div class="sim-notice-banner">
+          <i class="fa-solid fa-circle-info"></i>
+          <span><strong>Analytical Protocol Notice:</strong> MTBF and MTTR values are simulated parameters used for prototype RAM analysis while long-term historical failure data is not yet available. Scenario values do not modify source datasets.</span>
+        </div>
+
+        <div class="sim-grid">
+          <!-- Left Column: Scenario & Parameters Selection -->
+          <div class="sim-col">
+            <!-- Scenario Card -->
+            <div class="sim-card">
+              <span class="sim-card-tag">STEP 1 • SELECT FAILURE SCENARIO</span>
+              <div class="sim-field-group">
+                <label for="simScenarioSelect" class="sim-label">Target Equipment / Failure Code</label>
+                <select id="simScenarioSelect" class="custom-select sim-select"></select>
+              </div>
+
+              <div class="sim-context-box">
+                <div class="sim-context-row">
+                  <span class="sim-context-lbl">Equipment / Component:</span>
+                  <strong class="sim-context-val" id="simCompName">-</strong>
+                </div>
+                <div class="sim-context-row">
+                  <span class="sim-context-lbl">Failure Code:</span>
+                  <strong class="sim-context-val" id="simFailCode">-</strong>
+                </div>
+                <div class="sim-context-row">
+                  <span class="sim-context-lbl">Failure Mode:</span>
+                  <span class="sim-context-val" id="simFailMode">-</span>
+                </div>
+                <div class="sim-context-row">
+                  <span class="sim-context-lbl">Failure Cause:</span>
+                  <span class="sim-context-val" id="simFailCause">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Baseline Card -->
+            <div class="sim-card">
+              <span class="sim-card-tag">STEP 2 • SIMULATED BASELINE PARAMETERS</span>
+              <div class="sim-kpi-strip">
+                <div class="sim-mini-kpi">
+                  <span>Simulated MTBF</span>
+                  <strong id="simBaseMtbf">- hrs</strong>
+                </div>
+                <div class="sim-mini-kpi">
+                  <span>Simulated MTTR</span>
+                  <strong id="simBaseMttr">- hrs</strong>
+                </div>
+                <div class="sim-mini-kpi full-span">
+                  <span>Baseline Availability ($A_{base}$)</span>
+                  <strong id="simBaseAvail">-%</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Sandbox Controls -->
+          <div class="sim-col">
+            <div class="sim-card">
+              <span class="sim-card-tag">STEP 3 • SELECT WHAT-IF SIMULATION MODE</span>
+              <div class="sim-mode-toggle">
+                <button class="sim-mode-btn active" data-mode="mttr">
+                  <i class="fa-solid fa-wrench"></i>
+                  <span>Adjust MTTR</span>
+                </button>
+                <button class="sim-mode-btn" data-mode="mtbf">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>Adjust MTBF</span>
+                </button>
+                <button class="sim-mode-btn" data-mode="target">
+                  <i class="fa-solid fa-bullseye"></i>
+                  <span>Target Availability</span>
+                </button>
+              </div>
+
+              <!-- Interactive Controls Container -->
+              <div class="sim-controls-wrapper">
+                <!-- Mode 1: Adjust MTTR -->
+                <div class="sim-mode-pane active" id="simPaneMttr">
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What happens to Availability if corrective repair latency changes?</p>
+                  <div class="sim-slider-group">
+                    <div class="sim-slider-header">
+                      <span>Repair Time (MTTR)</span>
+                      <div class="sim-input-pill">
+                        <input type="number" id="simMttrNum" min="0.5" max="120" step="0.5" />
+                        <span>hrs</span>
+                      </div>
+                    </div>
+                    <input type="range" class="sim-slider" id="simMttrSlider" min="0.5" max="96" step="0.5" />
+                    <div class="sim-slider-ticks">
+                      <span>0.5 hrs</span>
+                      <span>24 hrs</span>
+                      <span>48 hrs</span>
+                      <span>96 hrs</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mode 2: Adjust MTBF -->
+                <div class="sim-mode-pane" id="simPaneMtbf">
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What happens to Availability if operating intervals between failures change?</p>
+                  <div class="sim-slider-group">
+                    <div class="sim-slider-header">
+                      <span>Operating Time (MTBF)</span>
+                      <div class="sim-input-pill">
+                        <input type="number" id="simMtbfNum" min="500" max="150000" step="250" />
+                        <span>hrs</span>
+                      </div>
+                    </div>
+                    <input type="range" class="sim-slider" id="simMtbfSlider" min="1000" max="100000" step="500" />
+                    <div class="sim-slider-ticks">
+                      <span>1,000 hrs</span>
+                      <span>25,000 hrs</span>
+                      <span>50,000 hrs</span>
+                      <span>100,000 hrs</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mode 3: Target Availability -->
+                <div class="sim-mode-pane" id="simPaneTarget">
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What reliability performance is required to achieve a target Availability?</p>
+                  
+                  <div class="sim-slider-group">
+                    <div class="sim-slider-header">
+                      <span>Target Availability ($A_{target}$)</span>
+                      <div class="sim-input-pill highlight">
+                        <input type="number" id="simTargetNum" min="90.00" max="99.99" step="0.01" />
+                        <span>%</span>
+                      </div>
+                    </div>
+                    <input type="range" class="sim-slider" id="simTargetSlider" min="95.00" max="99.99" step="0.01" />
+                    <div class="sim-slider-ticks">
+                      <span>95.00%</span>
+                      <span>96.00%</span>
+                      <span>98.00%</span>
+                      <span>99.99%</span>
+                    </div>
+                  </div>
+
+                  <div class="sim-strategy-select">
+                    <span class="sim-label">Calculation Strategy:</span>
+                    <div class="sim-radio-cluster">
+                      <label class="sim-radio-card">
+                        <input type="radio" name="simStrategy" value="fixed-mttr" checked />
+                        <div class="sim-radio-content">
+                          <strong>Strategy A • Fix MTTR</strong>
+                          <span>Keep simulated MTTR fixed; calculate required MTBF</span>
+                        </div>
+                      </label>
+                      <label class="sim-radio-card">
+                        <input type="radio" name="simStrategy" value="fixed-mtbf" />
+                        <div class="sim-radio-content">
+                          <strong>Strategy B • Fix MTBF</strong>
+                          <span>Keep simulated MTBF fixed; calculate max allowable MTTR</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparative Impact & Engineering Interpretation Section -->
+        <div class="sim-impact-grid">
+          <!-- Impact Matrix Table -->
+          <div class="sim-card">
+            <span class="sim-card-tag">STEP 4 • SCENARIO IMPACT (BASELINE VS WHAT-IF)</span>
+            <table class="sim-comparison-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Simulated Baseline</th>
+                  <th>What-If Scenario</th>
+                  <th>Variance / Impact</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>MTBF</strong> (Operating Duration)</td>
+                  <td id="simCmpBaseMtbf">-</td>
+                  <td id="simCmpScenMtbf">-</td>
+                  <td id="simCmpDeltaMtbf">-</td>
+                </tr>
+                <tr>
+                  <td><strong>MTTR</strong> (Corrective Latency)</td>
+                  <td id="simCmpBaseMttr">-</td>
+                  <td id="simCmpScenMttr">-</td>
+                  <td id="simCmpDeltaMttr">-</td>
+                </tr>
+                <tr>
+                  <td><strong>Availability</strong> (Fleet Ratio)</td>
+                  <td id="simCmpBaseAvail">-</td>
+                  <td id="simCmpScenAvail">-</td>
+                  <td id="simCmpDeltaAvail">-</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Interpretation Card -->
+          <div class="sim-card sim-card-interpret">
+            <span class="sim-card-tag">STEP 5 • ENGINEERING INTERPRETATION</span>
+            <div class="sim-interpret-body">
+              <div class="sim-badge-pill" id="simFeasibilityBadge">SCENARIO FEASIBLE</div>
+              <p class="sim-narrative" id="simInterpretationText">
+                Selecting a baseline failure code will automatically synthesize scenario sensitivity analysis.
+              </p>
+              <div class="sim-interpret-footer">
+                <span>Model: $A = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}}$ • Analytical assumptions strictly bounded by ISO 14224 protocol.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -346,6 +583,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=10"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>
