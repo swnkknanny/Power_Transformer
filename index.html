@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RAM Analysis Dashboard</title>
+  <title>Substation RAM Analysis Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -19,12 +19,13 @@
 
   <div class="layout-container">
     
-    <!-- Sidebar อัปโหลดและเลือก Sheet -->
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <h3><i class="fa-solid fa-file-excel"></i> ข้อมูลไฟล์ Excel</h3>
+      <h3><i class="fa-solid fa-file-excel"></i> นำเข้าไฟล์ข้อมูล</h3>
       <div class="drop-zone">
         <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
         <p class="drop-text">คลิกเพื่อเลือกไฟล์ ALL_RAM</p>
+        <span class="file-support">รองรับ .xlsx, .xls</span>
         <input type="file" id="excelFile" accept=".xlsx, .xls" />
       </div>
 
@@ -34,37 +35,37 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Dashboard -->
     <main class="main-content">
       
-      <!-- KPI Cards -->
+      <!-- KPI Summary Cards -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div>
-            <span class="metric-title">Avg. Availability</span>
-            <h2 id="avgAvail" style="color: #16a34a;">-%</h2>
+          <div class="metric-info">
+            <span class="metric-title">Avg. Availability (เกณฑ์ ≥ 96%)</span>
+            <h2 id="avgAvail">-%</h2>
           </div>
           <i class="fa-solid fa-chart-line metric-icon green"></i>
         </div>
 
         <div class="metric-card">
-          <div>
+          <div class="metric-info">
             <span class="metric-title">Avg. MTBF (ชม.)</span>
-            <h2 id="avgMtbf" style="color: #2563eb;">-</h2>
+            <h2 id="avgMtbf">-</h2>
           </div>
           <i class="fa-solid fa-clock-rotate-left metric-icon blue"></i>
         </div>
 
         <div class="metric-card">
-          <div>
+          <div class="metric-info">
             <span class="metric-title">Avg. MTTR (ชม.)</span>
-            <h2 id="avgMttr" style="color: #ea580c;">-</h2>
+            <h2 id="avgMttr">-</h2>
           </div>
           <i class="fa-solid fa-screwdriver-wrench metric-icon orange"></i>
         </div>
 
         <div class="metric-card">
-          <div>
+          <div class="metric-info">
             <span class="metric-title">Total Failure Modes</span>
             <h2 id="totalModes">-</h2>
           </div>
@@ -72,11 +73,11 @@
         </div>
       </div>
 
-      <!-- ส่วนตาราง -->
+      <!-- Table Section -->
       <div class="table-card">
         <div class="table-header">
-          <h3 id="currentSheetTitle">ตารางการวิเคราะห์ RAM</h3>
-          <input type="text" id="searchInput" placeholder="🔍 ค้นหา Component, Code, Cause..." class="search-input" />
+          <h3 id="currentSheetTitle">ตารางวิเคราะห์ RAM</h3>
+          <input type="text" id="searchInput" placeholder="🔍 ค้นหา Component, Code, สาเหตุ..." class="search-input" />
         </div>
         
         <div class="table-wrapper" id="tableContainer">
