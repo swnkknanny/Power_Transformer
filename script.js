@@ -29,7 +29,7 @@ const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 const drillHistory = [];
 let activeSegmentIndex = null;
 
-// DOM Elements
+// DOM Elements: Core Dashboard
 const fileInput = document.getElementById('excelFile');
 const sheetSelect = document.getElementById('sheetSelect');
 const tableContainer = document.getElementById('tableContainer');
@@ -73,6 +73,44 @@ const drawerCloseBtn = document.getElementById('drawerCloseBtn');
 const drawerBackBtn = document.getElementById('drawerBackBtn');
 const drawerContent = document.getElementById('drawerContent');
 const drawerLevelTag = document.getElementById('drawerLevelTag');
+
+// DOM Elements: RAM What-If Simulator
+const simScenarioSelect = document.getElementById('simScenarioSelect');
+const simResetBtn = document.getElementById('simResetBtn');
+const simCompName = document.getElementById('simCompName');
+const simFailCode = document.getElementById('simFailCode');
+const simFailMode = document.getElementById('simFailMode');
+const simFailCause = document.getElementById('simFailCause');
+
+const simBaseMtbf = document.getElementById('simBaseMtbf');
+const simBaseMttr = document.getElementById('simBaseMttr');
+const simBaseAvail = document.getElementById('simBaseAvail');
+
+const simMttrSlider = document.getElementById('simMttrSlider');
+const simMttrNum = document.getElementById('simMttrNum');
+const simMtbfSlider = document.getElementById('simMtbfSlider');
+const simMtbfNum = document.getElementById('simMtbfNum');
+const simTargetSlider = document.getElementById('simTargetSlider');
+const simTargetNum = document.getElementById('simTargetNum');
+
+const simCmpBaseMtbf = document.getElementById('simCmpBaseMtbf');
+const simCmpScenMtbf = document.getElementById('simCmpScenMtbf');
+const simCmpDeltaMtbf = document.getElementById('simCmpDeltaMtbf');
+
+const simCmpBaseMttr = document.getElementById('simCmpBaseMttr');
+const simCmpScenMttr = document.getElementById('simCmpScenMttr');
+const simCmpDeltaMttr = document.getElementById('simCmpDeltaMttr');
+
+const simCmpBaseAvail = document.getElementById('simCmpBaseAvail');
+const simCmpScenAvail = document.getElementById('simCmpScenAvail');
+const simCmpDeltaAvail = document.getElementById('simCmpDeltaAvail');
+
+const simFeasibilityBadge = document.getElementById('simFeasibilityBadge');
+const simInterpretationText = document.getElementById('simInterpretationText');
+
+// Simulator In-Memory State (Sandbox Only)
+let simCurrentMode = 'mttr'; // 'mttr' | 'mtbf' | 'target'
+let simActiveRow = null;
 
 // ============================================================
 // REALTIME FIREBASE SYNC ENGINE
@@ -132,7 +170,10 @@ function showManualUploadPrompt() {
   `;
 }
 
-document.addEventListener('DOMContentLoaded', initRealtimeCloudSync);
+document.addEventListener('DOMContentLoaded', () => {
+  initRealtimeCloudSync();
+  initSimulatorEventListeners();
+});
 
 function handleWorkbookData(data, shouldPublishToCloud = false) {
   currentWorkbook = XLSX.read(data, { type: 'array' });
@@ -161,6 +202,9 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
     const currentView = drillHistory[drillHistory.length - 1];
     renderDrillView(currentView, false);
   }
+
+  // Populate What-If Simulator with current subsystem rows
+  populateSimulatorDropdown(targetSheet);
 }
 
 fileInput.addEventListener('change', function(e) {
@@ -176,6 +220,7 @@ fileInput.addEventListener('change', function(e) {
 sheetSelect.addEventListener('change', function(e) {
   if (currentWorkbook) {
     loadRamSheet(e.target.value);
+    populateSimulatorDropdown(e.target.value);
     closeDrawer();
   }
 });
@@ -241,11 +286,21 @@ function updateAuthUI() {
 }
 
 /* ============================================================
-   CORE METRICS ENGINE & AUTO-CALCULATE RAM FORMULA
+   CORE METRICS ENGINE & MATHEMATICAL FORMULATIONS
    ============================================================ */
 function calculateAvailabilityFormula(mtbf, mttr) {
-  if (mtbf + mttr === 0) return 100;
+  if (mtbf <= 0 || (mtbf + mttr) <= 0) return 0;
   return (mtbf / (mtbf + mttr)) * 100;
+}
+
+function calculateRequiredMtbf(targetAvailDecimal, mttr) {
+  if (targetAvailDecimal >= 1 || targetAvailDecimal <= 0) return 0;
+  return (targetAvailDecimal * mttr) / (1 - targetAvailDecimal);
+}
+
+function calculateRequiredMttr(targetAvailDecimal, mtbf) {
+  if (targetAvailDecimal <= 0) return 0;
+  return (mtbf * (1 - targetAvailDecimal)) / targetAvailDecimal;
 }
 
 function getNormalizedRows(sheetName) {
@@ -255,7 +310,7 @@ function getNormalizedRows(sheetName) {
 
   return rawRows.map((r, index) => {
     const compKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'COMPONENT');
-    const idKey = Object.keys(r).find(k => ['ID', 'CODE', 'EQUIPMENT ID', 'NO'].some(token => k.trim().toUpperCase().includes(token)));
+    const idKey = Object.keys(r).find(k => ['CODE', 'FAILURE CODE', 'ID', 'EQUIPMENT ID', 'NO'].some(t => k.trim().toUpperCase().includes(t)));
     const mtbfKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTBF');
     const mttrKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTTR');
     const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
@@ -274,13 +329,13 @@ function getNormalizedRows(sheetName) {
     }
 
     const compName = compKey && r[compKey] ? String(r[compKey]).trim() : 'Unassigned Equipment';
-    const compId = idKey && r[idKey] ? String(r[idKey]).trim() : `EQ-${index + 1}`;
-    const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'General Aging / Operational Stress';
+    const failCode = idKey && r[idKey] ? String(r[idKey]).trim() : `FC-${index + 1}`;
+    const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'Aging / Operational Stress';
     const failureMode = modeKey && r[modeKey] ? String(r[modeKey]).trim() : 'Functional Failure';
 
     return {
       rowIndex: index + 1,
-      id: compId,
+      id: failCode,
       component: compName,
       mtbf: Number(mtbfVal.toFixed(2)),
       mttr: Number(mttrVal.toFixed(2)),
@@ -587,6 +642,9 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
       avgMttrElem.textContent = metrics.avgMttr;
       worstAvailElem.textContent = metrics.minAvailItem;
       worstMttrElem.textContent = metrics.maxMttrItem;
+
+      // Re-populate simulator dropdown with updated cell values
+      populateSimulatorDropdown(sheetName);
     });
   });
 }
@@ -638,9 +696,244 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
+   RAM WHAT-IF SIMULATOR ENGINE (SANDBOX ONLY)
+   ============================================================ */
+function populateSimulatorDropdown(sheetName) {
+  const rows = getNormalizedRows(sheetName);
+  simScenarioSelect.innerHTML = '';
+
+  if (rows.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = 'No records in active subsystem';
+    simScenarioSelect.appendChild(opt);
+    simActiveRow = null;
+    return;
+  }
+
+  rows.forEach((r, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `[${r.id}] ${r.component} — Mode: ${r.mode.substring(0, 24)}`;
+    simScenarioSelect.appendChild(opt);
+  });
+
+  // Select first item by default
+  loadSimulatorBaseline(rows[0]);
+}
+
+function loadSimulatorBaseline(rowItem) {
+  if (!rowItem) return;
+  simActiveRow = rowItem;
+
+  // Context fields
+  simCompName.textContent = rowItem.component;
+  simFailCode.textContent = rowItem.id;
+  simFailMode.textContent = rowItem.mode;
+  simFailCause.textContent = `${rowItem.cause} (Simulated MTTR: ${rowItem.mttr.toFixed(2)} hrs)`;
+
+  // Baseline metrics
+  simBaseMtbf.textContent = `${rowItem.mtbf.toLocaleString()} hrs`;
+  simBaseMttr.textContent = `${rowItem.mttr.toFixed(2)} hrs`;
+  simBaseAvail.textContent = `${rowItem.availability.toFixed(2)}%`;
+
+  // Reset inputs to baseline
+  resetSimulatorInputs();
+  recalculateWhatIfScenario();
+}
+
+function resetSimulatorInputs() {
+  if (!simActiveRow) return;
+
+  // MTTR
+  simMttrSlider.value = simActiveRow.mttr > 0 ? simActiveRow.mttr : 8;
+  simMttrNum.value = simMttrSlider.value;
+
+  // MTBF
+  const mtbfVal = simActiveRow.mtbf > 0 ? simActiveRow.mtbf : 25000;
+  simMtbfSlider.max = Math.max(100000, mtbfVal * 2);
+  simMtbfSlider.value = mtbfVal;
+  simMtbfNum.value = mtbfVal;
+
+  // Target Availability
+  simTargetSlider.value = 99.95;
+  simTargetNum.value = 99.95;
+
+  document.querySelector('input[name="simStrategy"][value="fixed-mttr"]').checked = true;
+}
+
+function initSimulatorEventListeners() {
+  // Scenario Selection
+  simScenarioSelect.addEventListener('change', function() {
+    const currentSheet = sheetSelect.value;
+    const rows = getNormalizedRows(currentSheet);
+    const selectedIdx = parseInt(this.value);
+    if (!isNaN(selectedIdx) && rows[selectedIdx]) {
+      loadSimulatorBaseline(rows[selectedIdx]);
+    }
+  });
+
+  // Reset Button
+  simResetBtn.addEventListener('click', () => {
+    resetSimulatorInputs();
+    recalculateWhatIfScenario();
+  });
+
+  // Mode Toggle Buttons
+  document.querySelectorAll('.sim-mode-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sim-mode-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      simCurrentMode = this.getAttribute('data-mode');
+
+      document.querySelectorAll('.sim-mode-pane').forEach(p => p.classList.remove('active'));
+      if (simCurrentMode === 'mttr') document.getElementById('simPaneMttr').classList.add('active');
+      else if (simCurrentMode === 'mtbf') document.getElementById('simPaneMtbf').classList.add('active');
+      else if (simCurrentMode === 'target') document.getElementById('simPaneTarget').classList.add('active');
+
+      recalculateWhatIfScenario();
+    });
+  });
+
+  // Mode 1: MTTR Sync
+  simMttrSlider.addEventListener('input', function() {
+    simMttrNum.value = parseFloat(this.value).toFixed(1);
+    recalculateWhatIfScenario();
+  });
+  simMttrNum.addEventListener('input', function() {
+    simMttrSlider.value = this.value;
+    recalculateWhatIfScenario();
+  });
+
+  // Mode 2: MTBF Sync
+  simMtbfSlider.addEventListener('input', function() {
+    simMtbfNum.value = this.value;
+    recalculateWhatIfScenario();
+  });
+  simMtbfNum.addEventListener('input', function() {
+    simMtbfSlider.value = this.value;
+    recalculateWhatIfScenario();
+  });
+
+  // Mode 3: Target Sync
+  simTargetSlider.addEventListener('input', function() {
+    simTargetNum.value = parseFloat(this.value).toFixed(2);
+    recalculateWhatIfScenario();
+  });
+  simTargetNum.addEventListener('input', function() {
+    simTargetSlider.value = this.value;
+    recalculateWhatIfScenario();
+  });
+
+  // Strategy Radio Sync
+  document.querySelectorAll('input[name="simStrategy"]').forEach(radio => {
+    radio.addEventListener('change', recalculateWhatIfScenario);
+  });
+}
+
+function recalculateWhatIfScenario() {
+  if (!simActiveRow) return;
+
+  const baseMtbf = simActiveRow.mtbf;
+  const baseMttr = simActiveRow.mttr;
+  const baseAvail = simActiveRow.availability;
+
+  let scenMtbf = baseMtbf;
+  let scenMttr = baseMttr;
+  let scenAvail = baseAvail;
+  let interpretationText = '';
+  let isFeasible = true;
+
+  if (simCurrentMode === 'mttr') {
+    // Mode 1: Adjust MTTR
+    scenMttr = Math.max(0.1, parseFloat(simMttrNum.value) || 0.1);
+    scenMtbf = baseMtbf;
+    scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
+
+    const mttrDiff = scenMttr - baseMttr;
+    const availDiff = scenAvail - baseAvail;
+
+    interpretationText = `Under this simulated scenario with MTBF held at ${baseMtbf.toLocaleString()} operating hours, adjusting MTTR from ${baseMttr.toFixed(2)} to ${scenMttr.toFixed(2)} hours would result in a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). The model indicates that corrective latency improvements directly scale operational uptime without altering equipment reliability intervals.`;
+  } else if (simCurrentMode === 'mtbf') {
+    // Mode 2: Adjust MTBF
+    scenMtbf = Math.max(10, parseFloat(simMtbfNum.value) || 10);
+    scenMttr = baseMttr;
+    scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
+
+    const mtbfDiff = scenMtbf - baseMtbf;
+    const availDiff = scenAvail - baseAvail;
+
+    interpretationText = `Based on the selected assumptions, adjusting MTBF from ${baseMtbf.toLocaleString()} to ${scenMtbf.toLocaleString()} operating hours while maintaining simulated repair duration at ${baseMttr.toFixed(2)} hours yields a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). Reliability improvements under this scenario reflect reduced frequency of the cataloged failure mode (${simActiveRow.mode}).`;
+  } else if (simCurrentMode === 'target') {
+    // Mode 3: Target Availability
+    const targetAvailPct = Math.min(99.99, Math.max(90.0, parseFloat(simTargetNum.value) || 99.0));
+    const targetAvailDecimal = targetAvailPct / 100;
+    scenAvail = targetAvailPct;
+
+    const selectedStrategy = document.querySelector('input[name="simStrategy"]:checked')?.value || 'fixed-mttr';
+
+    if (selectedStrategy === 'fixed-mttr') {
+      scenMttr = baseMttr;
+      scenMtbf = calculateRequiredMtbf(targetAvailDecimal, scenMttr);
+      const reqDelta = scenMtbf - baseMtbf;
+
+      isFeasible = scenMtbf > 0 && scenMtbf < 500000;
+
+      interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while assuming the current simulated MTTR of ${baseMttr.toFixed(2)} hours remains constant, the required MTBF would need to increase from ${baseMtbf.toLocaleString()} to approximately <strong>${Math.round(scenMtbf).toLocaleString()} operating hours</strong> (an improvement of ${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs). This simulation scenario would require preventative mitigation against root cause "${simActiveRow.cause}".`;
+    } else {
+      scenMtbf = baseMtbf;
+      scenMttr = calculateRequiredMttr(targetAvailDecimal, scenMtbf);
+      const redDelta = baseMttr - scenMttr;
+
+      isFeasible = scenMttr >= 0.2;
+
+      interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while maintaining simulated MTBF at ${baseMtbf.toLocaleString()} operating hours, the maximum allowable MTTR would need to be reduced from ${baseMttr.toFixed(2)} to approximately <strong>${scenMttr.toFixed(2)} hours or less</strong> (a latency reduction of ${redDelta.toFixed(2)} hrs). The model indicates that specialized staging and immediate parts availability would be required under these operational parameters.`;
+    }
+  }
+
+  // Update Comparison Table
+  simCmpBaseMtbf.textContent = `${baseMtbf.toLocaleString()} hrs`;
+  simCmpScenMtbf.textContent = `${Math.round(scenMtbf).toLocaleString()} hrs`;
+  renderDiffIndicator(simCmpDeltaMtbf, scenMtbf - baseMtbf, 'hrs', true);
+
+  simCmpBaseMttr.textContent = `${baseMttr.toFixed(2)} hrs`;
+  simCmpScenMttr.textContent = `${scenMttr.toFixed(2)} hrs`;
+  renderDiffIndicator(simCmpDeltaMttr, scenMttr - baseMttr, 'hrs', false); // lower MTTR is better
+
+  simCmpBaseAvail.textContent = `${baseAvail.toFixed(2)}%`;
+  simCmpScenAvail.textContent = `${scenAvail.toFixed(2)}%`;
+  renderDiffIndicator(simCmpDeltaAvail, scenAvail - baseAvail, '%', true); // higher Avail is better
+
+  // Update Interpretation & Feasibility Badge
+  simInterpretationText.innerHTML = interpretationText;
+  if (isFeasible) {
+    simFeasibilityBadge.textContent = 'SCENARIO FEASIBLE';
+    simFeasibilityBadge.classList.remove('warning');
+  } else {
+    simFeasibilityBadge.textContent = 'EXTREME BOUNDARY SCENARIO';
+    simFeasibilityBadge.classList.add('warning');
+  }
+}
+
+function renderDiffIndicator(elem, delta, unit, higherIsBetter) {
+  const rounded = Number(delta.toFixed(2));
+  if (Math.abs(rounded) < 0.01) {
+    elem.innerHTML = `<span class="diff-neutral">0.00 ${unit} (No change)</span>`;
+    return;
+  }
+
+  const isPositive = rounded > 0;
+  const isGood = higherIsBetter ? isPositive : !isPositive;
+  const colorClass = isGood ? 'diff-up-green' : 'diff-down-red';
+  const arrow = isPositive ? '↑' : '↓';
+  const sign = isPositive ? '+' : '';
+
+  elem.innerHTML = `<span class="${colorClass}">${arrow} ${sign}${rounded.toLocaleString()} ${unit}</span>`;
+}
+
+/* ============================================================
    DRILL-DOWN ENGINE
    ============================================================ */
-
 function openDrawer() {
   detailDrawer.classList.add('open');
   drawerBackdrop.classList.add('show');
