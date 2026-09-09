@@ -135,9 +135,9 @@
         </div>
       </section>
 
-      <!-- Executive KPI Cards -->
+      <!-- Executive KPI Cards (Enhanced with drill cues) -->
       <section class="kpi-grid">
-        <div class="kpi-card">
+        <div class="kpi-card interactive" id="kpiCardAvail" title="Click to inspect Availability breakdown">
           <div class="kpi-header">
             <span class="kpi-title">Fleet Availability</span>
             <span class="kpi-target">Target ≥ 96.00%</span>
@@ -146,10 +146,13 @@
             <h2 id="avgAvail">-%</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-shield-check"></i></div>
           </div>
-          <div class="kpi-footer">Operational uptime benchmark</div>
+          <div class="kpi-footer">
+            <span>Operational uptime benchmark</span>
+            <i class="fa-solid fa-arrow-right kpi-arrow"></i>
+          </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card interactive" id="kpiCardMtbf" title="Click to inspect MTBF breakdown">
           <div class="kpi-header">
             <span class="kpi-title">Mean Time Between Failures</span>
             <span class="kpi-target">MTBF Metric</span>
@@ -161,10 +164,13 @@
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-clock-rotate-left"></i></div>
           </div>
-          <div class="kpi-footer">Average operating hours between failures</div>
+          <div class="kpi-footer">
+            <span>Average operating hours between failures</span>
+            <i class="fa-solid fa-arrow-right kpi-arrow"></i>
+          </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card interactive" id="kpiCardMttr" title="Click to inspect MTTR breakdown">
           <div class="kpi-header">
             <span class="kpi-title">Mean Time to Restore</span>
             <span class="kpi-target">MTTR Limit &le; 10h</span>
@@ -176,10 +182,13 @@
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-screwdriver-wrench"></i></div>
           </div>
-          <div class="kpi-footer">Average corrective maintenance latency</div>
+          <div class="kpi-footer">
+            <span>Average corrective maintenance latency</span>
+            <i class="fa-solid fa-arrow-right kpi-arrow"></i>
+          </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card interactive" id="kpiCardModes" title="Click to inspect Failure Modes breakdown">
           <div class="kpi-header">
             <span class="kpi-title">Cataloged Failure Modes</span>
             <span class="kpi-target">Active Registry</span>
@@ -188,7 +197,10 @@
             <h2 id="totalModes">-</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-list-check"></i></div>
           </div>
-          <div class="kpi-footer">Total failure mechanisms monitored</div>
+          <div class="kpi-footer">
+            <span>Total failure mechanisms monitored</span>
+            <i class="fa-solid fa-arrow-right kpi-arrow"></i>
+          </div>
         </div>
       </section>
 
@@ -200,18 +212,24 @@
             <h3>Subsystem Attention Vectors</h3>
           </div>
           <div class="attention-stream">
-            <div class="attention-block">
+            <div class="attention-block interactive" id="insightWorstAvail" title="Click to view equipment diagnostics">
               <div class="attention-indicator indicator-warn"></div>
               <div class="attention-details">
-                <span class="attention-label">Lowest Availability Component</span>
+                <div class="attention-header-row">
+                  <span class="attention-label">Lowest Availability Component</span>
+                  <span class="view-chip">Inspect <i class="fa-solid fa-chevron-right"></i></span>
+                </div>
                 <span class="attention-val" id="worstAvail">-</span>
                 <p class="attention-note">Priority candidate for condition-based maintenance to prevent unplanned outages.</p>
               </div>
             </div>
-            <div class="attention-block">
+            <div class="attention-block interactive" id="insightWorstMttr" title="Click to view equipment diagnostics">
               <div class="attention-indicator indicator-accent"></div>
               <div class="attention-details">
-                <span class="attention-label">Maximum Repair Latency (Peak MTTR)</span>
+                <div class="attention-header-row">
+                  <span class="attention-label">Maximum Repair Latency (Peak MTTR)</span>
+                  <span class="view-chip">Inspect <i class="fa-solid fa-chevron-right"></i></span>
+                </div>
                 <span class="attention-val" id="worstMttr">-</span>
                 <p class="attention-note">Consider stocking specialized spares and optimizing maintenance staging procedures.</p>
               </div>
@@ -220,9 +238,12 @@
         </div>
 
         <div class="insight-card">
-          <div class="card-meta">
-            <span class="card-tag">ROOT CAUSE SPECTRUM</span>
-            <h3>Failure Cause Distribution</h3>
+          <div class="card-meta flex-between">
+            <div>
+              <span class="card-tag">ROOT CAUSE SPECTRUM</span>
+              <h3>Failure Cause Distribution</h3>
+            </div>
+            <span class="interactive-hint"><i class="fa-solid fa-hand-pointer"></i> Click segment to drill</span>
           </div>
           <div class="chart-wrapper">
             <canvas id="causeChart"></canvas>
@@ -238,7 +259,7 @@
               <h3 id="currentSheetTitle">System Diagnostics & RAM Matrix</h3>
               <span class="table-status-pill" id="editNotice">Read-Only Observation Mode</span>
             </div>
-            <span class="sub-title">Equipment failure classification according to standard reliability taxonomy.</span>
+            <span class="sub-title">Click any equipment row to access comprehensive operational analytics.</span>
           </div>
 
           <div class="filter-group">
@@ -258,6 +279,23 @@
 
     </main>
   </div>
+
+  <!-- Detail Panel / Side Drawer (Interactive Drill-Down) -->
+  <aside class="detail-drawer" id="detailDrawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-nav">
+        <button class="btn-drawer-back" id="drawerBackBtn" style="display: none;">
+          <i class="fa-solid fa-arrow-left"></i> <span>Back</span>
+        </button>
+        <span class="drawer-level-tag" id="drawerLevelTag">LEVEL 2 • ANALYTICAL DETAIL</span>
+      </div>
+      <button class="drawer-close" id="drawerCloseBtn" aria-label="Close detail drawer">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerContent">
+      <!-- Injected Dynamically -->
+    </div>
+  </aside>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
   <!-- Admin Verification Modal -->
   <div class="modal-overlay" id="loginModal">
@@ -310,6 +348,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=7"></script>
 </body>
 </html>
