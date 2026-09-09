@@ -102,16 +102,40 @@ function loadRamSheet(sheetName) {
   renderFormattedTable(sheet);
 }
 
+// สร้างตารางพร้อมแบ่งสัดส่วนคอลัมน์อัตโนมัติ (Auto Fit)
 function renderFormattedTable(sheet) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   if (jsonData.length === 0) return;
 
   const headers = jsonData[0];
+  const sampleRows = jsonData.slice(1, 15);
+
+  // คำนวณประเภทคอลัมน์อัตโนมัติ
+  const colTypes = headers.map((header, colIndex) => {
+    const title = (header || '').toString().trim().toUpperCase();
+    
+    let totalLen = 0, count = 0;
+    sampleRows.forEach(row => {
+      const val = row[colIndex];
+      if (val !== undefined && val !== null) {
+        totalLen += val.toString().length;
+        count++;
+      }
+    });
+    const avgLen = count > 0 ? totalLen / count : 0;
+
+    const isShortMetric = ['CODE', 'MTBF', 'MTTR', 'AVAILABILITY', 'ID', 'NO'].some(k => title.includes(k));
+    if (isShortMetric || avgLen < 12) {
+      return 'col-compact';
+    }
+    return 'col-expand';
+  });
+
   const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
 
   let tableHtml = '<table id="ramTable"><thead><tr>';
-  headers.forEach(h => {
-    tableHtml += `<th>${h || ''}</th>`;
+  headers.forEach((h, idx) => {
+    tableHtml += `<th class="${colTypes[idx]}">${h || ''}</th>`;
   });
   tableHtml += '</tr></thead><tbody>';
 
@@ -120,16 +144,16 @@ function renderFormattedTable(sheet) {
     tableHtml += '<tr>';
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
-      
-      // ตรวจสอบค่าในคอลัมน์ Availability เพื่อใส่ badge สี
+      const colClass = colTypes[j];
+
+      // ไฮไลต์สี Availability ในตาราง
       if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
         const valNum = Number(cellValue);
         const percentVal = valNum <= 1 ? valNum * 100 : valNum;
         const badgeClass = percentVal >= 96 ? 'badge-pass' : 'badge-fail';
-        
-        tableHtml += `<td><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
+        tableHtml += `<td class="${colClass}"><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
       } else {
-        tableHtml += `<td>${cellValue}</td>`;
+        tableHtml += `<td class="${colClass}">${cellValue}</td>`;
       }
     }
     tableHtml += '</tr>';
@@ -147,6 +171,7 @@ function resetMetrics() {
   totalModesElem.textContent = '0';
 }
 
+// ค้นหาข้อมูลแบบ Real-time
 searchInput.addEventListener('input', function(e) {
   const query = e.target.value.toLowerCase();
   const trs = document.querySelectorAll('#ramTable tr');
