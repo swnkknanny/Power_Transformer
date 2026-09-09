@@ -138,7 +138,9 @@ const i18nData = {
 
 function setLanguage(lang) {
   currentLang = lang;
-  localStorage.setItem('RAM_DASHBOARD_LANG', lang);
+  try {
+    localStorage.setItem('RAM_DASHBOARD_LANG', lang);
+  } catch (e) {}
   document.documentElement.lang = lang;
 
   document.querySelectorAll('.btn-lang').forEach(btn => {
@@ -169,7 +171,7 @@ function setLanguage(lang) {
 }
 
 // ============================================================
-// 2. FIREBASE & CORE VARIABLES
+// 2. CORE SETUP & FIREBASE
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
@@ -181,7 +183,10 @@ const firebaseConfig = {
   measurementId: "G-NCSL5VJNYM"
 };
 
-firebase.initializeApp(firebaseConfig);
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch (e) {}
+
 const db = firebase.firestore();
 const RAM_DOC_REF = db.collection('substation_data').doc('active_workbook');
 
@@ -196,131 +201,47 @@ const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 const drillHistory = [];
 let activeSegmentIndex = null;
 
-// DOM Elements
-const fileInput = document.getElementById('excelFile');
-const sheetSelect = document.getElementById('sheetSelect');
-const tableContainer = document.getElementById('tableContainer');
-const currentSheetTitle = document.getElementById('currentSheetTitle');
-const searchInput = document.getElementById('searchInput');
-const editNotice = document.getElementById('editNotice');
-const modeBadge = document.getElementById('modeBadge');
-
-const adminUploadWidget = document.getElementById('adminUploadWidget');
-const saveExcelBtn = document.getElementById('saveExcelBtn');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const userProfile = document.getElementById('userProfile');
-
-const loginModal = document.getElementById('loginModal');
-const closeLoginModal = document.getElementById('closeLoginModal');
-const cancelLoginModal = document.getElementById('cancelLoginModal');
-const submitLoginBtn = document.getElementById('submitLoginBtn');
-const adminPasswordInput = document.getElementById('adminPassword');
-const loginError = document.getElementById('loginError');
-
-const exportModal = document.getElementById('exportModal');
-const openExportModalBtn = document.getElementById('openExportModalBtn');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const cancelModalBtn = document.getElementById('cancelModalBtn');
-const confirmPrintBtn = document.getElementById('confirmPrintBtn');
-const sheetOptionsList = document.getElementById('sheetOptionsList');
-const printContainer = document.getElementById('printContainer');
-
-const avgAvailElem = document.getElementById('avgAvail');
-const avgMtbfElem = document.getElementById('avgMtbf');
-const avgMttrElem = document.getElementById('avgMttr');
-const totalModesElem = document.getElementById('totalModes');
-const worstAvailElem = document.getElementById('worstAvail');
-const worstMttrElem = document.getElementById('worstMttr');
-
-// Drawer Elements
-const detailDrawer = document.getElementById('detailDrawer');
-const drawerBackdrop = document.getElementById('drawerBackdrop');
-const drawerCloseBtn = document.getElementById('drawerCloseBtn');
-const drawerBackBtn = document.getElementById('drawerBackBtn');
-const drawerContent = document.getElementById('drawerContent');
-const drawerLevelTag = document.getElementById('drawerLevelTag');
-
-// Simulator Elements
-const simScenarioSelect = document.getElementById('simScenarioSelect');
-const simResetBtn = document.getElementById('simResetBtn');
-const simCompName = document.getElementById('simCompName');
-const simFailMode = document.getElementById('simFailMode');
-const simFailCause = document.getElementById('simFailCause');
-
-const simBaseMtbf = document.getElementById('simBaseMtbf');
-const simBaseMttr = document.getElementById('simBaseMttr');
-const simBaseAvail = document.getElementById('simBaseAvail');
-
-const simMttrSlider = document.getElementById('simMttrSlider');
-const simMttrNum = document.getElementById('simMttrNum');
-const simMtbfSlider = document.getElementById('simMtbfSlider');
-const simMtbfNum = document.getElementById('simMtbfNum');
-const simTargetSlider = document.getElementById('simTargetSlider');
-const simTargetNum = document.getElementById('simTargetNum');
-
-const simBoardBaseAvail = document.getElementById('simBoardBaseAvail');
-const simBoardScenAvail = document.getElementById('simBoardScenAvail');
-const simBoardDiffAvail = document.getElementById('simBoardDiffAvail');
-const simBoardDiffCaption = document.getElementById('simBoardDiffCaption');
-const simBoardScenarioBox = document.getElementById('simBoardScenarioBox');
-
-const simVisualTrack = document.getElementById('simVisualTrack');
-const trackLblBase = document.getElementById('trackLblBase');
-const trackLblScen = document.getElementById('trackLblScen');
-const trackDotBase = document.getElementById('trackDotBase');
-const trackDotScen = document.getElementById('trackDotScen');
-const trackActiveBar = document.getElementById('trackActiveBar');
-
-const simCmpBaseMtbf = document.getElementById('simCmpBaseMtbf');
-const simCmpScenMtbf = document.getElementById('simCmpScenMtbf');
-const simCmpDeltaMtbf = document.getElementById('simCmpDeltaMtbf');
-
-const simCmpBaseMttr = document.getElementById('simCmpBaseMttr');
-const simCmpScenMttr = document.getElementById('simCmpScenMttr');
-const simCmpDeltaMttr = document.getElementById('simCmpDeltaMttr');
-
-const simCmpBaseAvail = document.getElementById('simCmpBaseAvail');
-const simCmpScenAvail = document.getElementById('simCmpScenAvail');
-const simCmpDeltaAvail = document.getElementById('simCmpDeltaAvail');
-
-const simFeasibilityBadge = document.getElementById('simFeasibilityBadge');
-const simInterpretationText = document.getElementById('simInterpretationText');
-const simTakeawayText = document.getElementById('simTakeawayText');
-
 let simCurrentMode = 'mttr';
 let simActiveRow = null;
 
 // ============================================================
-// 3. EVENT LISTENERS INITIALIZATION (ปลอดภัย 100%)
+// 3. SECURE DOM EVENT INITIALIZATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // ปุ่มเปลี่ยนภาษา
+  // สลับภาษา
   document.querySelectorAll('.btn-lang').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
       setLanguage(this.getAttribute('data-lang'));
     });
   });
 
-  // ปุ่มเปิดหน้าต่าง Admin Gateway
-  if (loginBtn) {
-    loginBtn.addEventListener('click', () => {
-      if (loginModal) {
-        loginModal.classList.add('show');
-        if (adminPasswordInput) {
-          adminPasswordInput.value = '';
-          adminPasswordInput.focus();
-        }
-        if (loginError) loginError.style.display = 'none';
+  // Admin Gateway Modal Open
+  const loginBtn = document.getElementById('loginBtn');
+  const loginModal = document.getElementById('loginModal');
+  const adminPasswordInput = document.getElementById('adminPassword');
+  const loginError = document.getElementById('loginError');
+
+  if (loginBtn && loginModal) {
+    loginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginModal.classList.add('show');
+      if (adminPasswordInput) {
+        adminPasswordInput.value = '';
+        adminPasswordInput.focus();
       }
+      if (loginError) loginError.style.display = 'none';
     });
   }
 
-  // ปุ่มปิดหน้าต่าง Admin Gateway
+  // Admin Modal Close
+  const closeLoginModal = document.getElementById('closeLoginModal');
+  const cancelLoginModal = document.getElementById('cancelLoginModal');
   if (closeLoginModal) closeLoginModal.addEventListener('click', closeLogin);
   if (cancelLoginModal) cancelLoginModal.addEventListener('click', closeLogin);
 
-  // ปุ่มกดส่งรหัส Admin
+  // Admin Submit
+  const submitLoginBtn = document.getElementById('submitLoginBtn');
   if (submitLoginBtn) submitLoginBtn.addEventListener('click', checkAdminPassword);
   if (adminPasswordInput) {
     adminPasswordInput.addEventListener('keypress', (e) => {
@@ -328,28 +249,98 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ปุ่ม Logout Admin
+  // Logout
+  const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       isAdmin = false;
       updateAuthUI();
+      const sheetSelect = document.getElementById('sheetSelect');
       if (currentWorkbook && sheetSelect) loadRamSheet(sheetSelect.value);
     });
   }
 
-  // ตั้งค่าภาษาเริ่มต้น
-  setLanguage(currentLang);
-  
-  // เริ่มต้น Simulator และซิงค์ฐานข้อมูล
+  // File Upload
+  const fileInput = document.getElementById('excelFile');
+  if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        handleWorkbookData(new Uint8Array(evt.target.result), true);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // Subsystem Selector
+  const sheetSelect = document.getElementById('sheetSelect');
+  if (sheetSelect) {
+    sheetSelect.addEventListener('change', function(e) {
+      if (currentWorkbook) {
+        loadRamSheet(e.target.value);
+        populateSimulatorDropdown(e.target.value);
+        closeDrawer();
+      }
+    });
+  }
+
+  // Search Input
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.addEventListener('input', applyTableFilter);
+
+  // Filter Buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentActiveFilter = this.getAttribute('data-filter');
+      applyTableFilter();
+    });
+  });
+
+  // Drawer Close
+  const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
+  if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
+
+  const drawerBackBtn = document.getElementById('drawerBackBtn');
+  if (drawerBackBtn) {
+    drawerBackBtn.addEventListener('click', () => {
+      if (drillHistory.length > 1) {
+        drillHistory.pop();
+        renderDrillView(drillHistory[drillHistory.length - 1], false);
+      } else {
+        closeDrawer();
+      }
+    });
+  }
+
+  // Simulator Events
   initSimulatorEventListeners();
+
+  // Export Events
+  initExportEvents();
+
+  // Load Initial Language
+  setLanguage(currentLang);
+
+  // Load Data
   initRealtimeCloudSync();
 });
 
 function closeLogin() {
+  const loginModal = document.getElementById('loginModal');
   if (loginModal) loginModal.classList.remove('show');
 }
 
 function checkAdminPassword() {
+  const adminPasswordInput = document.getElementById('adminPassword');
+  const loginError = document.getElementById('loginError');
+  const sheetSelect = document.getElementById('sheetSelect');
+
   if (adminPasswordInput && adminPasswordInput.value === ADMIN_PASSWORD) {
     isAdmin = true;
     updateAuthUI();
@@ -362,6 +353,13 @@ function checkAdminPassword() {
 
 function updateAuthUI() {
   const dict = i18nData[currentLang] || i18nData.en;
+  const loginBtn = document.getElementById('loginBtn');
+  const userProfile = document.getElementById('userProfile');
+  const adminUploadWidget = document.getElementById('adminUploadWidget');
+  const saveExcelBtn = document.getElementById('saveExcelBtn');
+  const modeBadge = document.getElementById('modeBadge');
+  const editNotice = document.getElementById('editNotice');
+
   if (isAdmin) {
     if (loginBtn) loginBtn.style.display = 'none';
     if (userProfile) userProfile.style.display = 'flex';
@@ -392,7 +390,7 @@ function updateAuthUI() {
 }
 
 // ============================================================
-// 4. REALTIME CLOUD SYNC
+// 4. FIREBASE SYNC ENGINE
 // ============================================================
 function initRealtimeCloudSync() {
   RAM_DOC_REF.onSnapshot((doc) => {
@@ -403,13 +401,12 @@ function initRealtimeCloudSync() {
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      handleWorkbookData(byteArray, false);
+      handleWorkbookData(new Uint8Array(byteNumbers), false);
     } else {
       fetchDefaultRepoFile();
     }
   }, (error) => {
-    console.warn('Firestore snapshot error, falling back to local file:', error);
+    console.warn('Firestore fallback to local file:', error);
     fetchDefaultRepoFile();
   });
 }
@@ -435,11 +432,12 @@ async function syncWorkbookToCloud() {
       updatedBy: 'Suwanan K.'
     });
   } catch (err) {
-    console.error('Error syncing dataset to Firebase:', err);
+    console.error('Error syncing dataset:', err);
   }
 }
 
 function showManualUploadPrompt() {
+  const tableContainer = document.getElementById('tableContainer');
   if (!tableContainer) return;
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
@@ -457,6 +455,7 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
     syncWorkbookToCloud();
   }
 
+  const sheetSelect = document.getElementById('sheetSelect');
   if (!sheetSelect) return;
   const prevSelected = sheetSelect.value;
   sheetSelect.innerHTML = '';
@@ -474,38 +473,16 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
   sheetSelect.value = targetSheet;
   loadRamSheet(targetSheet);
 
+  const detailDrawer = document.getElementById('detailDrawer');
   if (detailDrawer && detailDrawer.classList.contains('open') && drillHistory.length > 0) {
-    const currentView = drillHistory[drillHistory.length - 1];
-    renderDrillView(currentView, false);
+    renderDrillView(drillHistory[drillHistory.length - 1], false);
   }
 
   populateSimulatorDropdown(targetSheet);
 }
 
-if (fileInput) {
-  fileInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      handleWorkbookData(new Uint8Array(evt.target.result), true);
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-if (sheetSelect) {
-  sheetSelect.addEventListener('change', function(e) {
-    if (currentWorkbook) {
-      loadRamSheet(e.target.value);
-      populateSimulatorDropdown(e.target.value);
-      closeDrawer();
-    }
-  });
-}
-
 // ============================================================
-// 5. MATHEMATICAL RAM FORMULAS
+// 5. RAM CALCULATIONS
 // ============================================================
 function calculateAvailabilityFormula(mtbf, mttr) {
   if (mtbf <= 0 || (mtbf + mttr) <= 0) return 0;
@@ -621,6 +598,15 @@ function calculateSheetMetrics(rows) {
 
 function loadRamSheet(sheetName) {
   const dict = i18nData[currentLang] || i18nData.en;
+  const currentSheetTitle = document.getElementById('currentSheetTitle');
+  const tableContainer = document.getElementById('tableContainer');
+  const avgAvailElem = document.getElementById('avgAvail');
+  const avgMtbfElem = document.getElementById('avgMtbf');
+  const avgMttrElem = document.getElementById('avgMttr');
+  const totalModesElem = document.getElementById('totalModes');
+  const worstAvailElem = document.getElementById('worstAvail');
+  const worstMttrElem = document.getElementById('worstMttr');
+
   if (currentSheetTitle) currentSheetTitle.textContent = `${dict.table_title_prefix} ${sheetName}`;
   const rows = getNormalizedRows(sheetName);
 
@@ -708,7 +694,7 @@ function renderCauseChart(causeCounts) {
             pointStyle: 'circle',
             font: { size: 11, family: 'Plus Jakarta Sans, Sarabun', weight: '500' },
             color: '#5F666D',
-            padding: 12
+            padding: 10
           }
         }
       },
@@ -721,6 +707,7 @@ function renderCauseChart(causeCounts) {
 // 7. TABLE MATRIX
 // ============================================================
 function renderFormattedTable(sheet, sheetName) {
+  const tableContainer = document.getElementById('tableContainer');
   if (!tableContainer) return;
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   if (jsonData.length === 0) return;
@@ -850,6 +837,12 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
 
       const rows = getNormalizedRows(sheetName);
       const metrics = calculateSheetMetrics(rows);
+      const avgAvailElem = document.getElementById('avgAvail');
+      const avgMtbfElem = document.getElementById('avgMtbf');
+      const avgMttrElem = document.getElementById('avgMttr');
+      const worstAvailElem = document.getElementById('worstAvail');
+      const worstMttrElem = document.getElementById('worstMttr');
+
       if (avgAvailElem) {
         avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
         avgAvailElem.classList.remove('status-green', 'status-red');
@@ -867,14 +860,14 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
   });
 }
 
-if (saveExcelBtn) {
-  saveExcelBtn.addEventListener('click', function() {
-    if (!currentWorkbook) return;
-    XLSX.writeFile(currentWorkbook, 'Substation_RAM_Intelligence_Export.xlsx');
-  });
-}
-
 function resetMetrics() {
+  const avgAvailElem = document.getElementById('avgAvail');
+  const avgMtbfElem = document.getElementById('avgMtbf');
+  const avgMttrElem = document.getElementById('avgMttr');
+  const totalModesElem = document.getElementById('totalModes');
+  const worstAvailElem = document.getElementById('worstAvail');
+  const worstMttrElem = document.getElementById('worstMttr');
+
   if (avgAvailElem) {
     avgAvailElem.textContent = '-%';
     avgAvailElem.classList.remove('status-green', 'status-red');
@@ -888,6 +881,7 @@ function resetMetrics() {
 }
 
 function applyTableFilter() {
+  const searchInput = document.getElementById('searchInput');
   if (!searchInput) return;
   const query = searchInput.value.toLowerCase();
   const trs = document.querySelectorAll('#ramTable tbody tr');
@@ -907,23 +901,13 @@ function applyTableFilter() {
   });
 }
 
-if (searchInput) searchInput.addEventListener('input', applyTableFilter);
-
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    currentActiveFilter = this.getAttribute('data-filter');
-    applyTableFilter();
-  });
-});
-
 // ============================================================
-// 8. WHAT-IF SIMULATOR ENGINE (COMPACT DASHBOARD)
+// 8. WHAT-IF SIMULATOR ENGINE (CRASH-PROOF & FULLY FUNCTIONAL)
 // ============================================================
 function populateSimulatorDropdown(sheetName) {
-  const rows = getNormalizedRows(sheetName);
+  const simScenarioSelect = document.getElementById('simScenarioSelect');
   if (!simScenarioSelect) return;
+  const rows = getNormalizedRows(sheetName);
   simScenarioSelect.innerHTML = '';
 
   if (rows.length === 0) {
@@ -942,7 +926,9 @@ function populateSimulatorDropdown(sheetName) {
     simScenarioSelect.appendChild(opt);
   });
 
-  loadSimulatorBaseline(rows[0]);
+  if (rows[0]) {
+    loadSimulatorBaseline(rows[0]);
+  }
 }
 
 function loadSimulatorBaseline(rowItem) {
@@ -950,13 +936,20 @@ function loadSimulatorBaseline(rowItem) {
   simActiveRow = rowItem;
   const dict = i18nData[currentLang] || i18nData.en;
 
-  if (simCompName) simCompName.textContent = rowItem.component;
-  if (simFailMode) simFailMode.textContent = rowItem.mode;
-  if (simFailCause) simFailCause.textContent = rowItem.cause;
+  const simCompName = document.getElementById('simCompName');
+  const simFailMode = document.getElementById('simFailMode');
+  const simFailCause = document.getElementById('simFailCause');
+  const simBaseMtbf = document.getElementById('simBaseMtbf');
+  const simBaseMttr = document.getElementById('simBaseMttr');
+  const simBaseAvail = document.getElementById('simBaseAvail');
 
-  if (simBaseMtbf) simBaseMtbf.textContent = `${rowItem.mtbf.toLocaleString()} ${dict.unit_hrs}`;
-  if (simBaseMttr) simBaseMttr.textContent = `${rowItem.mttr.toFixed(2)} ${dict.unit_hrs}`;
-  if (simBaseAvail) simBaseAvail.textContent = `${rowItem.availability.toFixed(2)}%`;
+  if (simCompName) simCompName.textContent = rowItem.component || '-';
+  if (simFailMode) simFailMode.textContent = rowItem.mode || '-';
+  if (simFailCause) simFailCause.textContent = rowItem.cause || '-';
+
+  if (simBaseMtbf) simBaseMtbf.textContent = `${(rowItem.mtbf || 0).toLocaleString()} ${dict.unit_hrs}`;
+  if (simBaseMttr) simBaseMttr.textContent = `${(rowItem.mttr || 0).toFixed(2)} ${dict.unit_hrs}`;
+  if (simBaseAvail) simBaseAvail.textContent = `${(rowItem.availability || 0).toFixed(2)}%`;
 
   resetSimulatorInputs();
   recalculateWhatIfScenario();
@@ -964,6 +957,13 @@ function loadSimulatorBaseline(rowItem) {
 
 function resetSimulatorInputs() {
   if (!simActiveRow) return;
+
+  const simMttrSlider = document.getElementById('simMttrSlider');
+  const simMttrNum = document.getElementById('simMttrNum');
+  const simMtbfSlider = document.getElementById('simMtbfSlider');
+  const simMtbfNum = document.getElementById('simMtbfNum');
+  const simTargetSlider = document.getElementById('simTargetSlider');
+  const simTargetNum = document.getElementById('simTargetNum');
 
   const mttrVal = simActiveRow.mttr > 0 ? simActiveRow.mttr : 8;
   if (simMttrSlider) simMttrSlider.value = mttrVal;
@@ -984,18 +984,21 @@ function resetSimulatorInputs() {
 }
 
 function initSimulatorEventListeners() {
-  if (!simScenarioSelect) return;
+  const simScenarioSelect = document.getElementById('simScenarioSelect');
+  if (simScenarioSelect) {
+    simScenarioSelect.addEventListener('change', function() {
+      const sheetSelect = document.getElementById('sheetSelect');
+      if (!sheetSelect) return;
+      const currentSheet = sheetSelect.value;
+      const rows = getNormalizedRows(currentSheet);
+      const selectedIdx = parseInt(this.value);
+      if (!isNaN(selectedIdx) && rows[selectedIdx]) {
+        loadSimulatorBaseline(rows[selectedIdx]);
+      }
+    });
+  }
 
-  simScenarioSelect.addEventListener('change', function() {
-    if (!sheetSelect) return;
-    const currentSheet = sheetSelect.value;
-    const rows = getNormalizedRows(currentSheet);
-    const selectedIdx = parseInt(this.value);
-    if (!isNaN(selectedIdx) && rows[selectedIdx]) {
-      loadSimulatorBaseline(rows[selectedIdx]);
-    }
-  });
-
+  const simResetBtn = document.getElementById('simResetBtn');
   if (simResetBtn) {
     simResetBtn.addEventListener('click', () => {
       resetSimulatorInputs();
@@ -1018,6 +1021,8 @@ function initSimulatorEventListeners() {
     });
   });
 
+  const simMttrSlider = document.getElementById('simMttrSlider');
+  const simMttrNum = document.getElementById('simMttrNum');
   if (simMttrSlider && simMttrNum) {
     simMttrSlider.addEventListener('input', function() {
       simMttrNum.value = parseFloat(this.value).toFixed(1);
@@ -1029,6 +1034,8 @@ function initSimulatorEventListeners() {
     });
   }
 
+  const simMtbfSlider = document.getElementById('simMtbfSlider');
+  const simMtbfNum = document.getElementById('simMtbfNum');
   if (simMtbfSlider && simMtbfNum) {
     simMtbfSlider.addEventListener('input', function() {
       simMtbfNum.value = this.value;
@@ -1040,6 +1047,8 @@ function initSimulatorEventListeners() {
     });
   }
 
+  const simTargetSlider = document.getElementById('simTargetSlider');
+  const simTargetNum = document.getElementById('simTargetNum');
   if (simTargetSlider && simTargetNum) {
     simTargetSlider.addEventListener('input', function() {
       simTargetNum.value = parseFloat(this.value).toFixed(2);
@@ -1062,6 +1071,10 @@ function recalculateWhatIfScenario() {
   const baseMtbf = Number(simActiveRow.mtbf) || 1;
   const baseMttr = Number(simActiveRow.mttr) || 0;
   const baseAvail = Number(simActiveRow.availability) || calculateAvailabilityFormula(baseMtbf, baseMttr);
+
+  const simMttrNum = document.getElementById('simMttrNum');
+  const simMtbfNum = document.getElementById('simMtbfNum');
+  const simTargetNum = document.getElementById('simTargetNum');
 
   let scenMtbf = baseMtbf;
   let scenMttr = baseMttr;
@@ -1121,6 +1134,7 @@ function recalculateWhatIfScenario() {
       }
     }
   } else if (simCurrentMode === 'target') {
+    const simVisualTrack = document.getElementById('simVisualTrack');
     if (simVisualTrack) simVisualTrack.style.display = 'none';
 
     const targetAvailPct = Math.min(99.99, Math.max(90.0, parseFloat(simTargetNum?.value) || 99.0));
@@ -1138,7 +1152,7 @@ function recalculateWhatIfScenario() {
         interpretationText = `หากต้องการบรรลุเป้าหมายความพร้อมใช้งานที่ <strong>${targetAvailPct.toFixed(2)}%</strong> โดยใช้เวลาซ่อมเดิม (${baseMttr.toFixed(2)} ชม.) แบบจำลองระบุว่าต้องยืดอายุ MTBF เป็นประมาณ <strong>${Math.round(scenMtbf).toLocaleString()} ชม.</strong> (${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} ชม. จากค่าเริ่มต้น)`;
         takeawayText = `การตั้งเป้าหมายความพร้อมใช้งาน ${targetAvailPct.toFixed(2)}% ภายใต้เวลาซ่อมคงที่ จำเป็นต้องเพิ่ม MTBF เป็น ${Math.round(scenMtbf).toLocaleString()} ชั่วโมง`;
       } else {
-        interpretationText = `To achieve target Availability of <strong>${targetAvailPct.toFixed(2)}%</strong> with MTTR fixed at ${baseMttr.toFixed(2)} hrs, the model indicates required MTBF would need to increase to <strong>${Math.round(scenMtbf).toLocaleString()} hrs</strong> (${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs).`;
+        interpretationText = `To achieve target Availability of <strong>${targetAvailPct.toFixed(2)}%</strong> with MTTR fixed at ${baseMttr.toFixed(2)} hrs, the model indicates required MTBF would need to reach approximately <strong>${Math.round(scenMtbf).toLocaleString()} hrs</strong> (${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs).`;
         takeawayText = `Targeting ${targetAvailPct.toFixed(2)}% Availability with fixed repair time requires expanding MTBF to ${Math.round(scenMtbf).toLocaleString()} operating hours.`;
       }
     } else {
@@ -1157,6 +1171,12 @@ function recalculateWhatIfScenario() {
   }
 
   // Update Visual Compare Board
+  const simBoardBaseAvail = document.getElementById('simBoardBaseAvail');
+  const simBoardScenAvail = document.getElementById('simBoardScenAvail');
+  const simBoardDiffAvail = document.getElementById('simBoardDiffAvail');
+  const simBoardDiffCaption = document.getElementById('simBoardDiffCaption');
+  const simBoardScenarioBox = document.getElementById('simBoardScenarioBox');
+
   if (simBoardBaseAvail) simBoardBaseAvail.textContent = `${baseAvail.toFixed(2)}%`;
   if (simBoardScenAvail) simBoardScenAvail.textContent = `${scenAvail.toFixed(2)}%`;
 
@@ -1178,7 +1198,7 @@ function recalculateWhatIfScenario() {
     }
   }
 
-  // Threshold Reactive Styling
+  // Threshold Styling
   if (simBoardScenarioBox) {
     simBoardScenarioBox.classList.remove('within-target', 'below-target');
     simBoardScenarioBox.classList.add(scenAvail >= 96.00 ? 'within-target' : 'below-target');
@@ -1186,6 +1206,16 @@ function recalculateWhatIfScenario() {
 
   // Impact Summary Table
   const dict = i18nData[currentLang] || i18nData.en;
+  const simCmpBaseMtbf = document.getElementById('simCmpBaseMtbf');
+  const simCmpScenMtbf = document.getElementById('simCmpScenMtbf');
+  const simCmpDeltaMtbf = document.getElementById('simCmpDeltaMtbf');
+  const simCmpBaseMttr = document.getElementById('simCmpBaseMttr');
+  const simCmpScenMttr = document.getElementById('simCmpScenMttr');
+  const simCmpDeltaMttr = document.getElementById('simCmpDeltaMttr');
+  const simCmpBaseAvail = document.getElementById('simCmpBaseAvail');
+  const simCmpScenAvail = document.getElementById('simCmpScenAvail');
+  const simCmpDeltaAvail = document.getElementById('simCmpDeltaAvail');
+
   if (simCmpBaseMtbf) simCmpBaseMtbf.textContent = `${baseMtbf.toLocaleString()} ${dict.unit_hrs}`;
   if (simCmpScenMtbf) simCmpScenMtbf.textContent = `${Math.round(scenMtbf).toLocaleString()} ${dict.unit_hrs}`;
   renderDiffIndicator(simCmpDeltaMtbf, scenMtbf - baseMtbf, dict.unit_hrs, true);
@@ -1199,6 +1229,10 @@ function recalculateWhatIfScenario() {
   renderDiffIndicator(simCmpDeltaAvail, scenAvail - baseAvail, '%', true);
 
   // Interpretation Card Tag & Narrative
+  const simFeasibilityBadge = document.getElementById('simFeasibilityBadge');
+  const simInterpretationText = document.getElementById('simInterpretationText');
+  const simTakeawayText = document.getElementById('simTakeawayText');
+
   if (simFeasibilityBadge) {
     simFeasibilityBadge.className = 'interpret-pill ' + (scenAvail >= 96.00 ? 'status-within' : 'status-below');
     simFeasibilityBadge.textContent = (scenAvail >= 96.00) 
@@ -1210,8 +1244,15 @@ function recalculateWhatIfScenario() {
 }
 
 function updateVisualTrack(baseVal, scenVal, minVal, maxVal, unitLabel) {
+  const simVisualTrack = document.getElementById('simVisualTrack');
   if (!simVisualTrack) return;
   simVisualTrack.style.display = 'flex';
+
+  const trackLblBase = document.getElementById('trackLblBase');
+  const trackLblScen = document.getElementById('trackLblScen');
+  const trackDotBase = document.getElementById('trackDotBase');
+  const trackDotScen = document.getElementById('trackDotScen');
+  const trackActiveBar = document.getElementById('trackActiveBar');
 
   const range = maxVal - minVal;
   const pctBase = Math.min(100, Math.max(0, ((baseVal - minVal) / range) * 100));
@@ -1231,10 +1272,29 @@ function updateVisualTrack(baseVal, scenVal, minVal, maxVal, unitLabel) {
   }
 }
 
+function renderDiffIndicator(elem, delta, unit, higherIsBetter) {
+  if (!elem) return;
+  const rounded = Number(delta.toFixed(2));
+  if (Math.abs(rounded) < 0.01) {
+    elem.innerHTML = `<span class="diff-neutral">0.00 ${unit}</span>`;
+    return;
+  }
+
+  const isPositive = rounded > 0;
+  const isGood = higherIsBetter ? isPositive : !isPositive;
+  const colorClass = isGood ? 'diff-up-green' : 'diff-down-red';
+  const arrow = isPositive ? '↑' : '↓';
+  const sign = isPositive ? '+' : '';
+
+  elem.innerHTML = `<span class="${colorClass}">${arrow} ${sign}${rounded.toLocaleString()} ${unit}</span>`;
+}
+
 // ============================================================
-// 9. DRAWER & EXPORT BRIEF ENGINE
+// 9. DRILL-DOWN ENGINE
 // ============================================================
 function openDrawer() {
+  const detailDrawer = document.getElementById('detailDrawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
   if (!detailDrawer || !drawerBackdrop) return;
   detailDrawer.classList.add('open');
   drawerBackdrop.classList.add('show');
@@ -1242,6 +1302,8 @@ function openDrawer() {
 }
 
 function closeDrawer() {
+  const detailDrawer = document.getElementById('detailDrawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
   if (!detailDrawer || !drawerBackdrop) return;
   detailDrawer.classList.remove('open');
   drawerBackdrop.classList.remove('show');
@@ -1250,27 +1312,15 @@ function closeDrawer() {
   activeSegmentIndex = null;
 }
 
-if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
-if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
-
-if (drawerBackBtn) {
-  drawerBackBtn.addEventListener('click', () => {
-    if (drillHistory.length > 1) {
-      drillHistory.pop();
-      const prevView = drillHistory[drillHistory.length - 1];
-      renderDrillView(prevView, false);
-    } else {
-      closeDrawer();
-    }
-  });
-}
-
 function pushDrillView(viewState) {
   drillHistory.push(viewState);
   renderDrillView(viewState, true);
 }
 
 function renderDrillView(viewState, shouldOpen = true) {
+  const drawerBackBtn = document.getElementById('drawerBackBtn');
+  const drawerLevelTag = document.getElementById('drawerLevelTag');
+
   if (drawerBackBtn) drawerBackBtn.style.display = drillHistory.length > 1 ? 'inline-flex' : 'none';
   if (drawerLevelTag) {
     drawerLevelTag.textContent = viewState.level === 3 
@@ -1294,6 +1344,8 @@ function openDrillCategory(categoryName) {
 }
 
 function renderCategoryDetail(categoryName) {
+  const drawerContent = document.getElementById('drawerContent');
+  const sheetSelect = document.getElementById('sheetSelect');
   if (!drawerContent || !sheetSelect) return;
   const currentSheet = sheetSelect.value;
   const allRows = getNormalizedRows(currentSheet);
@@ -1436,121 +1488,14 @@ function renderCategoryDetail(categoryName) {
   drawerContent.innerHTML = html;
 }
 
-const kpiCardAvailEl = document.getElementById('kpiCardAvail');
-const kpiCardMtbfEl = document.getElementById('kpiCardMtbf');
-const kpiCardMttrEl = document.getElementById('kpiCardMttr');
-const kpiCardModesEl = document.getElementById('kpiCardModes');
-
-if (kpiCardAvailEl) kpiCardAvailEl.addEventListener('click', () => openDrillKpi('availability'));
-if (kpiCardMtbfEl) kpiCardMtbfEl.addEventListener('click', () => openDrillKpi('mtbf'));
-if (kpiCardMttrEl) kpiCardMttrEl.addEventListener('click', () => openDrillKpi('mttr'));
-if (kpiCardModesEl) kpiCardModesEl.addEventListener('click', () => openDrillKpi('modes'));
-
-function openDrillKpi(metric) {
-  pushDrillView({ type: 'kpi', metric: metric, level: 2 });
-}
-
-function renderKpiDetail(metric) {
-  if (!drawerContent || !sheetSelect) return;
-  const currentSheet = sheetSelect.value;
-  const allRows = getNormalizedRows(currentSheet);
-
-  let title = '';
-  let sub = '';
-  let sorted = [];
-
-  if (metric === 'availability') {
-    title = (currentLang === 'th') ? 'การจัดอันดับความพร้อมใช้งาน (AVAILABILITY)' : 'FLEET AVAILABILITY RANKING';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากความพร้อมใช้งานต่ำสุดไปสูงสุด (เป้าหมาย ≥ 96.00%)' : 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
-    sorted = [...allRows].sort((a, b) => a.availability - b.availability);
-  } else if (metric === 'mtbf') {
-    title = (currentLang === 'th') ? 'การจัดอันดับความน่าเชื่อถือ (MTBF)' : 'MTBF RELIABILITY SPECTRUM';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากชำรุดบ่อยสุด (MTBF ต่ำ) ไปยังตัวที่ทนทานที่สุด' : 'Ranked from lowest MTBF (highest failure rate) to highest';
-    sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
-  } else if (metric === 'mttr') {
-    title = (currentLang === 'th') ? 'การจัดอันดับเวลาบำรุงรักษา (MTTR)' : 'REPAIR LATENCY (MTTR) RANKING';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากใช้เวลาซ่อมนานสุดไปน้อยสุด (เกณฑ์ ≤ 10 ชม.)' : 'Ranked from highest repair duration to lowest (Limit ≤ 10h)';
-    sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
-  } else {
-    title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'FAILURE MODE FREQUENCY';
-    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึกไว้ในระบบย่อยปัจจุบัน' : 'Most prevalent cataloged mechanisms within current subsystem';
-    sorted = [...allRows];
-  }
-
-  let html = `
-    <div class="drawer-title-group">
-      <h2>${title}</h2>
-      <div class="drawer-subtitle">${sub}</div>
-    </div>
-
-    <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'อันดับอุปกรณ์ตามตัวชี้วัด' : 'Equipment Diagnostic Ranks'}</span>
-      <table class="drawer-table">
-        <thead>
-          <tr>
-            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
-            <th>Avail</th>
-            <th>MTBF</th>
-            <th>MTTR</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  sorted.forEach(r => {
-    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
-    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
-
-    html += `
-      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
-        <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
-        <td style="color:${availColor}; font-weight:700;">${r.availability.toFixed(2)}%</td>
-        <td>${r.mtbf.toFixed(2)}h</td>
-        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr.toFixed(2)}h</td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  drawerContent.innerHTML = html;
-}
-
-const insightWorstAvailEl = document.getElementById('insightWorstAvail');
-const insightWorstMttrEl = document.getElementById('insightWorstMttr');
-
-if (insightWorstAvailEl) {
-  insightWorstAvailEl.addEventListener('click', () => {
-    if (!sheetSelect) return;
-    const currentSheet = sheetSelect.value;
-    const rows = getNormalizedRows(currentSheet);
-    if (rows.length === 0) return;
-    const worst = [...rows].sort((a, b) => a.availability - b.availability)[0];
-    if (worst) openDrillEquipment(worst.component);
-  });
-}
-
-if (insightWorstMttrEl) {
-  insightWorstMttrEl.addEventListener('click', () => {
-    if (!sheetSelect) return;
-    const currentSheet = sheetSelect.value;
-    const rows = getNormalizedRows(currentSheet);
-    if (rows.length === 0) return;
-    const worst = [...rows].sort((a, b) => b.mttr - a.mttr)[0];
-    if (worst) openDrillEquipment(worst.component);
-  });
-}
-
 function openDrillEquipment(rawCompName) {
   const compName = decodeURIComponent(rawCompName);
   pushDrillView({ type: 'equipment', equipmentName: compName, level: 3 });
 }
 
 function renderEquipmentDetail(compName) {
+  const drawerContent = document.getElementById('drawerContent');
+  const sheetSelect = document.getElementById('sheetSelect');
   if (!drawerContent || !sheetSelect) return;
   const currentSheet = sheetSelect.value;
   const allRows = getNormalizedRows(currentSheet);
@@ -1648,82 +1593,155 @@ function renderEquipmentDetail(compName) {
   drawerContent.innerHTML = html;
 }
 
-function applyCategoryFilterToMatrix(categoryName) {
-  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
-  if (searchInput) {
-    searchInput.value = isOther ? '' : categoryName;
-    applyTableFilter();
+function renderKpiDetail(metric) {
+  const drawerContent = document.getElementById('drawerContent');
+  const sheetSelect = document.getElementById('sheetSelect');
+  if (!drawerContent || !sheetSelect) return;
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+
+  let title = '';
+  let sub = '';
+  let sorted = [];
+
+  if (metric === 'availability') {
+    title = (currentLang === 'th') ? 'การจัดอันดับความพร้อมใช้งาน (AVAILABILITY)' : 'FLEET AVAILABILITY RANKING';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากความพร้อมใช้งานต่ำสุดไปสูงสุด (เป้าหมาย ≥ 96.00%)' : 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
+    sorted = [...allRows].sort((a, b) => a.availability - b.availability);
+  } else if (metric === 'mtbf') {
+    title = (currentLang === 'th') ? 'การจัดอันดับความน่าเชื่อถือ (MTBF)' : 'MTBF RELIABILITY SPECTRUM';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากชำรุดบ่อยสุด (MTBF ต่ำ) ไปยังตัวที่ทนทานที่สุด' : 'Ranked from lowest MTBF (highest failure rate) to highest';
+    sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
+  } else if (metric === 'mttr') {
+    title = (currentLang === 'th') ? 'การจัดอันดับเวลาบำรุงรักษา (MTTR)' : 'REPAIR LATENCY (MTTR) RANKING';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากใช้เวลาซ่อมนานสุดไปน้อยสุด (เกณฑ์ ≤ 10 ชม.)' : 'Ranked from highest repair duration to lowest (Limit ≤ 10h)';
+    sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
+  } else {
+    title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'FAILURE MODE FREQUENCY';
+    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึกไว้ในระบบย่อยปัจจุบัน' : 'Most prevalent cataloged mechanisms within current subsystem';
+    sorted = [...allRows];
   }
-  closeDrawer();
-  const ramTableEl = document.getElementById('ramTable');
-  if (ramTableEl) ramTableEl.scrollIntoView({ behavior: 'smooth' });
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${title}</h2>
+      <div class="drawer-subtitle">${sub}</div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'อันดับอุปกรณ์ตามตัวชี้วัด' : 'Equipment Diagnostic Ranks'}</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
+            <th>Avail</th>
+            <th>MTBF</th>
+            <th>MTTR</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  sorted.forEach(r => {
+    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
+    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
+
+    html += `
+      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
+        <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
+        <td style="color:${availColor}; font-weight:700;">${r.availability.toFixed(2)}%</td>
+        <td>${r.mtbf.toFixed(2)}h</td>
+        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr.toFixed(2)}h</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  drawerContent.innerHTML = html;
 }
 
 // ============================================================
-// 10. PRINT REPORT ENGINE
+// 10. PRINT & EXPORT ENGINE
 // ============================================================
-if (openExportModalBtn) {
-  openExportModalBtn.addEventListener('click', function() {
-    if (!currentWorkbook || !sheetSelect || !sheetOptionsList || !exportModal) {
-      alert((currentLang === 'th') ? 'กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน' : 'Please wait for system data to complete loading before generating the brief.');
-      return;
-    }
+function initExportEvents() {
+  const openExportModalBtn = document.getElementById('openExportModalBtn');
+  const exportModal = document.getElementById('exportModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const cancelModalBtn = document.getElementById('cancelModalBtn');
+  const confirmPrintBtn = document.getElementById('confirmPrintBtn');
 
-    const currentSheet = sheetSelect.value;
-    sheetOptionsList.innerHTML = '';
-
-    const currentOption = `
-      <label class="sheet-radio-item">
-        <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-        <span><strong>${(currentLang === 'th') ? 'ระบบย่อยที่กำลังเปิดอยู่' : 'Active Workspace Subsystem'} (${currentSheet})</strong></span>
-      </label>
-    `;
-    sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
-
-    currentWorkbook.SheetNames.forEach(name => {
-      if (name !== currentSheet) {
-        const item = `
-          <label class="sheet-radio-item">
-            <input type="radio" name="printSheetTarget" value="${name}" />
-            <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem Scope'}: ${name}</span>
-          </label>
-        `;
-        sheetOptionsList.insertAdjacentHTML('beforeend', item);
+  if (openExportModalBtn) {
+    openExportModalBtn.addEventListener('click', function() {
+      const sheetSelect = document.getElementById('sheetSelect');
+      const sheetOptionsList = document.getElementById('sheetOptionsList');
+      if (!currentWorkbook || !sheetSelect || !sheetOptionsList || !exportModal) {
+        alert((currentLang === 'th') ? 'กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน' : 'Please wait for system data to complete loading before generating the brief.');
+        return;
       }
+
+      const currentSheet = sheetSelect.value;
+      sheetOptionsList.innerHTML = '';
+
+      const currentOption = `
+        <label class="sheet-radio-item">
+          <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
+          <span><strong>${(currentLang === 'th') ? 'ระบบย่อยที่กำลังเปิดอยู่' : 'Active Workspace Subsystem'} (${currentSheet})</strong></span>
+        </label>
+      `;
+      sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
+
+      currentWorkbook.SheetNames.forEach(name => {
+        if (name !== currentSheet) {
+          const item = `
+            <label class="sheet-radio-item">
+              <input type="radio" name="printSheetTarget" value="${name}" />
+              <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem Scope'}: ${name}</span>
+            </label>
+          `;
+          sheetOptionsList.insertAdjacentHTML('beforeend', item);
+        }
+      });
+
+      const allOption = `
+        <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
+          <input type="radio" name="printSheetTarget" value="__ALL__" />
+          <span><strong>${(currentLang === 'th') ? 'รวมทุกระบบย่อย (All Subsystems)' : 'Consolidated Fleet Brief (All Subsystems)'}</strong></span>
+        </label>
+      `;
+      sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
+
+      exportModal.classList.add('show');
     });
+  }
 
-    const allOption = `
-      <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
-        <input type="radio" name="printSheetTarget" value="__ALL__" />
-        <span><strong>${(currentLang === 'th') ? 'รวมทุกระบบย่อย (All Subsystems)' : 'Consolidated Fleet Brief (All Subsystems)'}</strong></span>
-      </label>
-    `;
-    sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
+  function closeExport() {
+    if (exportModal) exportModal.classList.remove('show');
+  }
 
-    exportModal.classList.add('show');
-  });
-}
+  if (closeModalBtn) closeModalBtn.addEventListener('click', closeExport);
+  if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeExport);
 
-function closeExportModal() { 
-  if (exportModal) exportModal.classList.remove('show'); 
-}
-if (closeModalBtn) closeModalBtn.addEventListener('click', closeExportModal);
-if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeExportModal);
+  if (confirmPrintBtn) {
+    confirmPrintBtn.addEventListener('click', function() {
+      const selectedRadio = document.querySelector('input[name="printSheetTarget"]:checked');
+      if (!selectedRadio) return;
 
-if (confirmPrintBtn) {
-  confirmPrintBtn.addEventListener('click', function() {
-    const selectedRadio = document.querySelector('input[name="printSheetTarget"]:checked');
-    if (!selectedRadio) return;
+      const targetSheet = selectedRadio.value;
+      closeExport();
+      buildPrintView(targetSheet);
 
-    const targetSheet = selectedRadio.value;
-    closeExportModal();
-    buildPrintView(targetSheet);
-
-    setTimeout(() => { window.print(); }, 300);
-  });
+      setTimeout(() => { window.print(); }, 300);
+    });
+  }
 }
 
 function buildPrintView(targetSheet) {
+  const printContainer = document.getElementById('printContainer');
   if (!printContainer || !currentWorkbook) return;
   printContainer.innerHTML = '';
   const sheetsToPrint = targetSheet === '__ALL__' ? currentWorkbook.SheetNames : [targetSheet];
