@@ -5,19 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RAM Analysis & Maintenance Dashboard</title>
   
-  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
   
-  <!-- SheetJS Library -->
+  <!-- SheetJS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-  <!-- App Container -->
   <div class="app-layout">
     
-    <!-- Sidebar ซ้าย -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
@@ -33,7 +32,6 @@
         <a href="#" class="nav-item"><i class="fa-solid fa-wrench"></i> Maintenance</a>
       </nav>
 
-      <!-- โซนอัปโหลดไฟล์ใน Sidebar -->
       <div class="upload-widget">
         <span class="widget-label">DATA SOURCE</span>
         <div class="drop-box">
@@ -54,7 +52,7 @@
       </div>
     </aside>
 
-    <!-- Main Content ขวา -->
+    <!-- Main Content -->
     <main class="main-body">
       
       <!-- Top Bar -->
@@ -63,11 +61,17 @@
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput" placeholder="Search components, failure modes, causes..." />
         </div>
-        <div class="user-profile">
-          <div class="avatar">SK</div>
-          <div class="user-info">
-            <span class="user-name">Suwanan K.</span>
-            <span class="user-role">Reliability Engineer</span>
+        
+        <div class="topbar-actions">
+          <button class="btn-export" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Export PDF
+          </button>
+          <div class="user-profile">
+            <div class="avatar">SK</div>
+            <div class="user-info">
+              <span class="user-name">Suwanan K.</span>
+              <span class="user-role">Reliability Engineer</span>
+            </div>
           </div>
         </div>
       </header>
@@ -79,7 +83,7 @@
         <p>ระบบติดตามความพร้อมใช้งานและการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า เพื่อประสิทธิภาพสูงสุด</p>
       </section>
 
-      <!-- KPI Cards -->
+      <!-- KPI Summary Cards -->
       <section class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-icon icon-teal"><i class="fa-solid fa-shield-heart"></i></div>
@@ -114,12 +118,49 @@
         </div>
       </section>
 
-      <!-- Table Section -->
+      <!-- Insights Row: Worst Performer + Cause Donut Chart -->
+      <section class="insights-grid">
+        <div class="insight-card worst-box">
+          <span class="section-badge">KEY INSIGHTS & ATTENTION</span>
+          <h4>จุดที่ต้องเฝ้าระวังสูงสุดในระบบนี้</h4>
+          <div class="worst-item">
+            <i class="fa-solid fa-triangle-exclamation text-red"></i>
+            <div>
+              <p class="worst-label">Lowest Availability:</p>
+              <p class="worst-val" id="worstAvail">-</p>
+            </div>
+          </div>
+          <div class="worst-item">
+            <i class="fa-solid fa-clock-rotate-left text-orange"></i>
+            <div>
+              <p class="worst-label">Highest MTTR (ซ่อมบำรุงนานสุด):</p>
+              <p class="worst-val" id="worstMttr">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-card chart-box">
+          <span class="section-badge">FAILURE CAUSE DISTRIBUTION</span>
+          <h4>สัดส่วนสาเหตุข้อบกพร่อง (Failure Cause)</h4>
+          <div class="chart-wrapper">
+            <canvas id="causeChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Table Section with Quick Filters -->
       <section class="table-section">
         <div class="section-header">
           <div class="title-wrap">
             <h3 id="currentSheetTitle">ตารางวิเคราะห์การบำรุงรักษาและ RAM</h3>
             <span class="sub-title">แสดงรายละเอียดรายการวิเคราะห์แบบเรียลไทม์</span>
+          </div>
+
+          <!-- Quick Filter Buttons -->
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
+            <button class="filter-btn" data-filter="critical">วิกฤต (&lt; 96%)</button>
+            <button class="filter-btn" data-filter="high-mttr">MTTR สูง (&gt; 10 ชม.)</button>
           </div>
         </div>
 
