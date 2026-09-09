@@ -1,5 +1,5 @@
 // ============================================================
-// FIREBASE INITIALIZATION (Project: ram-substation)
+// FIREBASE CONFIGURATION & INITIALIZATION
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
@@ -11,7 +11,6 @@ const firebaseConfig = {
   measurementId: "G-NCSL5VJNYM"
 };
 
-// Initialize Firebase Core & Firestore
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const RAM_DOC_REF = db.collection('substation_data').doc('active_workbook');
@@ -25,6 +24,10 @@ const ADMIN_PASSWORD = '13102547';
 let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
+
+// Drill-Down Navigation State (Level 1 -> Level 2 -> Level 3)
+const drillHistory = [];
+let activeSegmentIndex = null;
 
 // DOM Elements
 const fileInput = document.getElementById('excelFile');
@@ -62,6 +65,14 @@ const avgMttrElem = document.getElementById('avgMttr');
 const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
+
+// Drawer Elements
+const detailDrawer = document.getElementById('detailDrawer');
+const drawerBackdrop = document.getElementById('drawerBackdrop');
+const drawerCloseBtn = document.getElementById('drawerCloseBtn');
+const drawerBackBtn = document.getElementById('drawerBackBtn');
+const drawerContent = document.getElementById('drawerContent');
+const drawerLevelTag = document.getElementById('drawerLevelTag');
 
 // ============================================================
 // REALTIME FIREBASE SYNC ENGINE
@@ -145,6 +156,12 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
 
   sheetSelect.value = targetSheet;
   loadRamSheet(targetSheet);
+
+  // If a drawer is open, re-render dynamically
+  if (detailDrawer.classList.contains('open') && drillHistory.length > 0) {
+    const currentView = drillHistory[drillHistory.length - 1];
+    renderDrillView(currentView, false);
+  }
 }
 
 fileInput.addEventListener('change', function(e) {
@@ -160,11 +177,12 @@ fileInput.addEventListener('change', function(e) {
 sheetSelect.addEventListener('change', function(e) {
   if (currentWorkbook) {
     loadRamSheet(e.target.value);
+    closeDrawer();
   }
 });
 
 /* ============================================================
-   ADMIN AUTHENTICATION
+   ADMIN AUTHENTICATION LOGIC
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -224,8 +242,50 @@ function updateAuthUI() {
 }
 
 /* ============================================================
-   METRICS CALCULATION
+   CORE METRICS ENGINE & DATA NORMALIZER
    ============================================================ */
+function getNormalizedRows(sheetName) {
+  if (!currentWorkbook || !currentWorkbook.Sheets[sheetName]) return [];
+  const sheet = currentWorkbook.Sheets[sheetName];
+  const rawRows = XLSX.utils.sheet_to_json(sheet);
+
+  return rawRows.map((r, index) => {
+    const compKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'COMPONENT');
+    const idKey = Object.keys(r).find(k => ['ID', 'CODE', 'EQUIPMENT ID', 'NO'].some(token => k.trim().toUpperCase().includes(token)));
+    const mtbfKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTBF');
+    const mttrKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTTR');
+    const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
+    const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
+    const modeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('MODE'));
+
+    let availVal = 100;
+    if (availKey && !isNaN(r[availKey])) {
+      const parsed = Number(r[availKey]);
+      availVal = parsed <= 1 ? parsed * 100 : parsed;
+    }
+
+    const mtbfVal = mtbfKey && !isNaN(r[mtbfKey]) ? Number(r[mtbfKey]) : 0;
+    const mttrVal = mttrKey && !isNaN(r[mttrKey]) ? Number(r[mttrKey]) : 0;
+    const compName = compKey && r[compKey] ? String(r[compKey]).trim() : 'Unassigned Equipment';
+    const compId = idKey && r[idKey] ? String(r[idKey]).trim() : `EQ-${index + 1}`;
+    const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'General Aging / Operational Stress';
+    const failureMode = modeKey && r[modeKey] ? String(r[modeKey]).trim() : 'Functional Failure';
+
+    return {
+      rowIndex: index + 1,
+      id: compId,
+      component: compName,
+      mtbf: mtbfVal,
+      mttr: mttrVal,
+      availability: availVal,
+      cause: failureCause,
+      mode: failureMode,
+      subsystem: sheetName,
+      isAttention: availVal < 96 || mttrVal > 10
+    };
+  });
+}
+
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
   let totalMttr = 0, countMttr = 0;
@@ -235,40 +295,29 @@ function calculateSheetMetrics(rows) {
   const causeCounts = {};
 
   rows.forEach(r => {
-    const compKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'COMPONENT');
-    const mtbfKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTBF');
-    const mttrKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTTR');
-    const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
-    const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
-
-    const compName = r[compKey] || 'Unassigned Equipment';
-
-    if (mtbfKey && !isNaN(r[mtbfKey])) {
-      totalMtbf += Number(r[mtbfKey]);
+    if (r.mtbf > 0) {
+      totalMtbf += r.mtbf;
       countMtbf++;
     }
-    if (mttrKey && !isNaN(r[mttrKey])) {
-      const mttrVal = Number(r[mttrKey]);
-      totalMttr += mttrVal;
+    if (r.mttr > 0) {
+      totalMttr += r.mttr;
       countMttr++;
-      if (mttrVal > maxMttr) {
-        maxMttr = mttrVal;
-        maxMttrItem = `${compName} (${mttrVal} hrs)`;
+      if (r.mttr > maxMttr) {
+        maxMttr = r.mttr;
+        maxMttrItem = `${r.component} (${r.mttr} hrs)`;
       }
     }
-    if (availKey && !isNaN(r[availKey])) {
-      let availVal = Number(r[availKey]);
-      if (availVal <= 1) availVal = availVal * 100;
-      totalAvail += availVal;
+    if (r.availability > 0) {
+      totalAvail += r.availability;
       countAvail++;
-      if (availVal < minAvail) {
-        minAvail = availVal;
-        minAvailItem = `${compName} (${availVal.toFixed(4)}%)`;
+      if (r.availability < minAvail) {
+        minAvail = r.availability;
+        minAvailItem = `${r.component} (${r.availability.toFixed(4)}%)`;
       }
     }
 
-    if (causeKey && r[causeKey]) {
-      const rawCauses = r[causeKey].toString().split(/[,、]/);
+    if (r.cause) {
+      const rawCauses = r.cause.split(/[,、]/);
       rawCauses.forEach(c => {
         const clean = c.trim();
         if (clean) causeCounts[clean] = (causeCounts[clean] || 0) + 1;
@@ -289,8 +338,7 @@ function calculateSheetMetrics(rows) {
 
 function loadRamSheet(sheetName) {
   currentSheetTitle.textContent = `Diagnostic Matrix: Subsystem ${sheetName}`;
-  const sheet = currentWorkbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet);
+  const rows = getNormalizedRows(sheetName);
 
   if (rows.length === 0) {
     tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">No records registered for this subsystem domain.</p>';
@@ -313,11 +361,11 @@ function loadRamSheet(sheetName) {
   worstMttrElem.textContent = metrics.maxMttrItem;
 
   renderCauseChart(metrics.causeCounts);
-  renderFormattedTable(sheet, sheetName);
+  renderFormattedTable(currentWorkbook.Sheets[sheetName], sheetName);
 }
 
 /* ============================================================
-   CHART.JS ROOT CAUSE DONUT
+   CHART.JS ROOT CAUSE DONUT (CLICKABLE)
    ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
@@ -334,13 +382,16 @@ function renderCauseChart(causeCounts) {
 
   if (currentChart) currentChart.destroy();
 
+  const chartColors = ['#8E7C93', '#66756B', '#B7A58A', '#5F666D', '#C5C2BA'];
+
   currentChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ['#8E7C93', '#66756B', '#B7A58A', '#5F666D', '#C5C2BA'],
+        backgroundColor: chartColors,
+        hoverOffset: 6,
         borderWidth: 2,
         borderColor: '#FFFFFF'
       }]
@@ -348,6 +399,17 @@ function renderCauseChart(causeCounts) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onClick: (event, elements) => {
+        if (elements && elements.length > 0) {
+          const index = elements[0].index;
+          activeSegmentIndex = index;
+          const clickedCategory = labels[index];
+          openDrillCategory(clickedCategory);
+        }
+      },
+      onHover: (event, chartElement) => {
+        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+      },
       plugins: {
         legend: {
           position: 'right',
@@ -366,7 +428,10 @@ function renderCauseChart(causeCounts) {
           titleFont: { size: 11, family: 'Plus Jakarta Sans' },
           bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
           padding: 10,
-          cornerRadius: 6
+          cornerRadius: 6,
+          callbacks: {
+            afterLabel: () => 'Click to drill down'
+          }
         }
       },
       cutout: '72%'
@@ -375,7 +440,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   TABLE RENDERING & CLOUD PERSISTENCE
+   TABLE RENDERING & PERSISTENCE
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -402,6 +467,7 @@ function renderFormattedTable(sheet, sheetName) {
 
   const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
   const mttrColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'MTTR');
+  const compColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'COMPONENT');
 
   let tableHtml = '<table id="ramTable"><thead><tr>';
   headers.forEach((h, idx) => {
@@ -421,7 +487,9 @@ function renderFormattedTable(sheet, sheetName) {
       rowMttr = Number(row[mttrColIndex]);
     }
 
-    tableHtml += `<tr data-row="${i}" data-avail="${rowAvail}" data-mttr="${rowMttr}">`;
+    const componentName = compColIndex !== -1 && row[compColIndex] ? String(row[compColIndex]) : `Equipment #${i}`;
+
+    tableHtml += `<tr data-row="${i}" data-component="${encodeURIComponent(componentName)}" data-avail="${rowAvail}" data-mttr="${rowMttr}">`;
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
@@ -441,6 +509,16 @@ function renderFormattedTable(sheet, sheetName) {
 
   tableHtml += '</tbody></table>';
   tableContainer.innerHTML = tableHtml;
+
+  // Row click listener for Level 3 Equipment Drill
+  document.querySelectorAll('#ramTable tbody tr').forEach(tr => {
+    tr.addEventListener('click', function(e) {
+      // Don't drill down if Admin is actively editing cells
+      if (isAdmin && e.target.hasAttribute('contenteditable')) return;
+      const compName = decodeURIComponent(this.getAttribute('data-component'));
+      openDrillEquipment(compName);
+    });
+  });
 
   if (isAdmin) {
     bindCellEditEvents(sheetName);
@@ -466,8 +544,8 @@ function bindCellEditEvents(sheetName) {
 
       syncWorkbookToCloud();
 
-      const updatedRows = XLSX.utils.sheet_to_json(sheet);
-      const metrics = calculateSheetMetrics(updatedRows);
+      const rows = getNormalizedRows(sheetName);
+      const metrics = calculateSheetMetrics(rows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
       avgMtbfElem.textContent = metrics.avgMtbf;
       avgMttrElem.textContent = metrics.avgMttr;
@@ -520,6 +598,407 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     applyTableFilter();
   });
 });
+
+/* ============================================================
+   DRILL-DOWN ENGINE (LEVEL 1 -> LEVEL 2 -> LEVEL 3)
+   ============================================================ */
+
+function openDrawer() {
+  detailDrawer.classList.add('open');
+  drawerBackdrop.classList.add('show');
+  detailDrawer.setAttribute('aria-hidden', 'false');
+}
+
+function closeDrawer() {
+  detailDrawer.classList.remove('open');
+  drawerBackdrop.classList.remove('show');
+  detailDrawer.setAttribute('aria-hidden', 'true');
+  drillHistory.length = 0;
+  activeSegmentIndex = null;
+}
+
+drawerCloseBtn.addEventListener('click', closeDrawer);
+drawerBackdrop.addEventListener('click', closeDrawer);
+
+drawerBackBtn.addEventListener('click', () => {
+  if (drillHistory.length > 1) {
+    drillHistory.pop(); // Pop current
+    const prevView = drillHistory[drillHistory.length - 1];
+    renderDrillView(prevView, false);
+  } else {
+    closeDrawer();
+  }
+});
+
+function pushDrillView(viewState) {
+  drillHistory.push(viewState);
+  renderDrillView(viewState, true);
+}
+
+function renderDrillView(viewState, shouldOpen = true) {
+  drawerBackBtn.style.display = drillHistory.length > 1 ? 'inline-flex' : 'none';
+  drawerLevelTag.textContent = viewState.level === 3 ? 'LEVEL 3 • EQUIPMENT DEEP-DIVE' : 'LEVEL 2 • ANALYTICAL DETAIL';
+
+  if (viewState.type === 'category') {
+    renderCategoryDetail(viewState.category);
+  } else if (viewState.type === 'kpi') {
+    renderKpiDetail(viewState.metric);
+  } else if (viewState.type === 'equipment') {
+    renderEquipmentDetail(viewState.equipmentName);
+  }
+
+  if (shouldOpen) openDrawer();
+}
+
+// LEVEL 2: FAILURE CAUSE CATEGORY DRILL
+function openDrillCategory(categoryName) {
+  pushDrillView({ type: 'category', category: categoryName, level: 2 });
+}
+
+function renderCategoryDetail(categoryName) {
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+  
+  const isOther = categoryName === 'Other Determinants';
+  const categoryRows = allRows.filter(r => {
+    if (isOther) {
+      return !['Electrical', 'Mechanical', 'Protection', 'Human Error'].some(top => r.cause.toLowerCase().includes(top.toLowerCase()));
+    }
+    return r.cause.toLowerCase().includes(categoryName.toLowerCase());
+  });
+
+  const totalFailures = categoryRows.length;
+  const totalSubsystemFailures = allRows.length;
+  const sharePct = totalSubsystemFailures > 0 ? ((totalFailures / totalSubsystemFailures) * 100).toFixed(1) : 0;
+  
+  const avgDowntime = totalFailures > 0
+    ? (categoryRows.reduce((acc, r) => acc + r.mttr, 0) / totalFailures).toFixed(1)
+    : 0;
+
+  // Affected Equipment Aggregation
+  const eqMap = {};
+  categoryRows.forEach(r => {
+    eqMap[r.component] = (eqMap[r.component] || 0) + 1;
+  });
+  const sortedEq = Object.entries(eqMap).sort((a, b) => b[1] - a[1]);
+  const maxEqCount = sortedEq.length > 0 ? sortedEq[0][1] : 1;
+
+  // Sub-causes breakdown
+  const causeBreakdown = {};
+  categoryRows.forEach(r => {
+    causeBreakdown[r.cause] = (causeBreakdown[r.cause] || 0) + 1;
+  });
+  const sortedCauses = Object.entries(causeBreakdown).sort((a, b) => b[1] - a[1]);
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${categoryName.toUpperCase()} FAILURES</h2>
+      <div class="drawer-subtitle">
+        <span>${sharePct}% of Total Subsystem Incidents</span>
+        <span>•</span>
+        <span>Scope: Subsystem ${currentSheet}</span>
+      </div>
+    </div>
+
+    <div class="drawer-kpi-strip">
+      <div class="drawer-mini-kpi">
+        <span>Failure Events</span>
+        <strong>${totalFailures}</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>Avg Repair Downtime</span>
+        <strong>${avgDowntime} hrs</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>Affected Equipment</span>
+        <strong>${sortedEq.length} units</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>Subsystem Share</span>
+        <strong>${sharePct}%</strong>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Failures by Equipment</span>
+      <div class="horizontal-bars">
+  `;
+
+  sortedEq.slice(0, 5).forEach(([comp, count]) => {
+    const widthPct = Math.round((count / maxEqCount) * 100);
+    html += `
+      <div class="bar-row" onclick="openDrillEquipment('${encodeURIComponent(comp)}')">
+        <div class="bar-row-info">
+          <span>${comp}</span>
+          <span>${count} event${count > 1 ? 's' : ''}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: ${widthPct}%;"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Top Failure Modes / Causes</span>
+      <div class="horizontal-bars">
+  `;
+
+  sortedCauses.slice(0, 4).forEach(([cause, count]) => {
+    html += `
+      <div class="bar-row">
+        <div class="bar-row-info">
+          <span style="font-weight: 500;">${cause}</span>
+          <span>${count}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Recent Registered Events</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Mode</th>
+            <th>MTTR</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  categoryRows.slice(0, 6).forEach(r => {
+    html += `
+      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
+        <td><strong>${r.component}</strong></td>
+        <td>${r.mode}</td>
+        <td>${r.mttr} hrs</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+      <button class="drawer-btn-viewall" onclick="applyCategoryFilterToMatrix('${categoryName}')">
+        Filter Matrix to ${categoryName} Failures →
+      </button>
+    </div>
+  `;
+
+  drawerContent.innerHTML = html;
+}
+
+// LEVEL 2: KPI CARDS DRILL
+document.getElementById('kpiCardAvail').addEventListener('click', () => openDrillKpi('availability'));
+document.getElementById('kpiCardMtbf').addEventListener('click', () => openDrillKpi('mtbf'));
+document.getElementById('kpiCardMttr').addEventListener('click', () => openDrillKpi('mttr'));
+document.getElementById('kpiCardModes').addEventListener('click', () => openDrillKpi('modes'));
+
+function openDrillKpi(metric) {
+  pushDrillView({ type: 'kpi', metric: metric, level: 2 });
+}
+
+function renderKpiDetail(metric) {
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+
+  let title = '';
+  let sub = '';
+  let sorted = [];
+
+  if (metric === 'availability') {
+    title = 'FLEET AVAILABILITY RANKING';
+    sub = 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
+    sorted = [...allRows].sort((a, b) => a.availability - b.availability);
+  } else if (metric === 'mtbf') {
+    title = 'MTBF RELIABILITY SPECTRUM';
+    sub = 'Ranked from lowest MTBF (highest failure rate) to highest';
+    sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
+  } else if (metric === 'mttr') {
+    title = 'REPAIR LATENCY (MTTR) RANKING';
+    sub = 'Ranked from highest repair duration to lowest (Limit &le; 10h)';
+    sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
+  } else {
+    title = 'FAILURE MODE FREQUENCY';
+    sub = 'Most prevalent cataloged mechanisms within current subsystem';
+    sorted = [...allRows];
+  }
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${title}</h2>
+      <div class="drawer-subtitle">${sub}</div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Equipment Diagnostic Ranks</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Avail</th>
+            <th>MTBF</th>
+            <th>MTTR</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  sorted.forEach(r => {
+    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
+    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
+
+    html += `
+      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
+        <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
+        <td style="color:${availColor}; font-weight:700;">${r.availability.toFixed(2)}%</td>
+        <td>${r.mtbf}h</td>
+        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr}h</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  drawerContent.innerHTML = html;
+}
+
+// KEY INSIGHTS CLICKS
+document.getElementById('insightWorstAvail').addEventListener('click', () => {
+  const currentSheet = sheetSelect.value;
+  const rows = getNormalizedRows(currentSheet);
+  if (rows.length === 0) return;
+  const worst = [...rows].sort((a, b) => a.availability - b.availability)[0];
+  if (worst) openDrillEquipment(worst.component);
+});
+
+document.getElementById('insightWorstMttr').addEventListener('click', () => {
+  const currentSheet = sheetSelect.value;
+  const rows = getNormalizedRows(currentSheet);
+  if (rows.length === 0) return;
+  const worst = [...rows].sort((a, b) => b.mttr - a.mttr)[0];
+  if (worst) openDrillEquipment(worst.component);
+});
+
+// LEVEL 3: INDIVIDUAL EQUIPMENT DEEP-DIVE
+function openDrillEquipment(rawCompName) {
+  const compName = decodeURIComponent(rawCompName);
+  pushDrillView({ type: 'equipment', equipmentName: compName, level: 3 });
+}
+
+function renderEquipmentDetail(compName) {
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+  const matchedRows = allRows.filter(r => r.component.toLowerCase() === compName.toLowerCase());
+  
+  if (matchedRows.length === 0) {
+    drawerContent.innerHTML = `<p>Equipment details unavailable.</p>`;
+    return;
+  }
+
+  const primary = matchedRows[0];
+  const isAttention = primary.availability < 96 || primary.mttr > 10;
+  const statusBadge = isAttention
+    ? `<span class="badge-status-attention"><i class="fa-solid fa-triangle-exclamation"></i> ATTENTION REQUIRED</span>`
+    : `<span class="badge-status-normal"><i class="fa-solid fa-check"></i> NORMAL OPERATIONAL</span>`;
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${primary.component}</h2>
+      <div class="drawer-subtitle">
+        <span>${primary.id}</span>
+        <span>•</span>
+        <span>Subsystem: ${currentSheet}</span>
+        <span>•</span>
+        ${statusBadge}
+      </div>
+    </div>
+
+    <div class="drawer-kpi-strip">
+      <div class="drawer-mini-kpi">
+        <span>Availability</span>
+        <strong style="color: ${primary.availability >= 96 ? '#66756B' : '#A65D57'};">${primary.availability.toFixed(4)}%</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>MTBF</span>
+        <strong>${primary.mtbf.toLocaleString()} hrs</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>MTTR</span>
+        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr} hrs</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>Failure Modes</span>
+        <strong>${matchedRows.length}</strong>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Equipment Diagnostic Details</span>
+      <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+        <div><strong>Primary Cause:</strong> ${primary.cause}</div>
+        <div><strong>Dominant Failure Mode:</strong> ${primary.mode}</div>
+        <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
+          ${isAttention
+            ? 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.'
+            : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.'}
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">Registered Subsystem Events</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>Mode</th>
+            <th>Reported Cause</th>
+            <th>Downtime</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  matchedRows.forEach(r => {
+    html += `
+      <tr>
+        <td><strong>${r.mode}</strong></td>
+        <td>${r.cause}</td>
+        <td>${r.mttr}h</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  drawerContent.innerHTML = html;
+}
+
+// Quick filter sync from Level 2 to Main Matrix Table
+function applyCategoryFilterToMatrix(categoryName) {
+  searchInput.value = categoryName === 'Other Determinants' ? '' : categoryName;
+  applyTableFilter();
+  closeDrawer();
+  document.getElementById('ramTable').scrollIntoView({ behavior: 'smooth' });
+}
 
 /* ============================================================
    EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape)
@@ -584,10 +1063,10 @@ function buildPrintView(targetSheet) {
   const sheetsToPrint = targetSheet === '__ALL__' ? currentWorkbook.SheetNames : [targetSheet];
 
   sheetsToPrint.forEach(sName => {
-    const sheet = currentWorkbook.Sheets[sName];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const rows = getNormalizedRows(sName);
     const metrics = calculateSheetMetrics(rows);
 
+    const sheet = currentWorkbook.Sheets[sName];
     const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     if (jsonData.length === 0) return;
 
