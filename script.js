@@ -1,15 +1,29 @@
+// ============================================================
+// FIREBASE INITIALIZATION (Project: ram-substation)
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
+  authDomain: "ram-substation.firebaseapp.com",
+  projectId: "ram-substation",
+  storageBucket: "ram-substation.firebasestorage.app",
+  messagingSenderId: "937237145244",
+  appId: "1:937237145244:web:8f554a10a8dcbba2306f59",
+  measurementId: "G-NCSL5VJNYM"
+};
+
+// Initialize Firebase Core & Firestore
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const RAM_DOC_REF = db.collection('substation_data').doc('active_workbook');
+
 let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// Admin Security Credentials
+// Admin Gateway Credentials
 const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
-// IndexedDB Persistence Configuration
-const DB_NAME = 'RAM_DASHBOARD_DB';
-const DB_VERSION = 1;
-const STORE_NAME = 'excel_files';
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 
 // DOM Elements
@@ -49,68 +63,51 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-/* ============================================================
-   INDEXEDDB PERSISTENCE LAYER
-   ============================================================ */
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = function(e) {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
+// ============================================================
+// REALTIME FIREBASE SYNC ENGINE
+// ============================================================
+function initRealtimeCloudSync() {
+  RAM_DOC_REF.onSnapshot((doc) => {
+    if (doc.exists && doc.data().fileData) {
+      const base64Data = doc.data().fileData;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+      const byteArray = new Uint8Array(byteNumbers);
+      handleWorkbookData(byteArray, false);
+    } else {
+      fetchDefaultRepoFile();
+    }
+  }, (error) => {
+    console.warn('Firestore snapshot error, falling back to local file:', error);
+    fetchDefaultRepoFile();
   });
 }
 
-async function saveWorkbookToDB(arrayBuffer) {
-  try {
-    const db = await openDB();
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    store.put(arrayBuffer, 'current_workbook');
-    return new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => reject(tx.error);
-    });
-  } catch (err) {
-    console.error('Failed to commit workbook to IndexedDB:', err);
-  }
-}
-
-async function loadWorkbookFromDB() {
-  try {
-    const db = await openDB();
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.get('current_workbook');
-    return new Promise((resolve) => {
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    });
-  } catch (err) {
-    return null;
-  }
-}
-
-// Check Database -> Fallback to ALL_RAM.xlsx
-async function initDashboardData() {
-  const savedData = await loadWorkbookFromDB();
-  if (savedData) {
-    handleWorkbookData(savedData, false);
-    return;
-  }
-
+async function fetchDefaultRepoFile() {
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
-    if (!response.ok) throw new Error('Repository file not detected');
+    if (!response.ok) throw new Error('Default file missing');
     const arrayBuffer = await response.arrayBuffer();
-    handleWorkbookData(arrayBuffer, true);
+    handleWorkbookData(new Uint8Array(arrayBuffer), true);
   } catch (err) {
     showManualUploadPrompt();
+  }
+}
+
+async function syncWorkbookToCloud() {
+  if (!currentWorkbook) return;
+  try {
+    const base64Data = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'base64' });
+    await RAM_DOC_REF.set({
+      fileData: base64Data,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: 'Suwanan K.'
+    });
+  } catch (err) {
+    console.error('Error syncing dataset to Firebase:', err);
   }
 }
 
@@ -118,21 +115,22 @@ function showManualUploadPrompt() {
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
       <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.4rem; color: #8E7C93; margin-bottom: 12px;"></i>
-      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Load Dataset (ALL_RAM.xlsx)</p>
-      <span style="font-size: 0.75rem; color: #888E94;">Click anywhere in this container to load your local spreadsheet telemetry</span>
+      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Initialize Substation Dataset (ALL_RAM.xlsx)</p>
+      <span style="font-size: 0.75rem; color: #888E94;">Click here to upload and publish data live to all connected devices</span>
     </div>
   `;
 }
 
-document.addEventListener('DOMContentLoaded', initDashboardData);
+document.addEventListener('DOMContentLoaded', initRealtimeCloudSync);
 
-function handleWorkbookData(data, shouldSave = true) {
+function handleWorkbookData(data, shouldPublishToCloud = false) {
   currentWorkbook = XLSX.read(data, { type: 'array' });
 
-  if (shouldSave) {
-    saveWorkbookToDB(data);
+  if (shouldPublishToCloud) {
+    syncWorkbookToCloud();
   }
 
+  const prevSelected = sheetSelect.value;
   sheetSelect.innerHTML = '';
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
@@ -141,9 +139,12 @@ function handleWorkbookData(data, shouldSave = true) {
     sheetSelect.appendChild(option);
   });
 
-  const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
-  sheetSelect.value = defaultSheet;
-  loadRamSheet(defaultSheet);
+  const targetSheet = (prevSelected && currentWorkbook.SheetNames.includes(prevSelected))
+    ? prevSelected
+    : (currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0]);
+
+  sheetSelect.value = targetSheet;
+  loadRamSheet(targetSheet);
 }
 
 fileInput.addEventListener('change', function(e) {
@@ -151,7 +152,7 @@ fileInput.addEventListener('change', function(e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(evt) {
-    handleWorkbookData(evt.target.result, true);
+    handleWorkbookData(new Uint8Array(evt.target.result), true);
   };
   reader.readAsArrayBuffer(file);
 });
@@ -163,7 +164,7 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 /* ============================================================
-   ADMIN GATEWAY AUTHENTICATION
+   ADMIN AUTHENTICATION
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -206,9 +207,9 @@ function updateAuthUI() {
     userProfile.style.display = 'flex';
     adminUploadWidget.style.display = 'block';
     saveExcelBtn.style.display = 'flex';
-    modeBadge.textContent = 'ADMIN CONSOLE (UNLOCKED)';
+    modeBadge.textContent = 'ADMIN CONSOLE (LIVE CLOUD EDIT)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = 'Active Edit Mode: Click on data cells to modify values (Auto-persisted)';
+    editNotice.textContent = 'Active Cloud Edit Mode: Edits sync live to all devices';
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
@@ -223,7 +224,7 @@ function updateAuthUI() {
 }
 
 /* ============================================================
-   EXECUTIVE METRICS & COMPUTATION
+   METRICS CALCULATION
    ============================================================ */
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
@@ -339,13 +340,7 @@ function renderCauseChart(causeCounts) {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: [
-          '#8E7C93', // Muted Amethyst
-          '#66756B', // Muted Sage
-          '#B7A58A', // Champagne
-          '#5F666D', // Charcoal Soft
-          '#C5C2BA'  // Soft Stone
-        ],
+        backgroundColor: ['#8E7C93', '#66756B', '#B7A58A', '#5F666D', '#C5C2BA'],
         borderWidth: 2,
         borderColor: '#FFFFFF'
       }]
@@ -380,7 +375,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   TABLE RENDERING & PERSISTED CELL EDITING
+   TABLE RENDERING & CLOUD PERSISTENCE
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -469,11 +464,8 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // Auto-persist directly to IndexedDB
-      const updatedArray = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'array' });
-      saveWorkbookToDB(updatedArray);
+      syncWorkbookToCloud();
 
-      // Recompute metrics instantly
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
