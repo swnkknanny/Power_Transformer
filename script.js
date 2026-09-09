@@ -245,7 +245,6 @@ function updateAuthUI() {
    ============================================================ */
 function calculateAvailabilityFormula(mtbf, mttr) {
   if (mtbf + mttr === 0) return 100;
-  // Availability = MTBF / (MTBF + MTTR) * 100%
   return (mtbf / (mtbf + mttr)) * 100;
 }
 
@@ -266,7 +265,6 @@ function getNormalizedRows(sheetName) {
     const mtbfVal = mtbfKey && !isNaN(r[mtbfKey]) ? Number(r[mtbfKey]) : 0;
     const mttrVal = mttrKey && !isNaN(r[mttrKey]) ? Number(r[mttrKey]) : 0;
 
-    // คำนวณ Availability อัตโนมัติจาก MTBF และ MTTR ถ้ามีค่า หรืออ่านจาก Sheet
     let availVal = 100;
     if (mtbfVal > 0 || mttrVal > 0) {
       availVal = calculateAvailabilityFormula(mtbfVal, mttrVal);
@@ -490,7 +488,6 @@ function renderFormattedTable(sheet, sheetName) {
     let rowMtbf = mtbfColIndex !== -1 && !isNaN(row[mtbfColIndex]) ? Number(row[mtbfColIndex]) : 0;
     let rowMttr = mttrColIndex !== -1 && !isNaN(row[mttrColIndex]) ? Number(row[mttrColIndex]) : 0;
     
-    // คำนวณ Availability 2 ตำแหน่ง
     let rowAvail = (rowMtbf > 0 || rowMttr > 0) 
       ? calculateAvailabilityFormula(rowMtbf, rowMttr)
       : (availColIndex !== -1 && !isNaN(row[availColIndex]) ? (Number(row[availColIndex]) <= 1 ? Number(row[availColIndex]) * 100 : Number(row[availColIndex])) : 100);
@@ -502,7 +499,6 @@ function renderFormattedTable(sheet, sheetName) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
       
-      // ช่อง Availability จะเป็น Auto-calculated ห้ามพิมพ์เอง
       const isCalculatedCol = (j === availColIndex);
       const editableAttr = (isAdmin && !isCalculatedCol) ? 'contenteditable="true"' : '';
 
@@ -522,7 +518,6 @@ function renderFormattedTable(sheet, sheetName) {
   tableHtml += '</tbody></table>';
   tableContainer.innerHTML = tableHtml;
 
-  // Row click listener for Level 3 Equipment Drill
   document.querySelectorAll('#ramTable tbody tr').forEach(tr => {
     tr.addEventListener('click', function(e) {
       if (isAdmin && e.target.hasAttribute('contenteditable')) return;
@@ -553,9 +548,6 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(Number(newVal).toFixed(2)) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // ============================================================
-      // LIVE AUTO-CALCULATION: เมื่อแก้ MTBF หรือ MTTR
-      // ============================================================
       if (colIdx === mtbfColIndex || colIdx === mttrColIndex) {
         const mtbfAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mtbfColIndex });
         const mttrAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mttrColIndex });
@@ -564,7 +556,6 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
 
         const newAvail = calculateAvailabilityFormula(currentMtbf, currentMttr);
 
-        // บันทึก Availability กลับลง Sheet เพื่อซิงค์ขึ้น Cloud
         if (availColIndex !== -1) {
           const availAddr = XLSX.utils.encode_cell({ r: rowIdx, c: availColIndex });
           if (!sheet[availAddr]) sheet[availAddr] = {};
@@ -572,7 +563,6 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
           sheet[availAddr].t = 'n';
         }
 
-        // อัปเดตการแสดงผลในแถวปัจจุบันทันที
         const rowElem = this.parentElement;
         rowElem.setAttribute('data-avail', newAvail.toFixed(2));
         rowElem.setAttribute('data-mttr', currentMttr.toFixed(2));
@@ -584,10 +574,8 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
         }
       }
 
-      // ซิงค์ขึ้น Cloud Firestore
       syncWorkbookToCloud();
 
-      // Recalculate KPIs ด้านบนอัตโนมัติ (ทศนิยม 2 ตำแหน่ง)
       const rows = getNormalizedRows(sheetName);
       const metrics = calculateSheetMetrics(rows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
@@ -650,7 +638,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   DRILL-DOWN ENGINE (ALL 2 DECIMAL PLACES)
+   DRILL-DOWN ENGINE
    ============================================================ */
 
 function openDrawer() {
@@ -1044,7 +1032,7 @@ function applyCategoryFilterToMatrix(categoryName) {
 }
 
 /* ============================================================
-   EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape - 2 Decimals)
+   EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape)
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
