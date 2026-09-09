@@ -6,8 +6,10 @@ let currentActiveFilter = 'all';
 const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
-// Key สำหรับบันทึกลงหน่วยความจำ Browser
-const STORAGE_KEY_WORKBOOK = 'RAM_STORED_WORKBOOK_DATA';
+// การตั้งค่า IndexedDB (พื้นที่เก็บไฟล์ขนาดใหญ่ ไม่จำกัด 5MB แบบ localStorage)
+const DB_NAME = 'RAM_DASHBOARD_DB';
+const DB_VERSION = 1;
+const STORE_NAME = 'excel_files';
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 
 // DOM Elements
@@ -47,45 +49,70 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-// 1. ระบบโหลดข้อมูลลำดับแรก: ตรวจสอบความจำถาวร (localStorage) ก่อนเสมอ
-async function initDashboardData() {
-  const savedData = localStorage.getItem(STORAGE_KEY_WORKBOOK);
-  
-  if (savedData) {
-    // ถ้าเคยมีแอดมินเอาไฟล์มาวางไว้แล้ว ดึงข้อมูลนั้นมาใช้ทันที!
-    try {
-      const byteCharacters = atob(savedData);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+/* ============================================================
+   ระบบจัดเก็บข้อมูลถาวรด้วย IndexedDB
+   ============================================================ */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      handleWorkbookData(byteArray, false); // false = ไม่ต้อง save ซ้ำ
-      return;
-    } catch (e) {
-      console.error('ไม่สามารถอ่านข้อมูลที่เซฟไว้ได้:', e);
-    }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveWorkbookToDB(arrayBuffer) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(arrayBuffer, 'current_workbook');
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (err) {
+    console.error('บันทึกลง IndexedDB ไม่สำเร็จ:', err);
+  }
+}
+
+async function loadWorkbookFromDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.get('current_workbook');
+    return new Promise((resolve) => {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+// 1. ตรวจสอบไฟล์เมื่อเปิดหน้าเว็บ: IndexedDB -> ALL_RAM.xlsx เริ่มต้น
+async function initDashboardData() {
+  // ลองดึงจาก IndexedDB ก่อน
+  const savedData = await loadWorkbookFromDB();
+  if (savedData) {
+    handleWorkbookData(savedData, false);
+    return;
   }
 
-  // ถ้ายังไม่เคยมีไฟล์ในระบบ ให้ลองดึงไฟล์ ALL_RAM.xlsx เริ่มต้น
+  // ถ้าไม่มี ให้ลองดึง ALL_RAM.xlsx จาก GitHub
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
     if (!response.ok) throw new Error('File not detected');
     const arrayBuffer = await response.arrayBuffer();
-    handleWorkbookData(new Uint8Array(arrayBuffer), false);
+    handleWorkbookData(arrayBuffer, true); // บันทึกลง DB เลยเพื่อความรวดเร็วครั้งต่อไป
   } catch (err) {
     showManualUploadPrompt();
-  }
-}
-
-// ฟังก์ชันบันทึกข้อมูล Workbook ลง localStorage อัตโนมัติ
-function saveWorkbookToStorage() {
-  if (!currentWorkbook) return;
-  try {
-    const base64Data = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'base64' });
-    localStorage.setItem(STORAGE_KEY_WORKBOOK, base64Data);
-  } catch (err) {
-    console.error('บันทึกลงความจำ Browser ไม่สำเร็จ:', err);
   }
 }
 
@@ -105,7 +132,7 @@ function handleWorkbookData(data, shouldSave = true) {
   currentWorkbook = XLSX.read(data, { type: 'array' });
 
   if (shouldSave) {
-    saveWorkbookToStorage(); // บันทึกถาวรลงเครื่องทันทีเมื่ออัปโหลดใหม่
+    saveWorkbookToDB(data);
   }
 
   sheetSelect.innerHTML = '';
@@ -121,13 +148,13 @@ function handleWorkbookData(data, shouldSave = true) {
   loadRamSheet(defaultSheet);
 }
 
-// เมื่อแอดมินเลือกไฟล์ใหม่
+// เมื่อมีการเลือกไฟล์ใหม่
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(evt) {
-    handleWorkbookData(new Uint8Array(evt.target.result), true); // เซฟถาวรทันที
+    handleWorkbookData(evt.target.result, true); // บันทึกลง IndexedDB ทันที
   };
   reader.readAsArrayBuffer(file);
 });
@@ -445,10 +472,11 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // 1. บันทึกลงความจำ Browser ทันทีทุกครั้งที่มีการแก้เซลล์!
-      saveWorkbookToStorage();
+      // บันทึกลง IndexedDB ถาวร
+      const updatedArray = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'array' });
+      saveWorkbookToDB(updatedArray);
 
-      // 2. คำนวณ KPI ใหม่ทันที
+      // คำนวณ KPI ใหม่ทันที
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
