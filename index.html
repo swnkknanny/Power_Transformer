@@ -234,9 +234,7 @@
     .interactive-hint { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; background: var(--surface-base); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border-subtle); }
     .chart-wrapper { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; }
 
-    /* ============================================================
-       TABLE SECTION: MOBILE-ENHANCED RESPONSIVE STYLING
-       ============================================================ */
+    /* Table Section */
     .table-section {
       background: var(--surface-card); 
       border: 1px solid var(--border-subtle); 
@@ -258,7 +256,6 @@
     }
     .filter-btn.active { background: var(--surface-card); color: var(--text-primary); box-shadow: 0 1px 2px rgba(52, 58, 64, 0.05); }
 
-    /* กรอบเลื่อนตารางแบบสมูท ไม่หลุดจอในมือถือ */
     .table-frame {
       overflow-x: auto;
       overflow-y: auto;
@@ -267,21 +264,21 @@
       border: 1px solid var(--border-subtle);
       background: var(--surface-card);
       width: 100%;
-      -webkit-overflow-scrolling: touch; /* เลื่อนลื่นบน iOS */
+      -webkit-overflow-scrolling: touch;
     }
     table { 
       width: 100%; 
       border-collapse: collapse; 
       font-size: 0.78rem; 
       text-align: left; 
-      min-width: 600px; /* คุมความกว้างไม่ให้ข้อมูลบีบแตก */
+      min-width: 600px;
     }
     th, td { 
       padding: 10px 12px; 
       border-bottom: 1px solid var(--border-subtle); 
       vertical-align: middle; 
       line-height: 1.4; 
-      white-space: nowrap; /* ไม่ให้คำตกแถวเละในมือถือ */
+      white-space: nowrap;
     }
     th {
       background: var(--surface-base); 
@@ -547,9 +544,7 @@
     .diff-down-red { color: #A65D57; font-weight: 700; }
     .diff-neutral { color: var(--text-muted); font-weight: 600; }
 
-    /* ============================================================
-       MOBILE & TABLET OPTIMIZATIONS (ปรับให้ดูในโทรศัพท์สวยงาม 100%)
-       ============================================================ */
+    /* Mobile & Tablet Optimizations */
     @media (max-width: 1100px) {
       .app-layout { grid-template-columns: 1fr; }
       .sidebar { border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 18px; }
@@ -565,7 +560,6 @@
       .search-box { width: 100%; }
       .topbar-actions { justify-content: space-between; width: 100%; }
 
-      /* ตารางวิเคราะห์ในมือถือ: ตัวหนังสือกระชับ + ไม่ดันจอ */
       .table-section { padding: 14px 10px; border-radius: var(--radius-md); }
       .table-frame { max-height: 400px; }
       table { min-width: 500px; font-size: 0.74rem; }
@@ -573,7 +567,6 @@
 
       .kpi-grid { grid-template-columns: 1fr; }
       
-      /* ปรับ Simulator บนมือถือ */
       .simulator-section { padding: 14px 12px; }
       .sim-compare-board { 
         flex-direction: column; 
@@ -606,6 +599,7 @@
     .btn-drawer-back { background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
     .drawer-level-tag { font-size: 0.6rem; font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.07em; }
     .drawer-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
+    .drawer-close:hover { color: var(--text-primary); }
     .drawer-body { padding: 18px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .drawer-title-group h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
     .drawer-title-group .drawer-subtitle { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
@@ -622,21 +616,96 @@
     .drawer-table th { background: var(--surface-base); color: var(--text-muted); font-weight: 600; }
     .drawer-btn-viewall { margin-top: 6px; width: 100%; padding: 8px; background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-primary); font-size: 0.72rem; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; }
 
-    /* Modals */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(52, 58, 64, 0.35); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+    /* ============================================================
+       MODALS: REDESIGNED WITH CARDS & PROPER SPACING
+       ============================================================ */
+    .modal-overlay { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(52, 58, 64, 0.4); 
+      backdrop-filter: blur(4px); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.2s ease; 
+    }
     .modal-overlay.show { opacity: 1; pointer-events: auto; }
-    .modal-box { background: var(--surface-card); width: 92%; max-width: 420px; border-radius: var(--radius-lg); padding: 20px; box-shadow: 0 16px 36px rgba(52, 58, 64, 0.12); border: 1px solid var(--border-subtle); }
-    .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; position: relative; }
-    .modal-icon { width: 34px; height: 34px; background: var(--surface-base); color: var(--brand-amethyst); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-    .modal-header h3 { font-size: 0.95rem; font-weight: 700; }
-    .modal-sub { font-size: 0.62rem; color: var(--text-muted); display: block; }
-    .modal-close { position: absolute; top: 0; right: 0; background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer; }
-    .modal-desc { font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4; }
-    .modal-input { width: 100%; padding: 8px 10px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.8rem; outline: none; margin-bottom: 6px; }
-    .error-msg { font-size: 0.7rem; color: var(--status-warning); margin-bottom: 8px; }
+    
+    .modal-box { 
+      background: var(--surface-card); 
+      width: 92%; 
+      max-width: 440px; 
+      border-radius: var(--radius-lg); 
+      padding: 22px; 
+      box-shadow: 0 16px 36px rgba(52, 58, 64, 0.16); 
+      border: 1px solid var(--border-subtle); 
+    }
+    .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; position: relative; }
+    .modal-icon { width: 36px; height: 36px; background: var(--surface-base); color: var(--brand-amethyst); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+    .modal-header h3 { font-size: 1rem; font-weight: 700; }
+    .modal-sub { font-size: 0.65rem; color: var(--text-muted); display: block; }
+    .modal-close { position: absolute; top: 0; right: 0; background: none; border: none; font-size: 1.3rem; color: var(--text-muted); cursor: pointer; }
+    .modal-desc { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.45; }
+    .modal-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.82rem; outline: none; margin-bottom: 6px; }
+    .error-msg { font-size: 0.72rem; color: var(--status-warning); margin-bottom: 8px; }
+
+    /* แก้ปัญหาปุ่ม Radio กองกัน: ให้แยกเป็นการ์ดแถวตรงสวยงาม */
+    .sheet-options-list {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding-right: 4px;
+    }
+
+    .sheet-radio-item {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 10px 14px !important;
+      background: var(--surface-base) !important;
+      border: 1px solid var(--border-subtle) !important;
+      border-radius: var(--radius-sm) !important;
+      cursor: pointer !important;
+      font-size: 0.8rem !important;
+      color: var(--text-primary) !important;
+      transition: all 0.15s ease !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .sheet-radio-item:hover {
+      background: var(--surface-card) !important;
+      border-color: var(--brand-amethyst) !important;
+    }
+
+    .sheet-radio-item input[type="radio"] {
+      accent-color: var(--brand-amethyst) !important;
+      width: 16px !important;
+      height: 16px !important;
+      margin: 0 !important;
+      cursor: pointer !important;
+      flex-shrink: 0 !important;
+    }
+
+    .sheet-radio-item span {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      line-height: 1.3 !important;
+    }
+
     .modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
-    .btn-tertiary { background: var(--surface-base); border: 1px solid var(--border-subtle); padding: 7px 12px; border-radius: var(--radius-sm); font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
-    .btn-primary { background: var(--text-primary); color: #FFFFFF; border: none; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 0.76rem; font-weight: 600; cursor: pointer; }
+    .btn-tertiary { background: var(--surface-base); border: 1px solid var(--border-subtle); padding: 7px 14px; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
+    .btn-primary { background: var(--text-primary); color: #FFFFFF; border: none; padding: 7px 16px; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
 
     /* Print Engine */
     .print-container { display: none; }
@@ -1278,6 +1347,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=201"></script>
+  <script src="script.js?v=205"></script>
 </body>
 </html>
