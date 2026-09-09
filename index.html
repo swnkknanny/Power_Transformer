@@ -3,25 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Excel Viewer</title>
-
-  <!-- เชื่อมต่อไปยังไฟล์ CSS สำหรับแต่งฟอนต์และดีไซน์ -->
+  <title>Excel Data Viewer & Analyzer</title>
+  
+  <!-- Font Awesome สำหรับไอคอน -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-
-  <!-- ไลบรารีสำหรับอ่านไฟล์ Excel -->
+  
+  <!-- SheetJS Library -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-  <div class="container">
-    <h2>อัปโหลดไฟล์ Excel</h2>
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <i class="fa-solid fa-file-excel logo-icon"></i>
+      <span>Excel Data Viewer & Analyzer</span>
+    </div>
+  </header>
 
-    <input type="file" id="excelFile" accept=".xlsx, .xls" />
+  <div class="layout-container">
+    
+    <!-- Left Sidebar: โซนอัปโหลด -->
+    <aside class="sidebar">
+      <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload File</h3>
+      
+      <div class="drop-zone" id="dropZone">
+        <i class="fa-solid fa-file-circle-plus drop-icon"></i>
+        <p class="drop-text">คลิกหรือลากไฟล์ Excel มาวางที่นี่</p>
+        <span class="file-support">รองรับ .xlsx, .xls, .csv</span>
+        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" />
+      </div>
 
-    <div id="tableContainer"></div>
+      <!-- ข้อมูลสรุปไฟล์ -->
+      <div class="file-details" id="fileDetails" style="display: none;">
+        <h4>ข้อมูลไฟล์</h4>
+        <p><strong>ชื่อไฟล์:</strong> <span id="fileName">-</span></p>
+        <p><strong>ขนาด:</strong> <span id="fileSize">-</span></p>
+        
+        <label for="sheetSelect"><strong>เลือก Sheet:</strong></label>
+        <select id="sheetSelect" class="form-select"></select>
+      </div>
+    </aside>
+
+    <!-- Main Content: โซนแสดงสถิติและตาราง -->
+    <main class="main-content">
+      
+      <!-- Metric Cards ด้านบน -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="metric-title">จำนวนแถวทั้งหมด</span>
+            <h2 id="rowCount">0</h2>
+          </div>
+          <i class="fa-solid fa-list-ol metric-icon blue"></i>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="metric-title">จำนวนคอลัมน์</span>
+            <h2 id="colCount">0</h2>
+          </div>
+          <i class="fa-solid fa-table-columns metric-icon green"></i>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-info">
+            <span class="metric-title">ชีตทั้งหมด</span>
+            <h2 id="totalSheets">0</h2>
+          </div>
+          <i class="fa-solid fa-layer-group metric-icon purple"></i>
+        </div>
+      </div>
+
+      <!-- ตารางแสดงข้อมูล -->
+      <div class="table-card">
+        <div class="table-header">
+          <h3 id="currentSheetTitle">ตารางข้อมูล</h3>
+          <input type="text" id="searchInput" placeholder="🔍 ค้นหาในตาราง..." class="search-input" />
+        </div>
+        
+        <div class="table-wrapper" id="tableContainer">
+          <div class="empty-state">
+            <i class="fa-regular fa-folder-open"></i>
+            <p>ยังไม่มีข้อมูล กรุณาเลือกไฟล์ Excel จากเมนูด้านซ้าย</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
   </div>
 
-  <!-- เชื่อมต่อไปยังไฟล์ JS สำหรับจัดการข้อมูล -->
   <script src="script.js"></script>
 </body>
 </html>
