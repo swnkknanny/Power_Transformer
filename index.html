@@ -3,90 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Substation RAM Analysis Dashboard</title>
+  <title>RAM Analysis & Maintenance Dashboard</title>
+  
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  
+  <!-- SheetJS Library -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-  <header class="navbar">
-    <div class="nav-brand">
-      <i class="fa-solid fa-bolt-lightning logo-icon"></i>
-      <span>Substation RAM Analysis Dashboard</span>
-    </div>
-  </header>
-
-  <div class="layout-container">
+  <!-- App Container -->
+  <div class="app-layout">
     
-    <!-- Sidebar -->
+    <!-- Sidebar ซ้าย -->
     <aside class="sidebar">
-      <h3><i class="fa-solid fa-file-excel"></i> นำเข้าไฟล์ข้อมูล</h3>
-      <div class="drop-zone">
-        <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
-        <p class="drop-text">คลิกเพื่อเลือกไฟล์ ALL_RAM</p>
-        <span class="file-support">รองรับ .xlsx, .xls</span>
-        <input type="file" id="excelFile" accept=".xlsx, .xls" />
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="brand-text">
+          <span class="brand-title">RAM SYSTEM</span>
+          <span class="brand-sub">SUBSTATION RELIABILITY</span>
+        </div>
       </div>
 
-      <div id="fileControls" style="display: none; margin-top: 20px;">
-        <label for="sheetSelect"><strong>เลือกระบบ (Subsystem):</strong></label>
-        <select id="sheetSelect" class="form-select"></select>
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="#" class="nav-item"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+        <a href="#" class="nav-item"><i class="fa-solid fa-wrench"></i> Maintenance</a>
+      </nav>
+
+      <!-- โซนอัปโหลดไฟล์สไตล์มินิมอลใน Sidebar -->
+      <div class="upload-widget">
+        <span class="widget-label">DATA SOURCE</span>
+        <div class="drop-box">
+          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          <span>เลือกไฟล์ ALL_RAM</span>
+          <input type="file" id="excelFile" accept=".xlsx, .xls" />
+        </div>
+        
+        <div id="subsystemControl" style="display: none; margin-top: 12px;">
+          <label class="control-label">เลือกระบบ (Subsystem):</label>
+          <select id="sheetSelect" class="custom-select"></select>
+        </div>
+      </div>
+
+      <div class="sidebar-quote">
+        <p class="quote-title">RELIABLE DATA</p>
+        <p class="quote-desc">FOR BETTER SUBSTATION PERFORMANCE</p>
       </div>
     </aside>
 
-    <!-- Main Dashboard -->
-    <main class="main-content">
+    <!-- Main Content ขวา -->
+    <main class="main-body">
       
-      <!-- KPI Summary Cards -->
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-info">
-            <span class="metric-title">Avg. Availability (เกณฑ์ ≥ 96%)</span>
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Search components, failure modes, causes..." />
+        </div>
+        <div class="user-profile">
+          <div class="avatar">RE</div>
+          <div class="user-info">
+            <span class="user-name">Sureerat K.</span>
+            <span class="user-role">Reliability Engineer</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Welcome Banner -->
+      <section class="welcome-banner">
+        <span class="welcome-badge">SYSTEM OVERVIEW</span>
+        <h1>Substation RAM Analysis <span>✦</span></h1>
+        <p>ระบบติดตามความพร้อมใช้งานและการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า เพื่อประสิทธิภาพสูงสุด</p>
+      </section>
+
+      <!-- KPI Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon icon-teal"><i class="fa-solid fa-shield-heart"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-title">Avg. Availability (≥ 96%)</span>
             <h2 id="avgAvail">-%</h2>
           </div>
-          <i class="fa-solid fa-chart-line metric-icon green"></i>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-info">
-            <span class="metric-title">Avg. MTBF (ชม.)</span>
+        <div class="kpi-card">
+          <div class="kpi-icon icon-blue"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-title">Avg. MTBF (ชม.)</span>
             <h2 id="avgMtbf">-</h2>
           </div>
-          <i class="fa-solid fa-clock-rotate-left metric-icon blue"></i>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-info">
-            <span class="metric-title">Avg. MTTR (ชม.)</span>
+        <div class="kpi-card">
+          <div class="kpi-icon icon-rose"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-title">Avg. MTTR (ชม.)</span>
             <h2 id="avgMttr">-</h2>
           </div>
-          <i class="fa-solid fa-screwdriver-wrench metric-icon orange"></i>
         </div>
 
-        <div class="metric-card">
-          <div class="metric-info">
-            <span class="metric-title">Total Failure Modes</span>
+        <div class="kpi-card">
+          <div class="kpi-icon icon-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="kpi-data">
+            <span class="kpi-title">Total Failure Modes</span>
             <h2 id="totalModes">-</h2>
           </div>
-          <i class="fa-solid fa-triangle-exclamation metric-icon purple"></i>
         </div>
-      </div>
+      </section>
 
       <!-- Table Section -->
-      <div class="table-card">
-        <div class="table-header">
-          <h3 id="currentSheetTitle">ตารางวิเคราะห์ RAM</h3>
-          <input type="text" id="searchInput" placeholder="🔍 ค้นหา Component, Code, สาเหตุ..." class="search-input" />
-        </div>
-        
-        <div class="table-wrapper" id="tableContainer">
-          <div class="empty-state">
-            <i class="fa-regular fa-folder-open"></i>
-            <p>กรุณาเลือกไฟล์ ALL_RAM.xlsx เพื่อเริ่มวิเคราะห์ข้อมูล</p>
+      <section class="table-section">
+        <div class="section-header">
+          <div class="title-wrap">
+            <h3 id="currentSheetTitle">ตารางวิเคราะห์การบำรุงรักษาและ RAM</h3>
+            <span class="sub-title">แสดงรายละเอียดรายการวิเคราะห์แบบเรียลไทม์</span>
           </div>
         </div>
-      </div>
+
+        <div class="table-frame" id="tableContainer">
+          <div class="empty-state">
+            <i class="fa-solid fa-file-excel"></i>
+            <p>กรุณาเลือกไฟล์ ALL_RAM.xlsx ที่เมนูด้านซ้ายเพื่อเริ่มต้นแสดงผลข้อมูล</p>
+          </div>
+        </div>
+      </section>
 
     </main>
   </div>
