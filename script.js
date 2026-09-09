@@ -2,10 +2,12 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// รหัสผ่านสำหรับเข้าสู่ระบบแอดมิน
+// รหัสผ่านแอดมิน
 const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
+// Key สำหรับบันทึกลงหน่วยความจำ Browser
+const STORAGE_KEY_WORKBOOK = 'RAM_STORED_WORKBOOK_DATA';
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 
 // DOM Elements
@@ -45,15 +47,45 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-// โหลดไฟล์เริ่มต้นจากระบบอัตโนมัติ
-async function autoLoadDefaultExcel() {
+// 1. ระบบโหลดข้อมูลลำดับแรก: ตรวจสอบความจำถาวร (localStorage) ก่อนเสมอ
+async function initDashboardData() {
+  const savedData = localStorage.getItem(STORAGE_KEY_WORKBOOK);
+  
+  if (savedData) {
+    // ถ้าเคยมีแอดมินเอาไฟล์มาวางไว้แล้ว ดึงข้อมูลนั้นมาใช้ทันที!
+    try {
+      const byteCharacters = atob(savedData);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      handleWorkbookData(byteArray, false); // false = ไม่ต้อง save ซ้ำ
+      return;
+    } catch (e) {
+      console.error('ไม่สามารถอ่านข้อมูลที่เซฟไว้ได้:', e);
+    }
+  }
+
+  // ถ้ายังไม่เคยมีไฟล์ในระบบ ให้ลองดึงไฟล์ ALL_RAM.xlsx เริ่มต้น
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
     if (!response.ok) throw new Error('File not detected');
     const arrayBuffer = await response.arrayBuffer();
-    handleWorkbookData(new Uint8Array(arrayBuffer));
+    handleWorkbookData(new Uint8Array(arrayBuffer), false);
   } catch (err) {
     showManualUploadPrompt();
+  }
+}
+
+// ฟังก์ชันบันทึกข้อมูล Workbook ลง localStorage อัตโนมัติ
+function saveWorkbookToStorage() {
+  if (!currentWorkbook) return;
+  try {
+    const base64Data = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'base64' });
+    localStorage.setItem(STORAGE_KEY_WORKBOOK, base64Data);
+  } catch (err) {
+    console.error('บันทึกลงความจำ Browser ไม่สำเร็จ:', err);
   }
 }
 
@@ -67,10 +99,14 @@ function showManualUploadPrompt() {
   `;
 }
 
-document.addEventListener('DOMContentLoaded', autoLoadDefaultExcel);
+document.addEventListener('DOMContentLoaded', initDashboardData);
 
-function handleWorkbookData(data) {
+function handleWorkbookData(data, shouldSave = true) {
   currentWorkbook = XLSX.read(data, { type: 'array' });
+
+  if (shouldSave) {
+    saveWorkbookToStorage(); // บันทึกถาวรลงเครื่องทันทีเมื่ออัปโหลดใหม่
+  }
 
   sheetSelect.innerHTML = '';
   currentWorkbook.SheetNames.forEach(name => {
@@ -85,12 +121,13 @@ function handleWorkbookData(data) {
   loadRamSheet(defaultSheet);
 }
 
+// เมื่อแอดมินเลือกไฟล์ใหม่
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(evt) {
-    handleWorkbookData(new Uint8Array(evt.target.result));
+    handleWorkbookData(new Uint8Array(evt.target.result), true); // เซฟถาวรทันที
   };
   reader.readAsArrayBuffer(file);
 });
@@ -147,7 +184,7 @@ function updateAuthUI() {
     saveExcelBtn.style.display = 'flex';
     modeBadge.textContent = 'ADMIN MODE (เปิดแก้ไขข้อมูล)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = '✏️ โหมดแอดมิน: สามารถคลิกที่ช่องในตารางเพื่อพิมพ์แก้ไขข้อมูลได้โดยตรง';
+    editNotice.textContent = '✏️ โหมดแอดมิน: แก้ไขข้อมูลได้โดยตรง ระบบจะจำค่าอัตโนมัติ';
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
@@ -255,7 +292,7 @@ function loadRamSheet(sheetName) {
 }
 
 /* ============================================================
-   กราฟวงกลมสรุปสาเหตุ (Donut Chart - Executive Calm Palette)
+   กราฟวงกลมสรุปสาเหตุ (Donut Chart)
    ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
@@ -279,11 +316,11 @@ function renderCauseChart(causeCounts) {
       datasets: [{
         data: data,
         backgroundColor: [
-          '#8E7C93', // Muted Amethyst (สีหลัก)
-          '#66756B', // Muted Sage
-          '#B7A58A', // Champagne
-          '#5F666D', // Charcoal Soft
-          '#C5C2BA'  // Warm Stone
+          '#8E7C93',
+          '#66756B',
+          '#B7A58A',
+          '#5F666D',
+          '#C5C2BA'
         ],
         borderWidth: 2,
         borderColor: '#FFFFFF'
@@ -319,7 +356,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   การสร้างตารางและระบบแก้ไขข้อมูลแบบทันที (Live Inline Edit)
+   การสร้างตารางและระบบบันทึกค่าแก้ไขถาวร
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -408,7 +445,10 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // คำนวณ KPI ใหม่ทันที
+      // 1. บันทึกลงความจำ Browser ทันทีทุกครั้งที่มีการแก้เซลล์!
+      saveWorkbookToStorage();
+
+      // 2. คำนวณ KPI ใหม่ทันที
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
