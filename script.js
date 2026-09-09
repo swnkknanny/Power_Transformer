@@ -16,6 +16,15 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
+// Modal Elements
+const exportModal = document.getElementById('exportModal');
+const openExportModalBtn = document.getElementById('openExportModalBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const cancelModalBtn = document.getElementById('cancelModalBtn');
+const confirmPrintBtn = document.getElementById('confirmPrintBtn');
+const sheetOptionsList = document.getElementById('sheetOptionsList');
+const printContainer = document.getElementById('printContainer');
+
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -48,21 +57,10 @@ sheetSelect.addEventListener('change', function(e) {
   }
 });
 
-function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `รายการวิเคราะห์ RAM: ระบบ ${sheetName}`;
-  const sheet = currentWorkbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet);
-
-  if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: #787774;">ไม่มีข้อมูลในระบบนี้</p>';
-    resetMetrics();
-    return;
-  }
-
+function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
   let totalMttr = 0, countMttr = 0;
   let totalAvail = 0, countAvail = 0;
-
   let minAvail = Infinity, minAvailItem = '-';
   let maxMttr = -Infinity, maxMttrItem = '-';
   const causeCounts = {};
@@ -102,7 +100,6 @@ function loadRamSheet(sheetName) {
       }
     }
 
-    // นับสถิติสาเหตุ
     if (causeKey && r[causeKey]) {
       const rawCauses = r[causeKey].toString().split(/[,、]/);
       rawCauses.forEach(c => {
@@ -114,34 +111,57 @@ function loadRamSheet(sheetName) {
     }
   });
 
-  const avgAvailPercent = countAvail > 0 ? (totalAvail / countAvail) : 0;
-  
-  avgAvailElem.textContent = countAvail > 0 ? avgAvailPercent.toFixed(2) + '%' : '-';
+  const avgAvail = countAvail > 0 ? (totalAvail / countAvail) : 0;
+  const avgMtbf = countMtbf > 0 ? Math.round(totalMtbf / countMtbf) : 0;
+  const avgMttr = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : 0;
+
+  return {
+    totalModes: rows.length,
+    avgAvail: countAvail > 0 ? avgAvail.toFixed(2) : '-',
+    avgMtbf: countMtbf > 0 ? avgMtbf.toLocaleString() : '-',
+    avgMttr: countMttr > 0 ? avgMttr : '-',
+    minAvailItem: minAvail !== Infinity ? minAvailItem : '-',
+    maxMttrItem: maxMttr !== -Infinity ? maxMttrItem : '-',
+    causeCounts
+  };
+}
+
+function loadRamSheet(sheetName) {
+  currentSheetTitle.textContent = `รายการวิเคราะห์ RAM: ระบบ ${sheetName}`;
+  const sheet = currentWorkbook.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  if (rows.length === 0) {
+    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: #787774;">ไม่มีข้อมูลในระบบนี้</p>';
+    resetMetrics();
+    return;
+  }
+
+  const metrics = calculateSheetMetrics(rows);
+
+  avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
   avgAvailElem.classList.remove('status-green', 'status-red');
   
-  if (countAvail > 0) {
-    if (avgAvailPercent >= 96) {
+  if (metrics.avgAvail !== '-') {
+    if (parseFloat(metrics.avgAvail) >= 96) {
       avgAvailElem.classList.add('status-green');
     } else {
       avgAvailElem.classList.add('status-red');
     }
   }
 
-  totalModesElem.textContent = rows.length.toLocaleString();
-  avgMtbfElem.textContent = countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-';
-  avgMttrElem.textContent = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-';
+  totalModesElem.textContent = metrics.totalModes.toLocaleString();
+  avgMtbfElem.textContent = metrics.avgMtbf;
+  avgMttrElem.textContent = metrics.avgMttr;
+  worstAvailElem.textContent = metrics.minAvailItem;
+  worstMttrElem.textContent = metrics.maxMttrItem;
 
-  worstAvailElem.textContent = minAvail !== Infinity ? minAvailItem : '-';
-  worstMttrElem.textContent = maxMttr !== -Infinity ? maxMttrItem : '-';
-
-  renderCauseChart(causeCounts);
+  renderCauseChart(metrics.causeCounts);
   renderFormattedTable(sheet);
 }
 
-// วาดกราฟ Donut
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
-  
   const sorted = Object.entries(causeCounts).sort((a, b) => b[1] - a[1]);
   const top4 = sorted.slice(0, 4);
   const others = sorted.slice(4).reduce((sum, item) => sum + item[1], 0);
@@ -174,10 +194,7 @@ function renderCauseChart(causeCounts) {
       plugins: {
         legend: {
           position: 'right',
-          labels: {
-            boxWidth: 10,
-            font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' }
-          }
+          labels: { boxWidth: 10, font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } }
         }
       },
       cutout: '68%'
@@ -219,8 +236,6 @@ function renderFormattedTable(sheet) {
 
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i];
-    
-    // คำนวณค่าสำหรับ Filter
     let rowAvail = 100;
     let rowMttr = 0;
 
@@ -265,7 +280,6 @@ function resetMetrics() {
   if (currentChart) currentChart.destroy();
 }
 
-// ฟังก์ชันกรองตาราง (Search + Quick Filter Buttons)
 function applyTableFilter() {
   const query = searchInput.value.toLowerCase();
   const trs = document.querySelectorAll('#ramTable tbody tr');
@@ -290,7 +304,6 @@ function applyTableFilter() {
 
 searchInput.addEventListener('input', applyTableFilter);
 
-// Event Listener ปุ่ม Quick Filter
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -299,3 +312,151 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     applyTableFilter();
   });
 });
+
+/* ============================================================
+   LOGIC MODAL & PRINT SPECIFIC SHEET
+   ============================================================ */
+openExportModalBtn.addEventListener('click', function() {
+  if (!currentWorkbook) {
+    alert('กรุณาเลือกไฟล์ Excel ก่อนทำการพิมพ์');
+    return;
+  }
+
+  const currentSheet = sheetSelect.value;
+  sheetOptionsList.innerHTML = '';
+
+  // ตัวเลือกชีตปัจจุบัน
+  const currentOption = `
+    <label class="sheet-radio-item">
+      <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
+      <span><strong>ระบบที่กำลังเปิดดูอยู่ (${currentSheet})</strong></span>
+    </label>
+  `;
+  sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
+
+  // ตัวเลือกชีตอื่นๆ
+  currentWorkbook.SheetNames.forEach(name => {
+    if (name !== currentSheet) {
+      const item = `
+        <label class="sheet-radio-item">
+          <input type="radio" name="printSheetTarget" value="${name}" />
+          <span>ระบบ ${name}</span>
+        </label>
+      `;
+      sheetOptionsList.insertAdjacentHTML('beforeend', item);
+    }
+  });
+
+  // ตัวเลือกพิมพ์ทั้งหมด
+  const allOption = `
+    <label class="sheet-radio-item" style="border-top: 1.5px dashed #d4d2cb; margin-top: 6px; padding-top: 12px;">
+      <input type="radio" name="printSheetTarget" value="__ALL__" />
+      <span><strong>ทุกระบบพร้อมกัน (All Subsystems)</strong></span>
+    </label>
+  `;
+  sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
+
+  exportModal.classList.add('show');
+});
+
+function closeModal() {
+  exportModal.classList.remove('show');
+}
+closeModalBtn.addEventListener('click', closeModal);
+cancelModalBtn.addEventListener('click', closeModal);
+
+// เมื่อกดยืนยันการพิมพ์
+confirmPrintBtn.addEventListener('click', function() {
+  const selectedRadio = document.querySelector('input[name="printSheetTarget"]:checked');
+  if (!selectedRadio) return;
+
+  const targetSheet = selectedRadio.value;
+  closeModal();
+
+  // สร้าง HTML สำหรับหน้าพิมพ์โดยเฉพาะ
+  buildPrintView(targetSheet);
+
+  // สั่งเปิดหน้าต่าง Print
+  setTimeout(() => {
+    window.print();
+  }, 300);
+});
+
+function buildPrintView(targetSheet) {
+  printContainer.innerHTML = '';
+  const sheetsToPrint = targetSheet === '__ALL__' ? currentWorkbook.SheetNames : [targetSheet];
+
+  sheetsToPrint.forEach(sName => {
+    const sheet = currentWorkbook.Sheets[sName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+    const metrics = calculateSheetMetrics(rows);
+
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (jsonData.length === 0) return;
+
+    const headers = jsonData[0];
+    const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
+
+    let pageHtml = `
+      <div class="print-page">
+        <div class="print-header">
+          <div>
+            <h2>รายงานการวิเคราะห์ RAM: ระบบ ${sName}</h2>
+            <span style="font-size: 0.75rem; color: #787774;">Substation Reliability & Maintenance Analysis</span>
+          </div>
+          <div class="meta">
+            <div>ผู้จัดทำ: <strong>Suwanan K. (Reliability Engineer)</strong></div>
+            <div>วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</div>
+          </div>
+        </div>
+
+        <div class="print-kpi-grid">
+          <div class="print-kpi-item">
+            <span>Avg. Availability (≥ 96%)</span>
+            <strong>${metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-'}</strong>
+          </div>
+          <div class="print-kpi-item">
+            <span>Avg. MTBF</span>
+            <strong>${metrics.avgMtbf} ชม.</strong>
+          </div>
+          <div class="print-kpi-item">
+            <span>Avg. MTTR</span>
+            <strong>${metrics.avgMttr} ชม.</strong>
+          </div>
+          <div class="print-kpi-item">
+            <span>Total Failure Modes</span>
+            <strong>${metrics.totalModes} รายการ</strong>
+          </div>
+        </div>
+
+        <table class="print-table">
+          <thead>
+            <tr>
+    `;
+
+    headers.forEach(h => {
+      pageHtml += `<th>${h || ''}</th>`;
+    });
+    pageHtml += `</tr></thead><tbody>`;
+
+    for (let i = 1; i < jsonData.length; i++) {
+      const r = jsonData[i];
+      pageHtml += `<tr>`;
+      for (let j = 0; j < headers.length; j++) {
+        let val = r[j] !== undefined ? r[j] : '';
+        if (j === availColIndex && !isNaN(val) && val !== '') {
+          const num = Number(val);
+          const pVal = num <= 1 ? num * 100 : num;
+          const color = pVal >= 96 ? '#2b825b' : '#c84444';
+          pageHtml += `<td style="color: ${color}; font-weight: bold; text-align: center;">${pVal.toFixed(4)}%</td>`;
+        } else {
+          pageHtml += `<td>${val}</td>`;
+        }
+      }
+      pageHtml += `</tr>`;
+    }
+
+    pageHtml += `</tbody></table></div>`;
+    printContainer.insertAdjacentHTML('beforeend', pageHtml);
+  });
+}
