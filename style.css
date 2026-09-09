@@ -206,9 +206,9 @@ body {
   padding: 24px; box-shadow: var(--shadow-executive);
 }
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
-.table-title-group { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.table-title-group { display: flex; flex-direction: column; gap: 4px; }
 .table-title-group h3 { font-size: 1.05rem; font-weight: 700; }
-.table-status-pill { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); background: var(--surface-subtle); padding: 2px 8px; border-radius: 4px; }
+.table-status-pill { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); background: var(--surface-subtle); padding: 2px 8px; border-radius: 4px; width: fit-content; }
 .sub-title { font-size: 0.76rem; color: var(--text-muted); display: block; }
 
 .filter-group { display: flex; gap: 6px; background: var(--surface-base); padding: 3px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); }
@@ -247,7 +247,446 @@ td[contenteditable="true"]:focus { background-color: #FFFFFF; outline: 2px solid
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Drawer Panel */
+/* ============================================================
+   RAM WHAT-IF SIMULATOR STYLES
+   ============================================================ */
+.simulator-section {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-executive);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sim-notice-banner {
+  background-color: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--brand-amethyst);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sim-notice-banner i {
+  color: var(--brand-amethyst);
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 20px;
+}
+
+.sim-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sim-card {
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sim-card-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--brand-champagne);
+  display: block;
+}
+
+.sim-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sim-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.sim-select {
+  background: var(--surface-card);
+}
+
+.sim-context-box {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-context-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 0.76rem;
+  gap: 12px;
+}
+
+.sim-context-lbl {
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 120px;
+}
+
+.sim-context-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.sim-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.sim-mini-kpi {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+}
+
+.sim-mini-kpi.full-span {
+  grid-column: 1 / -1;
+  border-left: 3px solid var(--status-healthy);
+}
+
+.sim-mini-kpi span {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+}
+
+.sim-mini-kpi strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  margin-top: 2px;
+  line-height: 1.1;
+}
+
+/* Mode Switcher */
+.sim-mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--surface-subtle);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.sim-mode-btn {
+  background: transparent;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.sim-mode-btn.active {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(52, 58, 64, 0.05);
+}
+
+.sim-mode-btn.active i {
+  color: var(--brand-amethyst);
+}
+
+.sim-controls-wrapper {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+}
+
+.sim-mode-pane {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sim-mode-pane.active {
+  display: flex;
+}
+
+.sim-question {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim-question i {
+  color: var(--brand-amethyst);
+}
+
+.sim-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sim-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sim-input-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.sim-input-pill.highlight {
+  border-color: var(--brand-amethyst);
+  background: var(--brand-amethyst-light);
+}
+
+.sim-input-pill input {
+  width: 72px;
+  border: none;
+  background: transparent;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  outline: none;
+  font-family: inherit;
+}
+
+.sim-input-pill span {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sim-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--surface-subtle);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.sim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand-amethyst);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s ease;
+}
+
+.sim-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.sim-slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sim-strategy-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.sim-radio-cluster {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.sim-radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.sim-radio-card:hover {
+  border-color: var(--brand-amethyst);
+}
+
+.sim-radio-card input[type="radio"] {
+  accent-color: var(--brand-amethyst);
+  margin-top: 3px;
+}
+
+.sim-radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sim-radio-content strong {
+  font-size: 0.74rem;
+  color: var(--text-primary);
+}
+
+.sim-radio-content span {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Impact & Interpretation */
+.sim-impact-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+}
+
+.sim-comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  background: var(--surface-card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sim-comparison-table th, .sim-comparison-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.sim-comparison-table th {
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sim-badge-pill {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  background: var(--status-healthy-bg);
+  color: var(--status-healthy);
+}
+
+.sim-badge-pill.warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning);
+}
+
+.sim-card-interpret {
+  background: var(--surface-base);
+  border-left: 3px solid var(--brand-champagne);
+}
+
+.sim-interpret-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+.sim-narrative {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.sim-narrative strong {
+  color: var(--text-primary);
+}
+
+.sim-interpret-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-divider);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+/* Variance Indicators */
+.diff-up-green { color: var(--status-healthy); font-weight: 700; }
+.diff-down-green { color: var(--status-healthy); font-weight: 700; }
+.diff-up-red { color: var(--status-warning); font-weight: 700; }
+.diff-down-red { color: var(--status-warning); font-weight: 700; }
+.diff-neutral { color: var(--text-muted); font-weight: 600; }
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .sim-grid, .sim-impact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   DRAWER & MODALS
+   ============================================================ */
 .detail-drawer {
   position: fixed; top: 0; right: -100%; width: 35vw; min-width: 420px; max-width: 580px; height: 100vh;
   background-color: var(--surface-card); border-left: 1px solid var(--border-subtle);
@@ -310,7 +749,7 @@ td[contenteditable="true"]:focus { background-color: #FFFFFF; outline: 2px solid
 .btn-tertiary { background: var(--surface-base); border: 1px solid var(--border-subtle); padding: 9px 16px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; }
 .btn-primary { background: var(--text-primary); color: #FFFFFF; border: none; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
   .app-layout { grid-template-columns: 1fr; }
   .sidebar { border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 20px; }
