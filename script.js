@@ -2,11 +2,11 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// รหัสผ่านแอดมิน
+// Admin Security Credentials
 const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
-// การตั้งค่า IndexedDB (พื้นที่เก็บไฟล์ขนาดใหญ่ ไม่จำกัด 5MB แบบ localStorage)
+// IndexedDB Persistence Configuration
 const DB_NAME = 'RAM_DASHBOARD_DB';
 const DB_VERSION = 1;
 const STORE_NAME = 'excel_files';
@@ -50,7 +50,7 @@ const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
 /* ============================================================
-   ระบบจัดเก็บข้อมูลถาวรด้วย IndexedDB
+   INDEXEDDB PERSISTENCE LAYER
    ============================================================ */
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -77,7 +77,7 @@ async function saveWorkbookToDB(arrayBuffer) {
       tx.onerror = () => reject(tx.error);
     });
   } catch (err) {
-    console.error('บันทึกลง IndexedDB ไม่สำเร็จ:', err);
+    console.error('Failed to commit workbook to IndexedDB:', err);
   }
 }
 
@@ -96,21 +96,19 @@ async function loadWorkbookFromDB() {
   }
 }
 
-// 1. ตรวจสอบไฟล์เมื่อเปิดหน้าเว็บ: IndexedDB -> ALL_RAM.xlsx เริ่มต้น
+// Check Database -> Fallback to ALL_RAM.xlsx
 async function initDashboardData() {
-  // ลองดึงจาก IndexedDB ก่อน
   const savedData = await loadWorkbookFromDB();
   if (savedData) {
     handleWorkbookData(savedData, false);
     return;
   }
 
-  // ถ้าไม่มี ให้ลองดึง ALL_RAM.xlsx จาก GitHub
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
-    if (!response.ok) throw new Error('File not detected');
+    if (!response.ok) throw new Error('Repository file not detected');
     const arrayBuffer = await response.arrayBuffer();
-    handleWorkbookData(arrayBuffer, true); // บันทึกลง DB เลยเพื่อความรวดเร็วครั้งต่อไป
+    handleWorkbookData(arrayBuffer, true);
   } catch (err) {
     showManualUploadPrompt();
   }
@@ -120,8 +118,8 @@ function showManualUploadPrompt() {
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
       <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.4rem; color: #8E7C93; margin-bottom: 12px;"></i>
-      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">เลือกไฟล์ข้อมูล (ALL_RAM.xlsx)</p>
-      <span style="font-size: 0.75rem; color: #888E94;">คลิกที่นี่เพื่อนำเข้าไฟล์ข้อมูลสำหรับเริ่มประมวลผล</span>
+      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Load Dataset (ALL_RAM.xlsx)</p>
+      <span style="font-size: 0.75rem; color: #888E94;">Click anywhere in this container to load your local spreadsheet telemetry</span>
     </div>
   `;
 }
@@ -139,7 +137,7 @@ function handleWorkbookData(data, shouldSave = true) {
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = `ระบบ: ${name}`;
+    option.textContent = `Subsystem: ${name}`;
     sheetSelect.appendChild(option);
   });
 
@@ -148,13 +146,12 @@ function handleWorkbookData(data, shouldSave = true) {
   loadRamSheet(defaultSheet);
 }
 
-// เมื่อมีการเลือกไฟล์ใหม่
 fileInput.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(evt) {
-    handleWorkbookData(evt.target.result, true); // บันทึกลง IndexedDB ทันที
+    handleWorkbookData(evt.target.result, true);
   };
   reader.readAsArrayBuffer(file);
 });
@@ -166,7 +163,7 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 /* ============================================================
-   ระบบตรวจสอบสิทธิ์แอดมิน (Admin Authentication)
+   ADMIN GATEWAY AUTHENTICATION
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -209,24 +206,24 @@ function updateAuthUI() {
     userProfile.style.display = 'flex';
     adminUploadWidget.style.display = 'block';
     saveExcelBtn.style.display = 'flex';
-    modeBadge.textContent = 'ADMIN MODE (เปิดแก้ไขข้อมูล)';
+    modeBadge.textContent = 'ADMIN CONSOLE (UNLOCKED)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = '✏️ โหมดแอดมิน: แก้ไขข้อมูลได้โดยตรง ระบบจะจำค่าอัตโนมัติ';
+    editNotice.textContent = 'Active Edit Mode: Click on data cells to modify values (Auto-persisted)';
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
     userProfile.style.display = 'none';
     adminUploadWidget.style.display = 'none';
     saveExcelBtn.style.display = 'none';
-    modeBadge.textContent = 'VIEWER MODE (โหมดดูข้อมูล)';
+    modeBadge.textContent = 'VIEWER CONSOLE';
     modeBadge.classList.remove('admin');
-    editNotice.textContent = 'โหมดอ่านอย่างเดียว (Viewer Mode)';
+    editNotice.textContent = 'Read-Only Observation Mode';
     editNotice.style.color = 'var(--text-secondary)';
   }
 }
 
 /* ============================================================
-   การคำนวณและสรุปผลข้อมูลตัวชี้วัด (Metrics Engine)
+   EXECUTIVE METRICS & COMPUTATION
    ============================================================ */
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
@@ -243,7 +240,7 @@ function calculateSheetMetrics(rows) {
     const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
     const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
 
-    const compName = r[compKey] || 'ไม่ระบุอุปกรณ์';
+    const compName = r[compKey] || 'Unassigned Equipment';
 
     if (mtbfKey && !isNaN(r[mtbfKey])) {
       totalMtbf += Number(r[mtbfKey]);
@@ -255,7 +252,7 @@ function calculateSheetMetrics(rows) {
       countMttr++;
       if (mttrVal > maxMttr) {
         maxMttr = mttrVal;
-        maxMttrItem = `${compName} (${mttrVal} ชม.)`;
+        maxMttrItem = `${compName} (${mttrVal} hrs)`;
       }
     }
     if (availKey && !isNaN(r[availKey])) {
@@ -290,12 +287,12 @@ function calculateSheetMetrics(rows) {
 }
 
 function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `ตารางวิเคราะห์การบำรุงรักษาและ RAM: ระบบ ${sheetName}`;
+  currentSheetTitle.textContent = `Diagnostic Matrix: Subsystem ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">ไม่มีรายการข้อมูลในระบบนี้</p>';
+    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">No records registered for this subsystem domain.</p>';
     resetMetrics();
     return;
   }
@@ -319,7 +316,7 @@ function loadRamSheet(sheetName) {
 }
 
 /* ============================================================
-   กราฟวงกลมสรุปสาเหตุ (Donut Chart)
+   CHART.JS ROOT CAUSE DONUT
    ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
@@ -330,7 +327,7 @@ function renderCauseChart(causeCounts) {
   const labels = top4.map(i => i[0]);
   const data = top4.map(i => i[1]);
   if (others > 0) {
-    labels.push('สาเหตุอื่นๆ');
+    labels.push('Other Determinants');
     data.push(others);
   }
 
@@ -343,11 +340,11 @@ function renderCauseChart(causeCounts) {
       datasets: [{
         data: data,
         backgroundColor: [
-          '#8E7C93',
-          '#66756B',
-          '#B7A58A',
-          '#5F666D',
-          '#C5C2BA'
+          '#8E7C93', // Muted Amethyst
+          '#66756B', // Muted Sage
+          '#B7A58A', // Champagne
+          '#5F666D', // Charcoal Soft
+          '#C5C2BA'  // Soft Stone
         ],
         borderWidth: 2,
         borderColor: '#FFFFFF'
@@ -371,8 +368,8 @@ function renderCauseChart(causeCounts) {
         },
         tooltip: {
           backgroundColor: '#343A40',
-          titleFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
-          bodyFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
+          titleFont: { size: 11, family: 'Plus Jakarta Sans' },
+          bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
           padding: 10,
           cornerRadius: 6
         }
@@ -383,7 +380,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   การสร้างตารางและระบบบันทึกค่าแก้ไขถาวร
+   TABLE RENDERING & PERSISTED CELL EDITING
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -472,11 +469,11 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // บันทึกลง IndexedDB ถาวร
+      // Auto-persist directly to IndexedDB
       const updatedArray = XLSX.write(currentWorkbook, { bookType: 'xlsx', type: 'array' });
       saveWorkbookToDB(updatedArray);
 
-      // คำนวณ KPI ใหม่ทันที
+      // Recompute metrics instantly
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
@@ -533,11 +530,11 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   การสร้างหน้าสำหรับ Export PDF / สั่งพิมพ์
+   EXECUTIVE BRIEF PRINT ENGINE (A4 Landscape)
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
-    alert('กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน');
+    alert('Please wait for system data to complete loading before generating the brief.');
     return;
   }
 
@@ -547,7 +544,7 @@ openExportModalBtn.addEventListener('click', function() {
   const currentOption = `
     <label class="sheet-radio-item">
       <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-      <span><strong>ระบบที่กำลังเปิดดูอยู่ (${currentSheet})</strong></span>
+      <span><strong>Active Workspace Subsystem (${currentSheet})</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
@@ -557,7 +554,7 @@ openExportModalBtn.addEventListener('click', function() {
       const item = `
         <label class="sheet-radio-item">
           <input type="radio" name="printSheetTarget" value="${name}" />
-          <span>ระบบ: ${name}</span>
+          <span>Subsystem Scope: ${name}</span>
         </label>
       `;
       sheetOptionsList.insertAdjacentHTML('beforeend', item);
@@ -567,7 +564,7 @@ openExportModalBtn.addEventListener('click', function() {
   const allOption = `
     <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
       <input type="radio" name="printSheetTarget" value="__ALL__" />
-      <span><strong>ทุกระบบพร้อมกัน (All Subsystems)</strong></span>
+      <span><strong>Consolidated Fleet Brief (All Subsystems)</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
@@ -609,31 +606,31 @@ function buildPrintView(targetSheet) {
       <div class="print-page">
         <div class="print-header">
           <div>
-            <h2>รายงานการวิเคราะห์การบำรุงรักษาและ RAM: ระบบ ${sName}</h2>
+            <h2>RAM Analytics Operational Brief: Subsystem ${sName}</h2>
             <span style="font-size: 0.72rem; color: #666;">Substation Reliability, Availability & Maintenance Performance Data</span>
           </div>
           <div class="meta">
-            <div>ผู้จัดทำ: <strong>Suwanan K. (วิศวกรความน่าเชื่อถือ)</strong></div>
-            <div>วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</div>
+            <div>Lead Analyst: <strong>Suwanan K. (Reliability Engineer)</strong></div>
+            <div>Documentation Timestamp: ${new Date().toLocaleDateString('en-GB')}</div>
           </div>
         </div>
 
         <div class="print-kpi-grid">
           <div class="print-kpi-item">
-            <span>ความพร้อมใช้งานเฉลี่ย (เป้าหมาย ≥ 96%)</span>
+            <span>Fleet Availability (Target ≥ 96%)</span>
             <strong>${metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-'}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>ระยะเวลาเฉลี่ยก่อนเกิดความเสียหาย (MTBF)</span>
-            <strong>${metrics.avgMtbf} ชม.</strong>
+            <span>Mean Time Between Failures</span>
+            <strong>${metrics.avgMtbf} hrs</strong>
           </div>
           <div class="print-kpi-item">
-            <span>ระยะเวลาเฉลี่ยในการบำรุงรักษา (MTTR)</span>
-            <strong>${metrics.avgMttr} ชม.</strong>
+            <span>Mean Time to Restore</span>
+            <strong>${metrics.avgMttr} hrs</strong>
           </div>
           <div class="print-kpi-item">
-            <span>จำนวนลักษณะข้อบกพร่องทั้งหมด</span>
-            <strong>${metrics.totalModes} รายการ</strong>
+            <span>Cataloged Failure Modes</span>
+            <strong>${metrics.totalModes} Modes</strong>
           </div>
         </div>
 
