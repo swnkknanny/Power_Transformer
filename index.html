@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=10">
   
   <!-- SheetJS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -135,7 +135,7 @@
         </div>
       </section>
 
-      <!-- Executive KPI Cards (Enhanced with drill cues) -->
+      <!-- Executive KPI Cards -->
       <section class="kpi-grid">
         <div class="kpi-card interactive" id="kpiCardAvail" title="Click to inspect Availability breakdown">
           <div class="kpi-header">
@@ -280,7 +280,7 @@
     </main>
   </div>
 
-  <!-- Detail Panel / Side Drawer (Interactive Drill-Down) -->
+  <!-- Detail Panel / Side Drawer -->
   <aside class="detail-drawer" id="detailDrawer" aria-hidden="true">
     <div class="drawer-header">
       <div class="drawer-nav">
@@ -291,9 +291,7 @@
       </div>
       <button class="drawer-close" id="drawerCloseBtn" aria-label="Close detail drawer">&times;</button>
     </div>
-    <div class="drawer-body" id="drawerContent">
-      <!-- Injected Dynamically -->
-    </div>
+    <div class="drawer-body" id="drawerContent"></div>
   </aside>
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
@@ -348,6 +346,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>
