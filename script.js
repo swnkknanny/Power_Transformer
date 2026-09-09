@@ -2,8 +2,8 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// ระบบความปลอดภัย: รหัสผ่านเริ่มต้น (สามารถเปลี่ยนรหัสนี้ได้ตามต้องการ)
-const ADMIN_PASSWORD = '13102547'; 
+// รหัสผ่านแอดมินเริ่มต้น
+const ADMIN_PASSWORD = '1234'; 
 let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
@@ -45,18 +45,33 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-// โหลดไฟล์เริ่มต้นอัตโนมัติ
+// 1. ระบบ Auto Fetch: พยายามดึงไฟล์อัตโนมัติ ถ้าไม่เจอให้แสดงปุ่มเลือกไฟล์ทันที
 async function autoLoadDefaultExcel() {
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
-    if (!response.ok) return;
+    if (!response.ok) {
+      throw new Error('File not found');
+    }
     const arrayBuffer = await response.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
     handleWorkbookData(data);
   } catch (err) {
-    console.error('Auto-load failed:', err);
+    console.warn('ยังไม่พบไฟล์เริ่มต้นบนเซิร์ฟเวอร์:', err);
+    showManualUploadPrompt();
   }
 }
+
+// ถ้าหาไฟล์ไม่เจอ ให้แสดงหน้าจอให้คลิกเลือกไฟล์เอง
+function showManualUploadPrompt() {
+  tableContainer.innerHTML = `
+    <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
+      <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: #2b825b; margin-bottom: 12px;"></i>
+      <p style="font-weight: 600; color: #222; margin-bottom: 4px;">คลิกที่นี่เพื่อเปิดไฟล์ ALL_RAM.xlsx</p>
+      <span style="font-size: 0.78rem; color: #787774;">(ยังไม่พบไฟล์บนเซิร์ฟเวอร์ กรุณาเลือกไฟล์จากเครื่องเพื่อเริ่มใช้งาน)</span>
+    </div>
+  `;
+}
+
 document.addEventListener('DOMContentLoaded', autoLoadDefaultExcel);
 
 function handleWorkbookData(data) {
@@ -117,7 +132,6 @@ function checkAdminPassword() {
     isAdmin = true;
     updateAuthUI();
     closeLogin();
-    // รีเรนเดอร์ตารางให้เป็นโหมดแก้ไขได้
     if (currentWorkbook) loadRamSheet(sheetSelect.value);
   } else {
     loginError.style.display = 'block';
@@ -330,8 +344,6 @@ function renderFormattedTable(sheet, sheetName) {
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
-
-      // ถ้าเป็น Admin จะเปิด contenteditable ให้แก้ไขได้
       const editableAttr = isAdmin ? 'contenteditable="true"' : '';
 
       if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
@@ -349,7 +361,6 @@ function renderFormattedTable(sheet, sheetName) {
   tableHtml += '</tbody></table>';
   tableContainer.innerHTML = tableHtml;
 
-  // ถ้าเป็น Admin ให้ผูก Event การแก้ไขข้อมูลในเซลล์แบบ Real-time
   if (isAdmin) {
     bindCellEditEvents(sheetName);
   }
@@ -365,7 +376,6 @@ function bindCellEditEvents(sheetName) {
       const colIdx = parseInt(this.getAttribute('data-col'));
       const newVal = this.textContent.trim();
 
-      // บันทึกลงใน Memory Sheet ของ XLSX ทันที
       const sheet = currentWorkbook.Sheets[sheetName];
       const cellAddress = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
 
@@ -373,7 +383,6 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // รีคำนวณสถิติ KPI ด้านบนใหม่ทันที
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
@@ -383,7 +392,6 @@ function bindCellEditEvents(sheetName) {
   });
 }
 
-// ปุ่มบันทึกและดาวน์โหลด Excel หลัง Admin แก้ไข
 saveExcelBtn.addEventListener('click', function() {
   if (!currentWorkbook) return;
   XLSX.writeFile(currentWorkbook, 'ALL_RAM_Updated.xlsx');
@@ -391,6 +399,7 @@ saveExcelBtn.addEventListener('click', function() {
 
 function resetMetrics() {
   avgAvailElem.textContent = '-%';
+  avgAvailElem.classList.remove('status-green', 'status-red');
   avgMtbfElem.textContent = '-';
   avgMttrElem.textContent = '-';
   totalModesElem.textContent = '0';
