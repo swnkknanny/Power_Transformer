@@ -7,7 +7,6 @@ const tableContainer = document.getElementById('tableContainer');
 const currentSheetTitle = document.getElementById('currentSheetTitle');
 const searchInput = document.getElementById('searchInput');
 
-// Metric Elements
 const avgAvailElem = document.getElementById('avgAvail');
 const avgMtbfElem = document.getElementById('avgMtbf');
 const avgMttrElem = document.getElementById('avgMttr');
@@ -32,7 +31,7 @@ fileInput.addEventListener('change', function(e) {
 
     fileControls.style.display = 'block';
 
-    // ถ้ามี Sheet TR ให้เปิด TR ก่อน ถ้าไม่มีให้เปิด Sheet แรก
+    // เลือกชีต TR เป็นค่าเริ่มต้น ถ้าไม่มีให้เลือกชีตแรก
     const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
     sheetSelect.value = defaultSheet;
     loadRamSheet(defaultSheet);
@@ -49,8 +48,6 @@ sheetSelect.addEventListener('change', function(e) {
 function loadRamSheet(sheetName) {
   currentSheetTitle.textContent = `ตารางวิเคราะห์ RAM: ระบบ ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
-  
-  // แปลงข้อมูลเป็น JSON Object
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   if (rows.length === 0) {
@@ -59,13 +56,11 @@ function loadRamSheet(sheetName) {
     return;
   }
 
-  // คำนวณค่า RAM Metrics
   let totalMtbf = 0, countMtbf = 0;
   let totalMttr = 0, countMttr = 0;
   let totalAvail = 0, countAvail = 0;
 
   rows.forEach(r => {
-    // ดึงค่า MTBF, MTTR, Availability (ป้องกัน whitespace ในชื่อคอลัมน์)
     const mtbfKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTBF');
     const mttrKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'MTTR');
     const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
@@ -84,25 +79,74 @@ function loadRamSheet(sheetName) {
     }
   });
 
-  // อัปเดตตัวเลขแสดงผลบน Dashboard
+  // คำนวณเปอร์เซ็นต์ Availability
+  const avgAvailPercent = countAvail > 0 ? (totalAvail / countAvail) * 100 : 0;
+  
+  // อัปเดตการ์ด Availability: >= 96% ขึ้นเขียว, < 96% ขึ้นแดง
+  avgAvailElem.textContent = countAvail > 0 ? avgAvailPercent.toFixed(2) + '%' : '-';
+  avgAvailElem.classList.remove('status-green', 'status-red');
+  
+  if (countAvail > 0) {
+    if (avgAvailPercent >= 96) {
+      avgAvailElem.classList.add('status-green');
+    } else {
+      avgAvailElem.classList.add('status-red');
+    }
+  }
+
+  // อัปเดต Metric อื่นๆ
   totalModesElem.textContent = rows.length.toLocaleString();
   avgMtbfElem.textContent = countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-';
   avgMttrElem.textContent = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-';
-  avgAvailElem.textContent = countAvail > 0 ? ((totalAvail / countAvail) * 100).toFixed(4) + '%' : '-';
 
-  // แปลงและแสดงผล HTML Table
-  const htmlTable = XLSX.utils.sheet_to_html(sheet, { id: 'ramTable' });
-  tableContainer.innerHTML = htmlTable;
+  renderFormattedTable(sheet);
+}
+
+function renderFormattedTable(sheet) {
+  const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+  if (jsonData.length === 0) return;
+
+  const headers = jsonData[0];
+  const availColIndex = headers.findIndex(h => h && h.toString().trim().toUpperCase() === 'AVAILABILITY');
+
+  let tableHtml = '<table id="ramTable"><thead><tr>';
+  headers.forEach(h => {
+    tableHtml += `<th>${h || ''}</th>`;
+  });
+  tableHtml += '</tr></thead><tbody>';
+
+  for (let i = 1; i < jsonData.length; i++) {
+    const row = jsonData[i];
+    tableHtml += '<tr>';
+    for (let j = 0; j < headers.length; j++) {
+      let cellValue = row[j] !== undefined ? row[j] : '';
+      
+      // ตรวจสอบค่าในคอลัมน์ Availability เพื่อใส่ badge สี
+      if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
+        const valNum = Number(cellValue);
+        const percentVal = valNum <= 1 ? valNum * 100 : valNum;
+        const badgeClass = percentVal >= 96 ? 'badge-pass' : 'badge-fail';
+        
+        tableHtml += `<td><span class="${badgeClass}">${percentVal.toFixed(4)}%</span></td>`;
+      } else {
+        tableHtml += `<td>${cellValue}</td>`;
+      }
+    }
+    tableHtml += '</tr>';
+  }
+
+  tableHtml += '</tbody></table>';
+  tableContainer.innerHTML = tableHtml;
 }
 
 function resetMetrics() {
   avgAvailElem.textContent = '-%';
+  avgAvailElem.classList.remove('status-green', 'status-red');
   avgMtbfElem.textContent = '-';
   avgMttrElem.textContent = '-';
   totalModesElem.textContent = '0';
 }
 
-// ระบบค้นหา Real-time
 searchInput.addEventListener('input', function(e) {
   const query = e.target.value.toLowerCase();
   const trs = document.querySelectorAll('#ramTable tr');
