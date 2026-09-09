@@ -1,4 +1,273 @@
 // ============================================================
+// MULTI-LANGUAGE SYSTEM (EN / TH)
+// ============================================================
+let currentLang = localStorage.getItem('RAM_DASHBOARD_LANG') || 'en';
+
+const i18nData = {
+  en: {
+    brand_sub: "SUBSTATION RELIABILITY",
+    nav_heading: "INTELLIGENCE CONSOLE",
+    nav_overview: "Overview",
+    nav_simulator: "What-If Simulator",
+    nav_maintenance: "Maintenance",
+    panel_subsystem: "SUBSYSTEM DOMAIN",
+    admin_override: "ADMIN DATA OVERRIDE",
+    import_dataset: "Import New Dataset",
+    sync_hint: "Syncs instantly to all devices",
+    footer_desc: "Substation equipment reliability & maintenance lifecycle management system.",
+    search_placeholder: "Search equipment, failure modes, causes...",
+    export_brief: "Export Brief",
+    commit_excel: "Commit Excel",
+    admin_gateway: "Admin Gateway",
+    lead_engineer: "Lead Reliability Eng.",
+    cloud_sync_active: "CLOUD SYNC ACTIVE",
+    mode_viewer: "VIEWER CONSOLE",
+    mode_admin: "ADMIN CONSOLE (LIVE CLOUD EDIT)",
+    banner_title: "Substation Reliability & Performance Intelligence",
+    banner_desc: "Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.",
+    kpi_avail_title: "Fleet Availability",
+    kpi_avail_target: "Target ≥ 96.00%",
+    kpi_avail_footer: "Operational uptime benchmark",
+    kpi_mtbf_title: "Mean Time Between Failures",
+    kpi_mtbf_target: "MTBF Metric",
+    kpi_mtbf_footer: "Average operating hours between failures",
+    kpi_mttr_title: "Mean Time to Restore",
+    kpi_mttr_target: "MTTR Limit ≤ 10h",
+    kpi_mttr_footer: "Average corrective maintenance latency",
+    kpi_modes_title: "Cataloged Failure Modes",
+    kpi_modes_target: "Active Registry",
+    kpi_modes_footer: "Total failure mechanisms monitored",
+    unit_hrs: "hrs",
+    tag_risk_prioritization: "RISK PRIORITIZATION",
+    attention_vectors_title: "Subsystem Attention Vectors",
+    lowest_avail_label: "Lowest Availability Component",
+    inspect_btn: "Inspect",
+    lowest_avail_note: "Priority candidate for condition-based maintenance to prevent unplanned outages.",
+    peak_mttr_label: "Maximum Repair Latency (Peak MTTR)",
+    peak_mttr_note: "Consider stocking specialized spares and optimizing maintenance staging procedures.",
+    tag_root_cause: "ROOT CAUSE SPECTRUM",
+    chart_cause_title: "Failure Cause Distribution",
+    click_segment_hint: "Click segment to drill",
+    table_title_prefix: "System Diagnostics & RAM Matrix: Subsystem",
+    table_status_viewer: "Read-Only Observation Mode",
+    table_status_admin: "Active Cloud Edit Mode: MTBF/MTTR edits auto-calculate Availability",
+    table_sub_title: "Click any equipment row to access comprehensive operational analytics.",
+    filter_all: "All Items",
+    filter_critical: "Avail < 96%",
+    filter_high_mttr: "MTTR > 10 hrs",
+    connecting_cloud: "Connecting to Realtime Cloud Database...",
+    no_records: "No records registered for this subsystem domain.",
+    // Simulator
+    sim_tag: "DECISION-SUPPORT SANDBOX",
+    sim_title: "RAM What-If Simulator",
+    sim_sub_title: "Availability Target & Reliability Scenario Analysis — Simulate how variations in MTBF and MTTR affect equipment Availability under controlled assumptions.",
+    sim_reset: "Reset Scenario",
+    sim_notice: "<strong>Analytical Protocol Notice:</strong> MTBF and MTTR values are simulated parameters used for prototype RAM analysis while long-term historical failure data is not yet available. Scenario values do not modify source datasets.",
+    sim_step1: "STEP 1 • SELECT FAILURE SCENARIO",
+    sim_scenario_label: "Target Equipment / Failure Code",
+    lbl_equipment: "Equipment / Component:",
+    lbl_failure_code: "Failure Code:",
+    lbl_failure_mode: "Failure Mode:",
+    lbl_failure_cause: "Failure Cause:",
+    sim_step2: "STEP 2 • SIMULATED BASELINE PARAMETERS",
+    sim_base_mtbf: "Simulated MTBF",
+    sim_base_mttr: "Simulated MTTR",
+    sim_base_avail: "Baseline Availability (A_base)",
+    sim_step3: "STEP 3 • SELECT WHAT-IF SIMULATION MODE",
+    mode_adjust_mttr: "Adjust MTTR",
+    mode_adjust_mtbf: "Adjust MTBF",
+    mode_target_avail: "Target Availability",
+    q_mttr: "What happens to Availability if corrective repair latency changes?",
+    lbl_repair_time: "Repair Time (MTTR)",
+    q_mtbf: "What happens to Availability if operating intervals between failures change?",
+    lbl_operating_time: "Operating Time (MTBF)",
+    q_target: "What reliability performance is required to achieve a target Availability?",
+    lbl_target_avail: "Target Availability (A_target)",
+    lbl_strategy: "Calculation Strategy:",
+    strategy_a_title: "Strategy A • Fix MTTR",
+    strategy_a_desc: "Keep simulated MTTR fixed; calculate required MTBF",
+    strategy_b_title: "Strategy B • Fix MTBF",
+    strategy_b_desc: "Keep simulated MTBF fixed; calculate max allowable MTTR",
+    sim_step4: "STEP 4 • SCENARIO IMPACT (BASELINE VS WHAT-IF)",
+    col_metric: "Metric",
+    col_base: "Simulated Baseline",
+    col_whatif: "What-If Scenario",
+    col_impact: "Variance / Impact",
+    row_mtbf: "MTBF",
+    sub_mtbf: "(Operating Duration)",
+    row_mttr: "MTTR",
+    sub_mttr: "(Corrective Latency)",
+    row_avail: "Availability",
+    sub_avail: "(Fleet Ratio)",
+    sim_step5: "STEP 5 • ENGINEERING INTERPRETATION",
+    interpret_footer: "Model: A = MTBF / (MTBF + MTTR) • Analytical assumptions strictly bounded by ISO 14224 protocol.",
+    badge_feasible: "SCENARIO FEASIBLE",
+    badge_boundary: "EXTREME BOUNDARY SCENARIO",
+    // Modals & Drawer
+    drawer_back: "Back",
+    modal_auth_title: "Engineering Gateway",
+    modal_auth_sub: "Administrative Access Protocol",
+    modal_auth_desc: "Enter authorization credentials to unlock live worksheet modification and cloud synchronization:",
+    modal_auth_err: "Invalid credential token. Access rejected.",
+    btn_cancel: "Cancel",
+    btn_auth: "Authenticate",
+    modal_export_title: "Executive Brief Export",
+    modal_export_sub: "Documentation Scope",
+    modal_export_desc: "Select subsystem domain to compile formatted operational brief:",
+    btn_dismiss: "Dismiss",
+    btn_gen_brief: "Generate Brief"
+  },
+  th: {
+    brand_sub: "ความน่าเชื่อถือของสถานีไฟฟ้า",
+    nav_heading: "คอนโซลข้อมูลอัจฉริยะ",
+    nav_overview: "ภาพรวมระบบ (Overview)",
+    nav_simulator: "แบบจำลอง What-If",
+    nav_maintenance: "การบำรุงรักษา (Maintenance)",
+    panel_subsystem: "เลือกระบบย่อย (SUBSYSTEM)",
+    admin_override: "จัดการข้อมูลแอดมิน",
+    import_dataset: "นำเข้าชุดข้อมูลใหม่ (Excel)",
+    sync_hint: "ซิงค์ข้อมูลเรียลไทม์ทุกอุปกรณ์",
+    footer_desc: "ระบบวิเคราะห์ความน่าเชื่อถือและวงจรการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า",
+    search_placeholder: "ค้นหาอุปกรณ์, ลักษณะข้อบกพร่อง, สาเหตุ...",
+    export_brief: "Export รายงาน",
+    commit_excel: "บันทึก Excel",
+    admin_gateway: "เข้าสู่ระบบแอดมิน",
+    lead_engineer: "วิศวกรความน่าเชื่อถือ",
+    cloud_sync_active: "ซิงค์ระบบคลาวด์ทำงานปกติ",
+    mode_viewer: "โหมดดูข้อมูล (VIEWER CONSOLE)",
+    mode_admin: "โหมดแอดมิน (ADMIN LIVE EDIT)",
+    banner_title: "ระบบวิเคราะห์ความน่าเชื่อถือและประสิทธิภาพสถานีไฟฟ้า",
+    banner_desc: "ติดตามความพร้อมใช้งาน (Availability) การกระจายตัวของข้อบกพร่อง และเพิ่มประสิทธิภาพการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า",
+    kpi_avail_title: "ความพร้อมใช้งานเฉลี่ย (Availability)",
+    kpi_avail_target: "เป้าหมาย ≥ 96.00%",
+    kpi_avail_footer: "เกณฑ์มาตรฐานความพร้อมใช้งาน",
+    kpi_mtbf_title: "ระยะเวลาเฉลี่ยก่อนเสียหาย (MTBF)",
+    kpi_mtbf_target: "ดัชนีความน่าเชื่อถือ",
+    kpi_mtbf_footer: "ระยะเวลาทำงานเฉลี่ยระหว่างรอบชำรุด",
+    kpi_mttr_title: "ระยะเวลาเฉลี่ยในการบำรุงรักษา (MTTR)",
+    kpi_mttr_target: "เกณฑ์กำหนด ≤ 10 ชม.",
+    kpi_mttr_footer: "เวลาเฉลี่ยที่ใช้ในการแก้ไขบำรุงรักษา",
+    kpi_modes_title: "ลักษณะข้อบกพร่องที่พบ (Failure Modes)",
+    kpi_modes_target: "รายการที่บันทึก",
+    kpi_modes_footer: "จำนวนลักษณะข้อบกพร่องที่ตรวจสอบ",
+    unit_hrs: "ชม.",
+    tag_risk_prioritization: "การจัดลำดับความเสี่ยงเร่งด่วน",
+    attention_vectors_title: "จุดที่ต้องเฝ้าระวังเป็นพิเศษ",
+    lowest_avail_label: "อุปกรณ์ที่มีความพร้อมใช้งานต่ำสุด",
+    inspect_btn: "ตรวจสอบ",
+    lowest_avail_note: "ควรจัดลำดับการตรวจสอบเพื่อลดความเสี่ยงที่ระบบจะหยุดชะงักกะทันหัน",
+    peak_mttr_label: "อุปกรณ์ที่ใช้เวลาบำรุงรักษานานที่สุด (Peak MTTR)",
+    peak_mttr_note: "ควรเตรียมเครื่องมือพิเศษและสำรองอะไหล่ล่วงหน้าเพื่อลดเวลา Downtime",
+    tag_root_cause: "การกระจายตัวของสาเหตุ",
+    chart_cause_title: "สัดส่วนสาเหตุข้อบกพร่อง (Failure Cause)",
+    click_segment_hint: "คลิกที่กราฟเพื่อเจาะลึกข้อมูล",
+    table_title_prefix: "ตารางวิเคราะห์การบำรุงรักษาและ RAM: ระบบ",
+    table_status_viewer: "โหมดอ่านอย่างเดียว (Viewer Mode)",
+    table_status_admin: "โหมดแอดมิน: แก้ไข MTBF/MTTR แล้วคำนวณ Availability อัตโนมัติ",
+    table_sub_title: "คลิกที่แถวอุปกรณ์เพื่อดูประวัติและการวิเคราะห์เชิงลึก",
+    filter_all: "ทั้งหมด",
+    filter_critical: "วิกฤต (< 96%)",
+    filter_high_mttr: "MTTR สูง (> 10 ชม.)",
+    connecting_cloud: "กำลังเชื่อมต่อฐานข้อมูลคลาวด์แบบเรียลไทม์...",
+    no_records: "ไม่มีรายการข้อมูลในระบบย่อยนี้",
+    // Simulator
+    sim_tag: "เครื่องมือช่วยตัดสินใจทางวิศวกรรม (SANDBOX)",
+    sim_title: "แบบจำลอง RAM What-If Simulator",
+    sim_sub_title: "การวิเคราะห์สถานการณ์จำลองเพื่อเป้าหมายความพร้อมใช้งาน — จำลองผลกระทบเมื่อปรับเปลี่ยนค่า MTBF และ MTTR ภายใต้สมมติฐานที่กำหนด",
+    sim_reset: "รีเซ็ตค่าจำลอง",
+    sim_notice: "<strong>หมายเหตุตามหลักวิชาการ:</strong> ค่า MTBF และ MTTR ในตารางนี้เป็นพารามิเตอร์จำลองสำหรับระบบต้นแบบเพื่อการศึกษา sensitivity analysis เนื่องจากยังไม่มีข้อมูลประวัติย้อนหลังระยะยาว การจำลองในส่วนนี้จะไม่ทับข้อมูลจริง",
+    sim_step1: "ขั้นตอนที่ 1 • เลือกสถานการณ์ข้อบกพร่อง",
+    sim_scenario_label: "เลือกอุปกรณ์ / รหัสข้อบกพร่อง",
+    lbl_equipment: "อุปกรณ์ / ส่วนประกอบ:",
+    lbl_failure_code: "รหัสข้อบกพร่อง (Failure Code):",
+    lbl_failure_mode: "ลักษณะข้อบกพร่อง (Failure Mode):",
+    lbl_failure_cause: "สาเหตุข้อบกพร่อง (Failure Cause):",
+    sim_step2: "ขั้นตอนที่ 2 • ค่าพารามิเตอร์จำลองเริ่มต้น",
+    sim_base_mtbf: "MTBF จำลองเริ่มต้น",
+    sim_base_mttr: "MTTR จำลองเริ่มต้น",
+    sim_base_avail: "Availability เริ่มต้น (A_base)",
+    sim_step3: "ขั้นตอนที่ 3 • เลือกโหมดการจำลอง WHAT-IF",
+    mode_adjust_mttr: "ปรับเวลาซ่อม (MTTR)",
+    mode_adjust_mtbf: "ปรับรอบชำรุด (MTBF)",
+    mode_target_avail: "ตั้งเป้า Availability",
+    q_mttr: "ถ้าเวลาที่ใช้ในการบำรุงรักษา (MTTR) เปลี่ยนแปลง ความพร้อมใช้งานจะเป็นอย่างไร?",
+    lbl_repair_time: "เวลาในการบำรุงรักษา (MTTR)",
+    q_mtbf: "ถ้าอุปกรณ์มีรอบการชำรุดห่างขึ้นหรือถี่ขึ้น ความพร้อมใช้งานจะเป็นอย่างไร?",
+    lbl_operating_time: "ระยะเวลาทำงานก่อนเสียหาย (MTBF)",
+    q_target: "หากต้องการให้บรรลุเป้าหมายความพร้อมใช้งาน จะต้องมีค่าความน่าเชื่อถือเท่าใด?",
+    lbl_target_avail: "เป้าหมายความพร้อมใช้งาน (A_target)",
+    lbl_strategy: "กลยุทธ์การคำนวณ:",
+    strategy_a_title: "กลยุทธ์ A • ล็อกเวลาซ่อม (Fix MTTR)",
+    strategy_a_desc: "ใช้เวลาซ่อมเดิม; คำนวณหาค่า MTBF ที่จำเป็นต้องทำให้ได้",
+    strategy_b_title: "กลยุทธ์ B • ล็อกความทนทาน (Fix MTBF)",
+    strategy_b_desc: "ใช้อัตราชำรุดเดิม; คำนวณหาเวลาซ่อมสูงสุด (MTTR) ที่ยอมรับได้",
+    sim_step4: "ขั้นตอนที่ 4 • ผลกระทบจากการจำลอง (BASELINE VS WHAT-IF)",
+    col_metric: "ตัวชี้วัด",
+    col_base: "ค่าจำลองเริ่มต้น",
+    col_whatif: "ผลจากแบบจำลอง",
+    col_impact: "ผลต่าง / ผลกระทบ",
+    row_mtbf: "MTBF",
+    sub_mtbf: "(ระยะเวลาทำงาน)",
+    row_mttr: "MTTR",
+    sub_mttr: "(เวลาบำรุงรักษา)",
+    row_avail: "Availability",
+    sub_avail: "(ความพร้อมใช้งาน)",
+    sim_step5: "ขั้นตอนที่ 5 • บทวิเคราะห์เชิงวิศวกรรม",
+    interpret_footer: "สูตรคำนวณ: A = MTBF / (MTBF + MTTR) • อิงตามสมมติฐานมาตรฐาน ISO 14224",
+    badge_feasible: "สถานการณ์มีความเป็นไปได้ในทางปฏิบัติ",
+    badge_boundary: "สถานการณ์เข้าใกล้จุดขีดจำกัดสูงสุด (BOUNDARY)",
+    // Modals & Drawer
+    drawer_back: "ย้อนกลับ",
+    modal_auth_title: "ระบบยืนยันสิทธิ์แอดมิน",
+    modal_auth_sub: "Engineering Administrative Access",
+    modal_auth_desc: "กรุณากรอกรหัสผ่านเพื่อปลดล็อกการแก้ไขข้อมูลและซิงค์คลาวด์:",
+    modal_auth_err: "รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง",
+    btn_cancel: "ยกเลิก",
+    btn_auth: "ยืนยันสิทธิ์",
+    modal_export_title: "พิมพ์รายงานสรุปผลผู้บริหาร",
+    modal_export_sub: "Executive Brief Export",
+    modal_export_desc: "เลือกระบบย่อยที่ต้องการสร้างรายงานสรุป:",
+    btn_dismiss: "ปิดหน้าต่าง",
+    btn_gen_brief: "พิมพ์รายงาน"
+  }
+};
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('RAM_DASHBOARD_LANG', lang);
+  document.documentElement.lang = lang;
+
+  // Update button active state
+  document.querySelectorAll('.btn-lang').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+  });
+
+  // Apply translations to data-i18n elements
+  const dict = i18nData[lang] || i18nData.en;
+  document.querySelectorAll('[data-i18n]').forEach(elem => {
+    const key = elem.getAttribute('data-i18n');
+    if (dict[key]) {
+      elem.innerHTML = dict[key];
+    }
+  });
+
+  // Search input placeholder
+  const searchEl = document.getElementById('searchInput');
+  if (searchEl) searchEl.placeholder = dict.search_placeholder;
+
+  // Refresh sheet title & badges
+  if (sheetSelect && sheetSelect.value) {
+    currentSheetTitle.textContent = `${dict.table_title_prefix} ${sheetSelect.value}`;
+  }
+  updateAuthUI();
+
+  // Re-run Simulator calculation for localized interpretation text
+  if (typeof recalculateWhatIfScenario === 'function') {
+    recalculateWhatIfScenario();
+  }
+}
+
+// ============================================================
 // FIREBASE CONFIGURATION & INITIALIZATION
 // ============================================================
 const firebaseConfig = {
@@ -74,7 +343,7 @@ const drawerBackBtn = document.getElementById('drawerBackBtn');
 const drawerContent = document.getElementById('drawerContent');
 const drawerLevelTag = document.getElementById('drawerLevelTag');
 
-// DOM Elements: RAM What-If Simulator
+// Simulator Elements
 const simScenarioSelect = document.getElementById('simScenarioSelect');
 const simResetBtn = document.getElementById('simResetBtn');
 const simCompName = document.getElementById('simCompName');
@@ -108,8 +377,7 @@ const simCmpDeltaAvail = document.getElementById('simCmpDeltaAvail');
 const simFeasibilityBadge = document.getElementById('simFeasibilityBadge');
 const simInterpretationText = document.getElementById('simInterpretationText');
 
-// Simulator In-Memory State (Sandbox Only)
-let simCurrentMode = 'mttr'; // 'mttr' | 'mtbf' | 'target'
+let simCurrentMode = 'mttr';
 let simActiveRow = null;
 
 // ============================================================
@@ -171,6 +439,14 @@ function showManualUploadPrompt() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Init Language Switcher buttons
+  document.querySelectorAll('.btn-lang').forEach(btn => {
+    btn.addEventListener('click', function() {
+      setLanguage(this.getAttribute('data-lang'));
+    });
+  });
+
+  setLanguage(currentLang);
   initRealtimeCloudSync();
   initSimulatorEventListeners();
 });
@@ -187,7 +463,7 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = `Subsystem: ${name}`;
+    option.textContent = (currentLang === 'th') ? `ระบบย่อย: ${name}` : `Subsystem: ${name}`;
     sheetSelect.appendChild(option);
   });
 
@@ -203,7 +479,6 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
     renderDrillView(currentView, false);
   }
 
-  // Populate What-If Simulator with current subsystem rows
   populateSimulatorDropdown(targetSheet);
 }
 
@@ -264,29 +539,30 @@ logoutBtn.addEventListener('click', () => {
 });
 
 function updateAuthUI() {
+  const dict = i18nData[currentLang] || i18nData.en;
   if (isAdmin) {
     loginBtn.style.display = 'none';
     userProfile.style.display = 'flex';
     adminUploadWidget.style.display = 'block';
     saveExcelBtn.style.display = 'flex';
-    modeBadge.textContent = 'ADMIN CONSOLE (LIVE CLOUD EDIT)';
+    modeBadge.textContent = dict.mode_admin;
     modeBadge.classList.add('admin');
-    editNotice.textContent = 'Active Cloud Edit Mode: MTBF/MTTR edits auto-calculate Availability';
+    editNotice.textContent = dict.table_status_admin;
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
     userProfile.style.display = 'none';
     adminUploadWidget.style.display = 'none';
     saveExcelBtn.style.display = 'none';
-    modeBadge.textContent = 'VIEWER CONSOLE';
+    modeBadge.textContent = dict.mode_viewer;
     modeBadge.classList.remove('admin');
-    editNotice.textContent = 'Read-Only Observation Mode';
+    editNotice.textContent = dict.table_status_viewer;
     editNotice.style.color = 'var(--text-secondary)';
   }
 }
 
 /* ============================================================
-   CORE METRICS ENGINE & MATHEMATICAL FORMULATIONS
+   MATHEMATICAL FORMULATIONS
    ============================================================ */
 function calculateAvailabilityFormula(mtbf, mttr) {
   if (mtbf <= 0 || (mtbf + mttr) <= 0) return 0;
@@ -330,7 +606,7 @@ function getNormalizedRows(sheetName) {
 
     const compName = compKey && r[compKey] ? String(r[compKey]).trim() : 'Unassigned Equipment';
     const failCode = idKey && r[idKey] ? String(r[idKey]).trim() : `FC-${index + 1}`;
-    const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'Aging / Operational Stress';
+    const failureCause = causeKey && r[causeKey] ? String(r[causeKey]).trim() : 'General Aging / Operational Stress';
     const failureMode = modeKey && r[modeKey] ? String(r[modeKey]).trim() : 'Functional Failure';
 
     return {
@@ -356,6 +632,8 @@ function calculateSheetMetrics(rows) {
   let maxMttr = -Infinity, maxMttrItem = '-';
   const causeCounts = {};
 
+  const dict = i18nData[currentLang] || i18nData.en;
+
   rows.forEach(r => {
     if (r.mtbf > 0) {
       totalMtbf += r.mtbf;
@@ -366,7 +644,7 @@ function calculateSheetMetrics(rows) {
       countMttr++;
       if (r.mttr > maxMttr) {
         maxMttr = r.mttr;
-        maxMttrItem = `${r.component} (${r.mttr.toFixed(2)} hrs)`;
+        maxMttrItem = `${r.component} (${r.mttr.toFixed(2)} ${dict.unit_hrs})`;
       }
     }
     if (r.availability > 0) {
@@ -399,11 +677,12 @@ function calculateSheetMetrics(rows) {
 }
 
 function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `Diagnostic Matrix: Subsystem ${sheetName}`;
+  const dict = i18nData[currentLang] || i18nData.en;
+  currentSheetTitle.textContent = `${dict.table_title_prefix} ${sheetName}`;
   const rows = getNormalizedRows(sheetName);
 
   if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">No records registered for this subsystem domain.</p>';
+    tableContainer.innerHTML = `<p style="padding: 24px; text-align: center; color: var(--text-muted);">${dict.no_records}</p>`;
     resetMetrics();
     return;
   }
@@ -438,7 +717,7 @@ function renderCauseChart(causeCounts) {
   const labels = top4.map(i => i[0]);
   const data = top4.map(i => i[1]);
   if (others > 0) {
-    labels.push('Other Determinants');
+    labels.push((currentLang === 'th') ? 'สาเหตุอื่นๆ' : 'Other Determinants');
     data.push(others);
   }
 
@@ -487,12 +766,12 @@ function renderCauseChart(causeCounts) {
         },
         tooltip: {
           backgroundColor: '#343A40',
-          titleFont: { size: 11, family: 'Plus Jakarta Sans' },
-          bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
+          titleFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
+          bodyFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
           padding: 10,
           cornerRadius: 6,
           callbacks: {
-            afterLabel: () => 'Click to drill down'
+            afterLabel: () => (currentLang === 'th') ? 'คลิกเพื่อดูรายละเอียด' : 'Click to drill down'
           }
         }
       },
@@ -502,7 +781,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   TABLE RENDERING & LIVE AUTO-CALCULATION
+   TABLE RENDERING & AUTO-CALCULATE
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -643,7 +922,6 @@ function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, avai
       worstAvailElem.textContent = metrics.minAvailItem;
       worstMttrElem.textContent = metrics.maxMttrItem;
 
-      // Re-populate simulator dropdown with updated cell values
       populateSimulatorDropdown(sheetName);
     });
   });
@@ -696,7 +974,7 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   RAM WHAT-IF SIMULATOR ENGINE (SANDBOX ONLY)
+   RAM WHAT-IF SIMULATOR ENGINE
    ============================================================ */
 function populateSimulatorDropdown(sheetName) {
   const rows = getNormalizedRows(sheetName);
@@ -705,7 +983,7 @@ function populateSimulatorDropdown(sheetName) {
   if (rows.length === 0) {
     const opt = document.createElement('option');
     opt.value = '';
-    opt.textContent = 'No records in active subsystem';
+    opt.textContent = (currentLang === 'th') ? 'ไม่มีรายการในระบบย่อยนี้' : 'No records in active subsystem';
     simScenarioSelect.appendChild(opt);
     simActiveRow = null;
     return;
@@ -718,26 +996,23 @@ function populateSimulatorDropdown(sheetName) {
     simScenarioSelect.appendChild(opt);
   });
 
-  // Select first item by default
   loadSimulatorBaseline(rows[0]);
 }
 
 function loadSimulatorBaseline(rowItem) {
   if (!rowItem) return;
   simActiveRow = rowItem;
+  const dict = i18nData[currentLang] || i18nData.en;
 
-  // Context fields
   simCompName.textContent = rowItem.component;
   simFailCode.textContent = rowItem.id;
   simFailMode.textContent = rowItem.mode;
-  simFailCause.textContent = `${rowItem.cause} (Simulated MTTR: ${rowItem.mttr.toFixed(2)} hrs)`;
+  simFailCause.textContent = `${rowItem.cause} (${dict.sim_base_mttr}: ${rowItem.mttr.toFixed(2)} ${dict.unit_hrs})`;
 
-  // Baseline metrics
-  simBaseMtbf.textContent = `${rowItem.mtbf.toLocaleString()} hrs`;
-  simBaseMttr.textContent = `${rowItem.mttr.toFixed(2)} hrs`;
+  simBaseMtbf.textContent = `${rowItem.mtbf.toLocaleString()} ${dict.unit_hrs}`;
+  simBaseMttr.textContent = `${rowItem.mttr.toFixed(2)} ${dict.unit_hrs}`;
   simBaseAvail.textContent = `${rowItem.availability.toFixed(2)}%`;
 
-  // Reset inputs to baseline
   resetSimulatorInputs();
   recalculateWhatIfScenario();
 }
@@ -745,17 +1020,14 @@ function loadSimulatorBaseline(rowItem) {
 function resetSimulatorInputs() {
   if (!simActiveRow) return;
 
-  // MTTR
   simMttrSlider.value = simActiveRow.mttr > 0 ? simActiveRow.mttr : 8;
   simMttrNum.value = simMttrSlider.value;
 
-  // MTBF
   const mtbfVal = simActiveRow.mtbf > 0 ? simActiveRow.mtbf : 25000;
   simMtbfSlider.max = Math.max(100000, mtbfVal * 2);
   simMtbfSlider.value = mtbfVal;
   simMtbfNum.value = mtbfVal;
 
-  // Target Availability
   simTargetSlider.value = 99.95;
   simTargetNum.value = 99.95;
 
@@ -763,7 +1035,6 @@ function resetSimulatorInputs() {
 }
 
 function initSimulatorEventListeners() {
-  // Scenario Selection
   simScenarioSelect.addEventListener('change', function() {
     const currentSheet = sheetSelect.value;
     const rows = getNormalizedRows(currentSheet);
@@ -773,13 +1044,11 @@ function initSimulatorEventListeners() {
     }
   });
 
-  // Reset Button
   simResetBtn.addEventListener('click', () => {
     resetSimulatorInputs();
     recalculateWhatIfScenario();
   });
 
-  // Mode Toggle Buttons
   document.querySelectorAll('.sim-mode-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.sim-mode-btn').forEach(b => b.classList.remove('active'));
@@ -795,7 +1064,6 @@ function initSimulatorEventListeners() {
     });
   });
 
-  // Mode 1: MTTR Sync
   simMttrSlider.addEventListener('input', function() {
     simMttrNum.value = parseFloat(this.value).toFixed(1);
     recalculateWhatIfScenario();
@@ -805,7 +1073,6 @@ function initSimulatorEventListeners() {
     recalculateWhatIfScenario();
   });
 
-  // Mode 2: MTBF Sync
   simMtbfSlider.addEventListener('input', function() {
     simMtbfNum.value = this.value;
     recalculateWhatIfScenario();
@@ -815,7 +1082,6 @@ function initSimulatorEventListeners() {
     recalculateWhatIfScenario();
   });
 
-  // Mode 3: Target Sync
   simTargetSlider.addEventListener('input', function() {
     simTargetNum.value = parseFloat(this.value).toFixed(2);
     recalculateWhatIfScenario();
@@ -825,7 +1091,6 @@ function initSimulatorEventListeners() {
     recalculateWhatIfScenario();
   });
 
-  // Strategy Radio Sync
   document.querySelectorAll('input[name="simStrategy"]').forEach(radio => {
     radio.addEventListener('change', recalculateWhatIfScenario);
   });
@@ -833,6 +1098,7 @@ function initSimulatorEventListeners() {
 
 function recalculateWhatIfScenario() {
   if (!simActiveRow) return;
+  const dict = i18nData[currentLang] || i18nData.en;
 
   const baseMtbf = simActiveRow.mtbf;
   const baseMttr = simActiveRow.mttr;
@@ -845,7 +1111,6 @@ function recalculateWhatIfScenario() {
   let isFeasible = true;
 
   if (simCurrentMode === 'mttr') {
-    // Mode 1: Adjust MTTR
     scenMttr = Math.max(0.1, parseFloat(simMttrNum.value) || 0.1);
     scenMtbf = baseMtbf;
     scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
@@ -853,9 +1118,12 @@ function recalculateWhatIfScenario() {
     const mttrDiff = scenMttr - baseMttr;
     const availDiff = scenAvail - baseAvail;
 
-    interpretationText = `Under this simulated scenario with MTBF held at ${baseMtbf.toLocaleString()} operating hours, adjusting MTTR from ${baseMttr.toFixed(2)} to ${scenMttr.toFixed(2)} hours would result in a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). The model indicates that corrective latency improvements directly scale operational uptime without altering equipment reliability intervals.`;
+    if (currentLang === 'th') {
+      interpretationText = `ภายใต้สถานการณ์จำลองนี้ เมื่อล็อกค่า MTBF ไว้ที่ ${baseMtbf.toLocaleString()} ชั่วโมงการทำงาน การปรับเวลาบำรุงรักษา (MTTR) จาก ${baseMttr.toFixed(2)} เป็น ${scenMttr.toFixed(2)} ชั่วโมง จะส่งผลให้ค่า Availability จำลองเปลี่ยนเป็น <strong>${scenAvail.toFixed(2)}%</strong> (เปลี่ยนแปลง ${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%) แบบจำลองชี้ให้เห็นว่าการลดเวลาเข้าซ่อมบำรุงจะช่วยยกระดับความพร้อมใช้งานของอุปกรณ์ได้โดยตรง`;
+    } else {
+      interpretationText = `Under this simulated scenario with MTBF held at ${baseMtbf.toLocaleString()} operating hours, adjusting MTTR from ${baseMttr.toFixed(2)} to ${scenMttr.toFixed(2)} hours would result in a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). The model indicates that corrective latency improvements directly scale operational uptime without altering equipment reliability intervals.`;
+    }
   } else if (simCurrentMode === 'mtbf') {
-    // Mode 2: Adjust MTBF
     scenMtbf = Math.max(10, parseFloat(simMtbfNum.value) || 10);
     scenMttr = baseMttr;
     scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
@@ -863,9 +1131,12 @@ function recalculateWhatIfScenario() {
     const mtbfDiff = scenMtbf - baseMtbf;
     const availDiff = scenAvail - baseAvail;
 
-    interpretationText = `Based on the selected assumptions, adjusting MTBF from ${baseMtbf.toLocaleString()} to ${scenMtbf.toLocaleString()} operating hours while maintaining simulated repair duration at ${baseMttr.toFixed(2)} hours yields a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). Reliability improvements under this scenario reflect reduced frequency of the cataloged failure mode (${simActiveRow.mode}).`;
+    if (currentLang === 'th') {
+      interpretationText = `จากสมมติฐานที่เลือก การปรับค่า MTBF จาก ${baseMtbf.toLocaleString()} เป็น ${scenMtbf.toLocaleString()} ชั่วโมง โดยยังคงเวลาซ่อมบำรุงไว้ที่ ${baseMttr.toFixed(2)} ชั่วโมง จะส่งผลให้ Availability จำลองอยู่ที่ <strong>${scenAvail.toFixed(2)}%</strong> (เปลี่ยนแปลง ${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%) การปรับปรุงความน่าเชื่อถือนี้สัมพันธ์กับการลดความถี่ในการเกิดลักษณะข้อบกพร่อง (${simActiveRow.mode})`;
+    } else {
+      interpretationText = `Based on the selected assumptions, adjusting MTBF from ${baseMtbf.toLocaleString()} to ${scenMtbf.toLocaleString()} operating hours while maintaining simulated repair duration at ${baseMttr.toFixed(2)} hours yields a simulated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}% change). Reliability improvements under this scenario reflect reduced frequency of the cataloged failure mode (${simActiveRow.mode}).`;
+    }
   } else if (simCurrentMode === 'target') {
-    // Mode 3: Target Availability
     const targetAvailPct = Math.min(99.99, Math.max(90.0, parseFloat(simTargetNum.value) || 99.0));
     const targetAvailDecimal = targetAvailPct / 100;
     scenAvail = targetAvailPct;
@@ -879,7 +1150,11 @@ function recalculateWhatIfScenario() {
 
       isFeasible = scenMtbf > 0 && scenMtbf < 500000;
 
-      interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while assuming the current simulated MTTR of ${baseMttr.toFixed(2)} hours remains constant, the required MTBF would need to increase from ${baseMtbf.toLocaleString()} to approximately <strong>${Math.round(scenMtbf).toLocaleString()} operating hours</strong> (an improvement of ${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs). This simulation scenario would require preventative mitigation against root cause "${simActiveRow.cause}".`;
+      if (currentLang === 'th') {
+        interpretationText = `หากต้องการบรรลุเป้าหมายความพร้อมใช้งานที่ <strong>${targetAvailPct.toFixed(2)}%</strong> โดยใช้เวลาในการบำรุงรักษาเดิม (${baseMttr.toFixed(2)} ชม.) ค่า MTBF ที่จำเป็นจะต้องเพิ่มขึ้นจาก ${baseMtbf.toLocaleString()} เป็นประมาณ <strong>${Math.round(scenMtbf).toLocaleString()} ชั่วโมง</strong> (ต้องยืดอายุการใช้งานเพิ่ม ${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} ชม.) ซึ่งต้องอาศัยมาตรการป้องกันสาเหตุข้อบกพร่อง "${simActiveRow.cause}"`;
+      } else {
+        interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while assuming the current simulated MTTR of ${baseMttr.toFixed(2)} hours remains constant, the required MTBF would need to increase from ${baseMtbf.toLocaleString()} to approximately <strong>${Math.round(scenMtbf).toLocaleString()} operating hours</strong> (an improvement of ${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs). This simulation scenario would require preventative mitigation against root cause "${simActiveRow.cause}".`;
+      }
     } else {
       scenMtbf = baseMtbf;
       scenMttr = calculateRequiredMttr(targetAvailDecimal, scenMtbf);
@@ -887,30 +1162,34 @@ function recalculateWhatIfScenario() {
 
       isFeasible = scenMttr >= 0.2;
 
-      interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while maintaining simulated MTBF at ${baseMtbf.toLocaleString()} operating hours, the maximum allowable MTTR would need to be reduced from ${baseMttr.toFixed(2)} to approximately <strong>${scenMttr.toFixed(2)} hours or less</strong> (a latency reduction of ${redDelta.toFixed(2)} hrs). The model indicates that specialized staging and immediate parts availability would be required under these operational parameters.`;
+      if (currentLang === 'th') {
+        interpretationText = `หากต้องการบรรลุเป้าหมายความพร้อมใช้งานที่ <strong>${targetAvailPct.toFixed(2)}%</strong> ภายใต้อัตราความน่าเชื่อถือเดิม (MTBF: ${baseMtbf.toLocaleString()} ชม.) ทีมบำรุงรักษาจะต้องลดเวลาการแก้ไขลงจาก ${baseMttr.toFixed(2)} ให้เหลือไม่เกินประมาณ <strong>${scenMttr.toFixed(2)} ชั่วโมง</strong> (ต้องลดเวลาลง ${redDelta.toFixed(2)} ชม.) ซึ่งจำเป็นต้องมีการเตรียมพร้อมด้านอะไหล่และเครื่องมือแบบเร่งด่วน`;
+      } else {
+        interpretationText = `To achieve the selected Availability target of <strong>${targetAvailPct.toFixed(2)}%</strong> while maintaining simulated MTBF at ${baseMtbf.toLocaleString()} operating hours, the maximum allowable MTTR would need to be reduced from ${baseMttr.toFixed(2)} to approximately <strong>${scenMttr.toFixed(2)} hours or less</strong> (a latency reduction of ${redDelta.toFixed(2)} hrs). The model indicates that specialized staging and immediate parts availability would be required under these operational parameters.`;
+      }
     }
   }
 
-  // Update Comparison Table
-  simCmpBaseMtbf.textContent = `${baseMtbf.toLocaleString()} hrs`;
-  simCmpScenMtbf.textContent = `${Math.round(scenMtbf).toLocaleString()} hrs`;
-  renderDiffIndicator(simCmpDeltaMtbf, scenMtbf - baseMtbf, 'hrs', true);
+  // Update Table Cells
+  simCmpBaseMtbf.textContent = `${baseMtbf.toLocaleString()} ${dict.unit_hrs}`;
+  simCmpScenMtbf.textContent = `${Math.round(scenMtbf).toLocaleString()} ${dict.unit_hrs}`;
+  renderDiffIndicator(simCmpDeltaMtbf, scenMtbf - baseMtbf, dict.unit_hrs, true);
 
-  simCmpBaseMttr.textContent = `${baseMttr.toFixed(2)} hrs`;
-  simCmpScenMttr.textContent = `${scenMttr.toFixed(2)} hrs`;
-  renderDiffIndicator(simCmpDeltaMttr, scenMttr - baseMttr, 'hrs', false); // lower MTTR is better
+  simCmpBaseMttr.textContent = `${baseMttr.toFixed(2)} ${dict.unit_hrs}`;
+  simCmpScenMttr.textContent = `${scenMttr.toFixed(2)} ${dict.unit_hrs}`;
+  renderDiffIndicator(simCmpDeltaMttr, scenMttr - baseMttr, dict.unit_hrs, false);
 
   simCmpBaseAvail.textContent = `${baseAvail.toFixed(2)}%`;
   simCmpScenAvail.textContent = `${scenAvail.toFixed(2)}%`;
-  renderDiffIndicator(simCmpDeltaAvail, scenAvail - baseAvail, '%', true); // higher Avail is better
+  renderDiffIndicator(simCmpDeltaAvail, scenAvail - baseAvail, '%', true);
 
-  // Update Interpretation & Feasibility Badge
+  // Interpretation Text & Badge
   simInterpretationText.innerHTML = interpretationText;
   if (isFeasible) {
-    simFeasibilityBadge.textContent = 'SCENARIO FEASIBLE';
+    simFeasibilityBadge.textContent = dict.badge_feasible;
     simFeasibilityBadge.classList.remove('warning');
   } else {
-    simFeasibilityBadge.textContent = 'EXTREME BOUNDARY SCENARIO';
+    simFeasibilityBadge.textContent = dict.badge_boundary;
     simFeasibilityBadge.classList.add('warning');
   }
 }
@@ -918,7 +1197,7 @@ function recalculateWhatIfScenario() {
 function renderDiffIndicator(elem, delta, unit, higherIsBetter) {
   const rounded = Number(delta.toFixed(2));
   if (Math.abs(rounded) < 0.01) {
-    elem.innerHTML = `<span class="diff-neutral">0.00 ${unit} (No change)</span>`;
+    elem.innerHTML = `<span class="diff-neutral">0.00 ${unit}</span>`;
     return;
   }
 
@@ -968,7 +1247,9 @@ function pushDrillView(viewState) {
 
 function renderDrillView(viewState, shouldOpen = true) {
   drawerBackBtn.style.display = drillHistory.length > 1 ? 'inline-flex' : 'none';
-  drawerLevelTag.textContent = viewState.level === 3 ? 'LEVEL 3 • EQUIPMENT DEEP-DIVE' : 'LEVEL 2 • ANALYTICAL DETAIL';
+  drawerLevelTag.textContent = viewState.level === 3 
+    ? ((currentLang === 'th') ? 'ระดับ 3 • รายละเอียดอุปกรณ์เชิงลึก' : 'LEVEL 3 • EQUIPMENT DEEP-DIVE')
+    : ((currentLang === 'th') ? 'ระดับ 2 • รายละเอียดเชิงวิเคราะห์' : 'LEVEL 2 • ANALYTICAL DETAIL');
 
   if (viewState.type === 'category') {
     renderCategoryDetail(viewState.category);
@@ -988,8 +1269,9 @@ function openDrillCategory(categoryName) {
 function renderCategoryDetail(categoryName) {
   const currentSheet = sheetSelect.value;
   const allRows = getNormalizedRows(currentSheet);
+  const dict = i18nData[currentLang] || i18nData.en;
   
-  const isOther = categoryName === 'Other Determinants';
+  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
   const categoryRows = allRows.filter(r => {
     if (isOther) {
       return !['Electrical', 'Mechanical', 'Protection', 'Human Error'].some(top => r.cause.toLowerCase().includes(top.toLowerCase()));
@@ -1020,35 +1302,35 @@ function renderCategoryDetail(categoryName) {
 
   let html = `
     <div class="drawer-title-group">
-      <h2>${categoryName.toUpperCase()} FAILURES</h2>
+      <h2>${categoryName.toUpperCase()}</h2>
       <div class="drawer-subtitle">
-        <span>${sharePct}% of Total Subsystem Incidents</span>
+        <span>${sharePct}% ${(currentLang === 'th') ? 'ของเหตุการณ์ทั้งหมดในระบบย่อย' : 'of Total Subsystem Incidents'}</span>
         <span>•</span>
-        <span>Scope: Subsystem ${currentSheet}</span>
+        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'} ${currentSheet}</span>
       </div>
     </div>
 
     <div class="drawer-kpi-strip">
       <div class="drawer-mini-kpi">
-        <span>Failure Events</span>
+        <span>${(currentLang === 'th') ? 'จำนวนเหตุการณ์' : 'Failure Events'}</span>
         <strong>${totalFailures}</strong>
       </div>
       <div class="drawer-mini-kpi">
-        <span>Avg Repair Downtime</span>
-        <strong>${avgDowntime} hrs</strong>
+        <span>${(currentLang === 'th') ? 'เวลาบำรุงรักษาเฉลี่ย' : 'Avg Repair Downtime'}</span>
+        <strong>${avgDowntime} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
-        <span>Affected Equipment</span>
-        <strong>${sortedEq.length} units</strong>
+        <span>${(currentLang === 'th') ? 'อุปกรณ์ที่ได้รับผลกระทบ' : 'Affected Equipment'}</span>
+        <strong>${sortedEq.length} ${(currentLang === 'th') ? 'รายการ' : 'units'}</strong>
       </div>
       <div class="drawer-mini-kpi">
-        <span>Subsystem Share</span>
+        <span>${(currentLang === 'th') ? 'สัดส่วนในระบบย่อย' : 'Subsystem Share'}</span>
         <strong>${sharePct}%</strong>
       </div>
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Failures by Equipment</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อบกพร่องจำแนกตามอุปกรณ์' : 'Failures by Equipment'}</span>
       <div class="horizontal-bars">
   `;
 
@@ -1058,7 +1340,7 @@ function renderCategoryDetail(categoryName) {
       <div class="bar-row" onclick="openDrillEquipment('${encodeURIComponent(comp)}')">
         <div class="bar-row-info">
           <span>${comp}</span>
-          <span>${count} event${count > 1 ? 's' : ''}</span>
+          <span>${count} ${(currentLang === 'th') ? 'ครั้ง' : 'events'}</span>
         </div>
         <div class="bar-track">
           <div class="bar-fill" style="width: ${widthPct}%;"></div>
@@ -1072,7 +1354,7 @@ function renderCategoryDetail(categoryName) {
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Top Failure Modes / Causes</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'สาเหตุข้อบกพร่องสูงสุด' : 'Top Failure Causes'}</span>
       <div class="horizontal-bars">
   `;
 
@@ -1092,12 +1374,12 @@ function renderCategoryDetail(categoryName) {
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Recent Registered Events</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการบันทึกล่าสุด' : 'Recent Registered Events'}</span>
       <table class="drawer-table">
         <thead>
           <tr>
-            <th>Equipment</th>
-            <th>Mode</th>
+            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
+            <th>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Mode'}</th>
             <th>MTTR</th>
           </tr>
         </thead>
@@ -1109,7 +1391,7 @@ function renderCategoryDetail(categoryName) {
       <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
         <td><strong>${r.component}</strong></td>
         <td>${r.mode}</td>
-        <td>${r.mttr.toFixed(2)} hrs</td>
+        <td>${r.mttr.toFixed(2)} ${dict.unit_hrs}</td>
       </tr>
     `;
   });
@@ -1118,7 +1400,7 @@ function renderCategoryDetail(categoryName) {
         </tbody>
       </table>
       <button class="drawer-btn-viewall" onclick="applyCategoryFilterToMatrix('${categoryName}')">
-        Filter Matrix to ${categoryName} Failures →
+        ${(currentLang === 'th') ? `กรองตารางเฉพาะกลุ่ม ${categoryName} →` : `Filter Matrix to ${categoryName} Failures →`}
       </button>
     </div>
   `;
@@ -1144,20 +1426,20 @@ function renderKpiDetail(metric) {
   let sorted = [];
 
   if (metric === 'availability') {
-    title = 'FLEET AVAILABILITY RANKING';
-    sub = 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
+    title = (currentLang === 'th') ? 'การจัดอันดับความพร้อมใช้งาน (AVAILABILITY)' : 'FLEET AVAILABILITY RANKING';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากความพร้อมใช้งานต่ำสุดไปสูงสุด (เป้าหมาย ≥ 96.00%)' : 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
     sorted = [...allRows].sort((a, b) => a.availability - b.availability);
   } else if (metric === 'mtbf') {
-    title = 'MTBF RELIABILITY SPECTRUM';
-    sub = 'Ranked from lowest MTBF (highest failure rate) to highest';
+    title = (currentLang === 'th') ? 'การจัดอันดับความน่าเชื่อถือ (MTBF)' : 'MTBF RELIABILITY SPECTRUM';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากชำรุดบ่อยสุด (MTBF ต่ำ) ไปยังตัวที่ทนทานที่สุด' : 'Ranked from lowest MTBF (highest failure rate) to highest';
     sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
   } else if (metric === 'mttr') {
-    title = 'REPAIR LATENCY (MTTR) RANKING';
-    sub = 'Ranked from highest repair duration to lowest (Limit &le; 10h)';
+    title = (currentLang === 'th') ? 'การจัดอันดับเวลาบำรุงรักษา (MTTR)' : 'REPAIR LATENCY (MTTR) RANKING';
+    sub = (currentLang === 'th') ? 'เรียงลำดับจากใช้เวลาซ่อมนานสุดไปน้อยสุด (เกณฑ์ ≤ 10 ชม.)' : 'Ranked from highest repair duration to lowest (Limit ≤ 10h)';
     sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
   } else {
-    title = 'FAILURE MODE FREQUENCY';
-    sub = 'Most prevalent cataloged mechanisms within current subsystem';
+    title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'FAILURE MODE FREQUENCY';
+    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึกไว้ในระบบย่อยปัจจุบัน' : 'Most prevalent cataloged mechanisms within current subsystem';
     sorted = [...allRows];
   }
 
@@ -1168,11 +1450,11 @@ function renderKpiDetail(metric) {
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Equipment Diagnostic Ranks</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'อันดับอุปกรณ์ตามตัวชี้วัด' : 'Equipment Diagnostic Ranks'}</span>
       <table class="drawer-table">
         <thead>
           <tr>
-            <th>Equipment</th>
+            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
             <th>Avail</th>
             <th>MTBF</th>
             <th>MTTR</th>
@@ -1229,17 +1511,18 @@ function renderEquipmentDetail(compName) {
   const currentSheet = sheetSelect.value;
   const allRows = getNormalizedRows(currentSheet);
   const matchedRows = allRows.filter(r => r.component.toLowerCase() === compName.toLowerCase());
+  const dict = i18nData[currentLang] || i18nData.en;
   
   if (matchedRows.length === 0) {
-    drawerContent.innerHTML = `<p>Equipment details unavailable.</p>`;
+    drawerContent.innerHTML = `<p>${(currentLang === 'th') ? 'ไม่พบข้อมูลอุปกรณ์' : 'Equipment details unavailable.'}</p>`;
     return;
   }
 
   const primary = matchedRows[0];
   const isAttention = primary.availability < 96 || primary.mttr > 10;
   const statusBadge = isAttention
-    ? `<span class="badge-status-attention"><i class="fa-solid fa-triangle-exclamation"></i> ATTENTION REQUIRED</span>`
-    : `<span class="badge-status-normal"><i class="fa-solid fa-check"></i> NORMAL OPERATIONAL</span>`;
+    ? `<span class="badge-status-attention"><i class="fa-solid fa-triangle-exclamation"></i> ${(currentLang === 'th') ? 'ต้องเฝ้าระวัง' : 'ATTENTION REQUIRED'}</span>`
+    : `<span class="badge-status-normal"><i class="fa-solid fa-check"></i> ${(currentLang === 'th') ? 'สถานะปกติ' : 'NORMAL OPERATIONAL'}</span>`;
 
   let html = `
     <div class="drawer-title-group">
@@ -1247,7 +1530,7 @@ function renderEquipmentDetail(compName) {
       <div class="drawer-subtitle">
         <span>${primary.id}</span>
         <span>•</span>
-        <span>Subsystem: ${currentSheet}</span>
+        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'}: ${currentSheet}</span>
         <span>•</span>
         ${statusBadge}
       </div>
@@ -1260,38 +1543,42 @@ function renderEquipmentDetail(compName) {
       </div>
       <div class="drawer-mini-kpi">
         <span>MTBF</span>
-        <strong>${primary.mtbf.toFixed(2)} hrs</strong>
+        <strong>${primary.mtbf.toFixed(2)} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>MTTR</span>
-        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(2)} hrs</strong>
+        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(2)} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
-        <span>Failure Modes</span>
+        <span>${(currentLang === 'th') ? 'จำนวนลักษณะข้อบกพร่อง' : 'Failure Modes'}</span>
         <strong>${matchedRows.length}</strong>
       </div>
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Equipment Diagnostic Details</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Equipment Diagnostic Details'}</span>
       <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
-        <div><strong>Primary Cause:</strong> ${primary.cause}</div>
-        <div><strong>Dominant Failure Mode:</strong> ${primary.mode}</div>
+        <div><strong>${(currentLang === 'th') ? 'สาเหตุหลัก' : 'Primary Cause'}:</strong> ${primary.cause}</div>
+        <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่องหลัก' : 'Dominant Failure Mode'}:</strong> ${primary.mode}</div>
         <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
           ${isAttention
-            ? 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.'
-            : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.'}
+            ? ((currentLang === 'th') 
+               ? 'คำแนะนำ: อุปกรณ์นี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวน หน้าสัมผัสทางไฟฟ้า และกลไกขับเคลื่อน' 
+               : 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.')
+            : ((currentLang === 'th')
+               ? 'ประสิทธิภาพการทำงานอยู่ภายใต้เกณฑ์มาตรฐาน ISO 14224 และ IEEE' 
+               : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.')}
         </div>
       </div>
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">Registered Subsystem Events</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึก' : 'Registered Subsystem Events'}</span>
       <table class="drawer-table">
         <thead>
           <tr>
-            <th>Mode</th>
-            <th>Reported Cause</th>
+            <th>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Mode'}</th>
+            <th>${(currentLang === 'th') ? 'สาเหตุ' : 'Reported Cause'}</th>
             <th>Downtime</th>
           </tr>
         </thead>
@@ -1318,7 +1605,8 @@ function renderEquipmentDetail(compName) {
 }
 
 function applyCategoryFilterToMatrix(categoryName) {
-  searchInput.value = categoryName === 'Other Determinants' ? '' : categoryName;
+  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
+  searchInput.value = isOther ? '' : categoryName;
   applyTableFilter();
   closeDrawer();
   document.getElementById('ramTable').scrollIntoView({ behavior: 'smooth' });
@@ -1329,7 +1617,7 @@ function applyCategoryFilterToMatrix(categoryName) {
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
-    alert('Please wait for system data to complete loading before generating the brief.');
+    alert((currentLang === 'th') ? 'กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน' : 'Please wait for system data to complete loading before generating the brief.');
     return;
   }
 
@@ -1339,7 +1627,7 @@ openExportModalBtn.addEventListener('click', function() {
   const currentOption = `
     <label class="sheet-radio-item">
       <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-      <span><strong>Active Workspace Subsystem (${currentSheet})</strong></span>
+      <span><strong>${(currentLang === 'th') ? 'ระบบย่อยที่กำลังเปิดอยู่' : 'Active Workspace Subsystem'} (${currentSheet})</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
@@ -1349,7 +1637,7 @@ openExportModalBtn.addEventListener('click', function() {
       const item = `
         <label class="sheet-radio-item">
           <input type="radio" name="printSheetTarget" value="${name}" />
-          <span>Subsystem Scope: ${name}</span>
+          <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem Scope'}: ${name}</span>
         </label>
       `;
       sheetOptionsList.insertAdjacentHTML('beforeend', item);
@@ -1359,7 +1647,7 @@ openExportModalBtn.addEventListener('click', function() {
   const allOption = `
     <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
       <input type="radio" name="printSheetTarget" value="__ALL__" />
-      <span><strong>Consolidated Fleet Brief (All Subsystems)</strong></span>
+      <span><strong>${(currentLang === 'th') ? 'รวมทุกระบบย่อย (All Subsystems)' : 'Consolidated Fleet Brief (All Subsystems)'}</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
@@ -1385,6 +1673,7 @@ confirmPrintBtn.addEventListener('click', function() {
 function buildPrintView(targetSheet) {
   printContainer.innerHTML = '';
   const sheetsToPrint = targetSheet === '__ALL__' ? currentWorkbook.SheetNames : [targetSheet];
+  const dict = i18nData[currentLang] || i18nData.en;
 
   sheetsToPrint.forEach(sName => {
     const rows = getNormalizedRows(sName);
@@ -1403,31 +1692,31 @@ function buildPrintView(targetSheet) {
       <div class="print-page">
         <div class="print-header">
           <div>
-            <h2>RAM Analytics Operational Brief: Subsystem ${sName}</h2>
+            <h2>${(currentLang === 'th') ? 'รายงานสรุปผลการวิเคราะห์การบำรุงรักษาและ RAM' : 'RAM Analytics Operational Brief'}: Subsystem ${sName}</h2>
             <span style="font-size: 0.72rem; color: #666;">Substation Reliability, Availability & Maintenance Performance Data</span>
           </div>
           <div class="meta">
-            <div>Lead Analyst: <strong>Suwanan K. (Reliability Engineer)</strong></div>
-            <div>Documentation Timestamp: ${new Date().toLocaleDateString('en-GB')}</div>
+            <div>Lead Analyst: <strong>Suwanan K. (${dict.lead_engineer})</strong></div>
+            <div>Documentation Timestamp: ${new Date().toLocaleDateString(currentLang === 'th' ? 'th-TH' : 'en-GB')}</div>
           </div>
         </div>
 
         <div class="print-kpi-grid">
           <div class="print-kpi-item">
-            <span>Fleet Availability (Target ≥ 96%)</span>
+            <span>${dict.kpi_avail_title} (${dict.kpi_avail_target})</span>
             <strong>${metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-'}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Mean Time Between Failures</span>
-            <strong>${metrics.avgMtbf} hrs</strong>
+            <span>${dict.kpi_mtbf_title}</span>
+            <strong>${metrics.avgMtbf} ${dict.unit_hrs}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Mean Time to Restore</span>
-            <strong>${metrics.avgMttr} hrs</strong>
+            <span>${dict.kpi_mttr_title}</span>
+            <strong>${metrics.avgMttr} ${dict.unit_hrs}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Cataloged Failure Modes</span>
-            <strong>${metrics.totalModes} Modes</strong>
+            <span>${dict.kpi_modes_title}</span>
+            <strong>${metrics.totalModes}</strong>
           </div>
         </div>
 
