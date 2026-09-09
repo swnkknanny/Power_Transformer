@@ -39,10 +39,10 @@ body {
 
 .layout-container {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 24px;
-  padding: 24px;
-  max-width: 1600px;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  padding: 20px;
+  max-width: 100%;
   margin: auto;
 }
 
@@ -68,7 +68,7 @@ body {
 .drop-zone {
   border: 2px dashed #94a3b8;
   border-radius: 8px;
-  padding: 28px 12px;
+  padding: 24px 12px;
   text-align: center;
   position: relative;
   background: #f1f5f9;
@@ -81,7 +81,7 @@ body {
 }
 
 .drop-icon {
-  font-size: 2.2rem;
+  font-size: 2rem;
   color: #0284c7;
   margin-bottom: 8px;
 }
@@ -116,16 +116,17 @@ body {
   outline: none;
 }
 
+/* Metrics Cards */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 20px;
 }
 
 .metric-card {
   background: var(--card-bg);
-  padding: 18px 20px;
+  padding: 16px 18px;
   border-radius: 12px;
   border: 1px solid var(--border-color);
   display: flex;
@@ -134,19 +135,19 @@ body {
 }
 
 .metric-title {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-weight: 600;
 }
 
 .metric-card h2 {
-  font-size: 1.6rem;
+  font-size: 1.45rem;
   margin-top: 4px;
 }
 
 .metric-icon {
-  font-size: 1.6rem;
-  padding: 12px;
+  font-size: 1.4rem;
+  padding: 10px;
   border-radius: 8px;
 }
 
@@ -155,20 +156,15 @@ body {
 .metric-icon.orange { color: #ea580c; background: #ffedd5; }
 .metric-icon.purple { color: #7c3aed; background: #f3e8ff; }
 
-/* Dynamic Status Classes */
-.status-green {
-  color: #16a34a !important;
-}
-
-.status-red {
-  color: #dc2626 !important;
-}
+/* Status Classes */
+.status-green { color: #16a34a !important; }
+.status-red { color: #dc2626 !important; }
 
 .badge-pass {
   background-color: #dcfce7;
   color: #15803d;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
   font-weight: 600;
   display: inline-block;
 }
@@ -176,17 +172,19 @@ body {
 .badge-fail {
   background-color: #fee2e2;
   color: #b91c1c;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
   font-weight: 600;
   display: inline-block;
 }
 
+/* Table Area: เลื่อนแนวตั้งอย่างเดียว */
 .table-card {
   background: var(--card-bg);
   border-radius: 12px;
   border: 1px solid var(--border-color);
   padding: 20px;
+  width: 100%;
 }
 
 .table-header {
@@ -202,28 +200,34 @@ body {
   padding: 8px 14px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  min-width: 260px;
+  min-width: 240px;
   outline: none;
 }
 
 .table-wrapper {
-  overflow-x: auto;
-  max-height: 540px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 580px;
   border: 1px solid var(--border-color);
   border-radius: 8px;
+  background: #ffffff;
 }
 
+/* Responsive Table & Auto Fit */
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   text-align: left;
 }
 
 th, td {
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border-color);
-  white-space: nowrap;
+  vertical-align: top;
+  line-height: 1.45;
+  white-space: normal;
+  word-break: break-word;
 }
 
 th {
@@ -231,11 +235,23 @@ th {
   font-weight: 600;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 tr:hover {
   background: #f8fafc;
+}
+
+/* Class สำหรับ Auto Layout */
+.col-compact {
+  width: 1%;
+  white-space: nowrap !important;
+  text-align: center;
+}
+
+.col-expand {
+  width: auto;
 }
 
 .empty-state {
