@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
   
   <!-- SheetJS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -34,39 +34,39 @@
         </div>
         <div class="brand-text">
           <span class="brand-title">RAM SYSTEM</span>
-          <span class="brand-sub">SUBSTATION RELIABILITY</span>
+          <span class="brand-sub" data-i18n="brand_sub">SUBSTATION RELIABILITY</span>
         </div>
       </div>
 
       <nav class="nav-menu">
-        <span class="nav-heading">INTELLIGENCE CONSOLE</span>
+        <span class="nav-heading" data-i18n="nav_heading">INTELLIGENCE CONSOLE</span>
         <a href="#" class="nav-item active">
           <i class="fa-solid fa-chart-line"></i>
-          <span>Overview</span>
+          <span data-i18n="nav_overview">Overview</span>
         </a>
         <a href="#simulatorSection" class="nav-item">
           <i class="fa-solid fa-calculator"></i>
-          <span>What-If Simulator</span>
+          <span data-i18n="nav_simulator">What-If Simulator</span>
         </a>
         <a href="#" class="nav-item">
           <i class="fa-solid fa-sliders"></i>
-          <span>Maintenance</span>
+          <span data-i18n="nav_maintenance">Maintenance</span>
         </a>
       </nav>
 
       <div class="control-panel">
-        <span class="panel-label">SUBSYSTEM DOMAIN</span>
+        <span class="panel-label" data-i18n="panel_subsystem">SUBSYSTEM DOMAIN</span>
         <div id="subsystemControl" class="select-wrapper">
           <select id="sheetSelect" class="custom-select" aria-label="Select Subsystem"></select>
         </div>
       </div>
 
       <div class="upload-widget admin-only" id="adminUploadWidget" style="display: none;">
-        <span class="widget-label">ADMIN DATA OVERRIDE</span>
+        <span class="widget-label" data-i18n="admin_override">ADMIN DATA OVERRIDE</span>
         <div class="drop-box">
           <i class="fa-solid fa-arrow-up-from-bracket"></i>
-          <span class="drop-box-text">Import New Dataset</span>
-          <span class="drop-box-hint">Syncs instantly to all devices</span>
+          <span class="drop-box-text" data-i18n="import_dataset">Import New Dataset</span>
+          <span class="drop-box-hint" data-i18n="sync_hint">Syncs instantly to all devices</span>
           <input type="file" id="excelFile" accept=".xlsx, .xls" />
         </div>
       </div>
@@ -76,7 +76,7 @@
           <span class="badge-dot"></span>
           <span>ISO 14224 COMPLIANT</span>
         </div>
-        <p class="footer-desc">Substation equipment reliability & maintenance lifecycle management system.</p>
+        <p class="footer-desc" data-i18n="footer_desc">Substation equipment reliability & maintenance lifecycle management system.</p>
       </div>
     </aside>
 
@@ -91,26 +91,33 @@
         </div>
         
         <div class="topbar-actions">
+          <!-- Language Switcher Toggle -->
+          <div class="lang-switch" id="langSwitch">
+            <button class="btn-lang active" data-lang="en">EN</button>
+            <span class="lang-divider">|</span>
+            <button class="btn-lang" data-lang="th">TH</button>
+          </div>
+
           <button class="btn-action" id="openExportModalBtn" title="Export Executive Summary Brief">
             <i class="fa-regular fa-file-pdf"></i>
-            <span>Export Brief</span>
+            <span data-i18n="export_brief">Export Brief</span>
           </button>
 
           <button class="btn-action btn-save-excel admin-only" id="saveExcelBtn" style="display: none;">
             <i class="fa-solid fa-arrow-down-to-bracket"></i>
-            <span>Commit Excel</span>
+            <span data-i18n="commit_excel">Commit Excel</span>
           </button>
 
           <div class="auth-box">
             <button class="btn-login" id="loginBtn">
               <i class="fa-solid fa-shield-halved"></i>
-              <span>Admin Gateway</span>
+              <span data-i18n="admin_gateway">Admin Gateway</span>
             </button>
             <div class="user-profile" id="userProfile" style="display: none;">
               <div class="avatar">SK</div>
               <div class="user-info">
                 <span class="user-name">Suwanan K.</span>
-                <span class="user-role badge-admin">Lead Reliability Eng.</span>
+                <span class="user-role badge-admin" data-i18n="lead_engineer">Lead Reliability Eng.</span>
               </div>
               <button class="btn-logout" id="logoutBtn" title="Terminate Admin Session">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -125,12 +132,12 @@
         <div class="banner-top">
           <span class="status-indicator" id="modeBadge">VIEWER CONSOLE</span>
           <span class="status-divider">•</span>
-          <span class="cloud-status"><i class="fa-solid fa-cloud-bolt"></i> CLOUD SYNC ACTIVE</span>
+          <span class="cloud-status"><i class="fa-solid fa-cloud-bolt"></i> <span data-i18n="cloud_sync_active">CLOUD SYNC ACTIVE</span></span>
         </div>
         <div class="banner-content">
           <div>
-            <h1>Substation Reliability & Performance Intelligence</h1>
-            <p>Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.</p>
+            <h1 data-i18n="banner_title">Substation Reliability & Performance Intelligence</h1>
+            <p data-i18n="banner_desc">Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.</p>
           </div>
         </div>
       </section>
@@ -139,66 +146,66 @@
       <section class="kpi-grid">
         <div class="kpi-card interactive" id="kpiCardAvail" title="Click to inspect Availability breakdown">
           <div class="kpi-header">
-            <span class="kpi-title">Fleet Availability</span>
-            <span class="kpi-target">Target ≥ 96.00%</span>
+            <span class="kpi-title" data-i18n="kpi_avail_title">Fleet Availability</span>
+            <span class="kpi-target" data-i18n="kpi_avail_target">Target ≥ 96.00%</span>
           </div>
           <div class="kpi-body">
             <h2 id="avgAvail">-%</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-shield-check"></i></div>
           </div>
           <div class="kpi-footer">
-            <span>Operational uptime benchmark</span>
+            <span data-i18n="kpi_avail_footer">Operational uptime benchmark</span>
             <i class="fa-solid fa-arrow-right kpi-arrow"></i>
           </div>
         </div>
 
         <div class="kpi-card interactive" id="kpiCardMtbf" title="Click to inspect MTBF breakdown">
           <div class="kpi-header">
-            <span class="kpi-title">Mean Time Between Failures</span>
-            <span class="kpi-target">MTBF Metric</span>
+            <span class="kpi-title" data-i18n="kpi_mtbf_title">Mean Time Between Failures</span>
+            <span class="kpi-target" data-i18n="kpi_mtbf_target">MTBF Metric</span>
           </div>
           <div class="kpi-body">
             <div class="val-group">
               <h2 id="avgMtbf">-</h2>
-              <span class="kpi-unit">hrs</span>
+              <span class="kpi-unit" data-i18n="unit_hrs">hrs</span>
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-clock-rotate-left"></i></div>
           </div>
           <div class="kpi-footer">
-            <span>Average operating hours between failures</span>
+            <span data-i18n="kpi_mtbf_footer">Average operating hours between failures</span>
             <i class="fa-solid fa-arrow-right kpi-arrow"></i>
           </div>
         </div>
 
         <div class="kpi-card interactive" id="kpiCardMttr" title="Click to inspect MTTR breakdown">
           <div class="kpi-header">
-            <span class="kpi-title">Mean Time to Restore</span>
-            <span class="kpi-target">MTTR Limit &le; 10h</span>
+            <span class="kpi-title" data-i18n="kpi_mttr_title">Mean Time to Restore</span>
+            <span class="kpi-target" data-i18n="kpi_mttr_target">MTTR Limit &le; 10h</span>
           </div>
           <div class="kpi-body">
             <div class="val-group">
               <h2 id="avgMttr">-</h2>
-              <span class="kpi-unit">hrs</span>
+              <span class="kpi-unit" data-i18n="unit_hrs">hrs</span>
             </div>
             <div class="kpi-icon-seal"><i class="fa-solid fa-screwdriver-wrench"></i></div>
           </div>
           <div class="kpi-footer">
-            <span>Average corrective maintenance latency</span>
+            <span data-i18n="kpi_mttr_footer">Average corrective maintenance latency</span>
             <i class="fa-solid fa-arrow-right kpi-arrow"></i>
           </div>
         </div>
 
         <div class="kpi-card interactive" id="kpiCardModes" title="Click to inspect Failure Modes breakdown">
           <div class="kpi-header">
-            <span class="kpi-title">Cataloged Failure Modes</span>
-            <span class="kpi-target">Active Registry</span>
+            <span class="kpi-title" data-i18n="kpi_modes_title">Cataloged Failure Modes</span>
+            <span class="kpi-target" data-i18n="kpi_modes_target">Active Registry</span>
           </div>
           <div class="kpi-body">
             <h2 id="totalModes">-</h2>
             <div class="kpi-icon-seal"><i class="fa-solid fa-list-check"></i></div>
           </div>
           <div class="kpi-footer">
-            <span>Total failure mechanisms monitored</span>
+            <span data-i18n="kpi_modes_footer">Total failure mechanisms monitored</span>
             <i class="fa-solid fa-arrow-right kpi-arrow"></i>
           </div>
         </div>
@@ -208,30 +215,30 @@
       <section class="insights-grid">
         <div class="insight-card">
           <div class="card-meta">
-            <span class="card-tag">RISK PRIORITIZATION</span>
-            <h3>Subsystem Attention Vectors</h3>
+            <span class="card-tag" data-i18n="tag_risk_prioritization">RISK PRIORITIZATION</span>
+            <h3 data-i18n="attention_vectors_title">Subsystem Attention Vectors</h3>
           </div>
           <div class="attention-stream">
             <div class="attention-block interactive" id="insightWorstAvail" title="Click to view equipment diagnostics">
               <div class="attention-indicator indicator-warn"></div>
               <div class="attention-details">
                 <div class="attention-header-row">
-                  <span class="attention-label">Lowest Availability Component</span>
-                  <span class="view-chip">Inspect <i class="fa-solid fa-chevron-right"></i></span>
+                  <span class="attention-label" data-i18n="lowest_avail_label">Lowest Availability Component</span>
+                  <span class="view-chip"><span data-i18n="inspect_btn">Inspect</span> <i class="fa-solid fa-chevron-right"></i></span>
                 </div>
                 <span class="attention-val" id="worstAvail">-</span>
-                <p class="attention-note">Priority candidate for condition-based maintenance to prevent unplanned outages.</p>
+                <p class="attention-note" data-i18n="lowest_avail_note">Priority candidate for condition-based maintenance to prevent unplanned outages.</p>
               </div>
             </div>
             <div class="attention-block interactive" id="insightWorstMttr" title="Click to view equipment diagnostics">
               <div class="attention-indicator indicator-accent"></div>
               <div class="attention-details">
                 <div class="attention-header-row">
-                  <span class="attention-label">Maximum Repair Latency (Peak MTTR)</span>
-                  <span class="view-chip">Inspect <i class="fa-solid fa-chevron-right"></i></span>
+                  <span class="attention-label" data-i18n="peak_mttr_label">Maximum Repair Latency (Peak MTTR)</span>
+                  <span class="view-chip"><span data-i18n="inspect_btn">Inspect</span> <i class="fa-solid fa-chevron-right"></i></span>
                 </div>
                 <span class="attention-val" id="worstMttr">-</span>
-                <p class="attention-note">Consider stocking specialized spares and optimizing maintenance staging procedures.</p>
+                <p class="attention-note" data-i18n="peak_mttr_note">Consider stocking specialized spares and optimizing maintenance staging procedures.</p>
               </div>
             </div>
           </div>
@@ -240,10 +247,10 @@
         <div class="insight-card">
           <div class="card-meta flex-between">
             <div>
-              <span class="card-tag">ROOT CAUSE SPECTRUM</span>
-              <h3>Failure Cause Distribution</h3>
+              <span class="card-tag" data-i18n="tag_root_cause">ROOT CAUSE SPECTRUM</span>
+              <h3 data-i18n="chart_cause_title">Failure Cause Distribution</h3>
             </div>
-            <span class="interactive-hint"><i class="fa-solid fa-hand-pointer"></i> Click segment to drill</span>
+            <span class="interactive-hint"><i class="fa-solid fa-hand-pointer"></i> <span data-i18n="click_segment_hint">Click segment to drill</span></span>
           </div>
           <div class="chart-wrapper">
             <canvas id="causeChart"></canvas>
@@ -259,129 +266,124 @@
               <h3 id="currentSheetTitle">System Diagnostics & RAM Matrix</h3>
               <span class="table-status-pill" id="editNotice">Read-Only Observation Mode</span>
             </div>
-            <span class="sub-title">Click any equipment row to access comprehensive operational analytics.</span>
+            <span class="sub-title" data-i18n="table_sub_title">Click any equipment row to access comprehensive operational analytics.</span>
           </div>
 
           <div class="filter-group">
-            <button class="filter-btn active" data-filter="all">All Items</button>
-            <button class="filter-btn" data-filter="critical">Avail &lt; 96%</button>
-            <button class="filter-btn" data-filter="high-mttr">MTTR &gt; 10 hrs</button>
+            <button class="filter-btn active" data-filter="all" data-i18n="filter_all">All Items</button>
+            <button class="filter-btn" data-filter="critical" data-i18n="filter_critical">Avail &lt; 96%</button>
+            <button class="filter-btn" data-filter="high-mttr" data-i18n="filter_high_mttr">MTTR &gt; 10 hrs</button>
           </div>
         </div>
 
         <div class="table-frame" id="tableContainer">
           <div class="empty-state">
             <div class="spinner-ring"></div>
-            <p>Connecting to Realtime Cloud Database...</p>
+            <p data-i18n="connecting_cloud">Connecting to Realtime Cloud Database...</p>
           </div>
         </div>
       </section>
 
-      <!-- ============================================================
-           NEW SECTION: RAM WHAT-IF SIMULATOR
-           ============================================================ -->
+      <!-- RAM What-If Simulator -->
       <section class="simulator-section" id="simulatorSection">
         <div class="section-header">
           <div class="title-wrap">
             <div class="table-title-group">
-              <span class="card-tag">DECISION-SUPPORT SANDBOX</span>
-              <h3>RAM What-If Simulator</h3>
+              <span class="card-tag" data-i18n="sim_tag">DECISION-SUPPORT SANDBOX</span>
+              <h3 data-i18n="sim_title">RAM What-If Simulator</h3>
             </div>
-            <span class="sub-title">Availability Target & Reliability Scenario Analysis — Simulate how variations in MTBF and MTTR affect equipment Availability under controlled assumptions.</span>
+            <span class="sub-title" data-i18n="sim_sub_title">Availability Target & Reliability Scenario Analysis — Simulate how variations in MTBF and MTTR affect equipment Availability under controlled assumptions.</span>
           </div>
           <button class="btn-action" id="simResetBtn" title="Reset to simulated baseline parameters">
             <i class="fa-solid fa-rotate-left"></i>
-            <span>Reset Scenario</span>
+            <span data-i18n="sim_reset">Reset Scenario</span>
           </button>
         </div>
 
         <!-- Simulation Notice -->
         <div class="sim-notice-banner">
           <i class="fa-solid fa-circle-info"></i>
-          <span><strong>Analytical Protocol Notice:</strong> MTBF and MTTR values are simulated parameters used for prototype RAM analysis while long-term historical failure data is not yet available. Scenario values do not modify source datasets.</span>
+          <span data-i18n="sim_notice"><strong>Analytical Protocol Notice:</strong> MTBF and MTTR values are simulated parameters used for prototype RAM analysis while long-term historical failure data is not yet available. Scenario values do not modify source datasets.</span>
         </div>
 
         <div class="sim-grid">
-          <!-- Left Column: Scenario & Parameters Selection -->
+          <!-- Left Column -->
           <div class="sim-col">
-            <!-- Scenario Card -->
             <div class="sim-card">
-              <span class="sim-card-tag">STEP 1 • SELECT FAILURE SCENARIO</span>
+              <span class="sim-card-tag" data-i18n="sim_step1">STEP 1 • SELECT FAILURE SCENARIO</span>
               <div class="sim-field-group">
-                <label for="simScenarioSelect" class="sim-label">Target Equipment / Failure Code</label>
+                <label for="simScenarioSelect" class="sim-label" data-i18n="sim_scenario_label">Target Equipment / Failure Code</label>
                 <select id="simScenarioSelect" class="custom-select sim-select"></select>
               </div>
 
               <div class="sim-context-box">
                 <div class="sim-context-row">
-                  <span class="sim-context-lbl">Equipment / Component:</span>
+                  <span class="sim-context-lbl" data-i18n="lbl_equipment">Equipment / Component:</span>
                   <strong class="sim-context-val" id="simCompName">-</strong>
                 </div>
                 <div class="sim-context-row">
-                  <span class="sim-context-lbl">Failure Code:</span>
+                  <span class="sim-context-lbl" data-i18n="lbl_failure_code">Failure Code:</span>
                   <strong class="sim-context-val" id="simFailCode">-</strong>
                 </div>
                 <div class="sim-context-row">
-                  <span class="sim-context-lbl">Failure Mode:</span>
+                  <span class="sim-context-lbl" data-i18n="lbl_failure_mode">Failure Mode:</span>
                   <span class="sim-context-val" id="simFailMode">-</span>
                 </div>
                 <div class="sim-context-row">
-                  <span class="sim-context-lbl">Failure Cause:</span>
+                  <span class="sim-context-lbl" data-i18n="lbl_failure_cause">Failure Cause:</span>
                   <span class="sim-context-val" id="simFailCause">-</span>
                 </div>
               </div>
             </div>
 
-            <!-- Baseline Card -->
             <div class="sim-card">
-              <span class="sim-card-tag">STEP 2 • SIMULATED BASELINE PARAMETERS</span>
+              <span class="sim-card-tag" data-i18n="sim_step2">STEP 2 • SIMULATED BASELINE PARAMETERS</span>
               <div class="sim-kpi-strip">
                 <div class="sim-mini-kpi">
-                  <span>Simulated MTBF</span>
+                  <span data-i18n="sim_base_mtbf">Simulated MTBF</span>
                   <strong id="simBaseMtbf">- hrs</strong>
                 </div>
                 <div class="sim-mini-kpi">
-                  <span>Simulated MTTR</span>
+                  <span data-i18n="sim_base_mttr">Simulated MTTR</span>
                   <strong id="simBaseMttr">- hrs</strong>
                 </div>
                 <div class="sim-mini-kpi full-span">
-                  <span>Baseline Availability ($A_{base}$)</span>
+                  <span data-i18n="sim_base_avail">Baseline Availability ($A_{base}$)</span>
                   <strong id="simBaseAvail">-%</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Interactive Sandbox Controls -->
+          <!-- Right Column -->
           <div class="sim-col">
             <div class="sim-card">
-              <span class="sim-card-tag">STEP 3 • SELECT WHAT-IF SIMULATION MODE</span>
+              <span class="sim-card-tag" data-i18n="sim_step3">STEP 3 • SELECT WHAT-IF SIMULATION MODE</span>
               <div class="sim-mode-toggle">
                 <button class="sim-mode-btn active" data-mode="mttr">
                   <i class="fa-solid fa-wrench"></i>
-                  <span>Adjust MTTR</span>
+                  <span data-i18n="mode_adjust_mttr">Adjust MTTR</span>
                 </button>
                 <button class="sim-mode-btn" data-mode="mtbf">
                   <i class="fa-solid fa-clock"></i>
-                  <span>Adjust MTBF</span>
+                  <span data-i18n="mode_adjust_mtbf">Adjust MTBF</span>
                 </button>
                 <button class="sim-mode-btn" data-mode="target">
                   <i class="fa-solid fa-bullseye"></i>
-                  <span>Target Availability</span>
+                  <span data-i18n="mode_target_avail">Target Availability</span>
                 </button>
               </div>
 
-              <!-- Interactive Controls Container -->
               <div class="sim-controls-wrapper">
                 <!-- Mode 1: Adjust MTTR -->
                 <div class="sim-mode-pane active" id="simPaneMttr">
-                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What happens to Availability if corrective repair latency changes?</p>
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> <span data-i18n="q_mttr">What happens to Availability if corrective repair latency changes?</span></p>
                   <div class="sim-slider-group">
                     <div class="sim-slider-header">
-                      <span>Repair Time (MTTR)</span>
+                      <span data-i18n="lbl_repair_time">Repair Time (MTTR)</span>
                       <div class="sim-input-pill">
                         <input type="number" id="simMttrNum" min="0.5" max="120" step="0.5" />
-                        <span>hrs</span>
+                        <span data-i18n="unit_hrs">hrs</span>
                       </div>
                     </div>
                     <input type="range" class="sim-slider" id="simMttrSlider" min="0.5" max="96" step="0.5" />
@@ -396,13 +398,13 @@
 
                 <!-- Mode 2: Adjust MTBF -->
                 <div class="sim-mode-pane" id="simPaneMtbf">
-                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What happens to Availability if operating intervals between failures change?</p>
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> <span data-i18n="q_mtbf">What happens to Availability if operating intervals between failures change?</span></p>
                   <div class="sim-slider-group">
                     <div class="sim-slider-header">
-                      <span>Operating Time (MTBF)</span>
+                      <span data-i18n="lbl_operating_time">Operating Time (MTBF)</span>
                       <div class="sim-input-pill">
                         <input type="number" id="simMtbfNum" min="500" max="150000" step="250" />
-                        <span>hrs</span>
+                        <span data-i18n="unit_hrs">hrs</span>
                       </div>
                     </div>
                     <input type="range" class="sim-slider" id="simMtbfSlider" min="1000" max="100000" step="500" />
@@ -417,11 +419,11 @@
 
                 <!-- Mode 3: Target Availability -->
                 <div class="sim-mode-pane" id="simPaneTarget">
-                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> What reliability performance is required to achieve a target Availability?</p>
+                  <p class="sim-question"><i class="fa-solid fa-circle-question"></i> <span data-i18n="q_target">What reliability performance is required to achieve a target Availability?</span></p>
                   
                   <div class="sim-slider-group">
                     <div class="sim-slider-header">
-                      <span>Target Availability ($A_{target}$)</span>
+                      <span data-i18n="lbl_target_avail">Target Availability ($A_{target}$)</span>
                       <div class="sim-input-pill highlight">
                         <input type="number" id="simTargetNum" min="90.00" max="99.99" step="0.01" />
                         <span>%</span>
@@ -437,20 +439,20 @@
                   </div>
 
                   <div class="sim-strategy-select">
-                    <span class="sim-label">Calculation Strategy:</span>
+                    <span class="sim-label" data-i18n="lbl_strategy">Calculation Strategy:</span>
                     <div class="sim-radio-cluster">
                       <label class="sim-radio-card">
                         <input type="radio" name="simStrategy" value="fixed-mttr" checked />
                         <div class="sim-radio-content">
-                          <strong>Strategy A • Fix MTTR</strong>
-                          <span>Keep simulated MTTR fixed; calculate required MTBF</span>
+                          <strong data-i18n="strategy_a_title">Strategy A • Fix MTTR</strong>
+                          <span data-i18n="strategy_a_desc">Keep simulated MTTR fixed; calculate required MTBF</span>
                         </div>
                       </label>
                       <label class="sim-radio-card">
                         <input type="radio" name="simStrategy" value="fixed-mtbf" />
                         <div class="sim-radio-content">
-                          <strong>Strategy B • Fix MTBF</strong>
-                          <span>Keep simulated MTBF fixed; calculate max allowable MTTR</span>
+                          <strong data-i18n="strategy_b_title">Strategy B • Fix MTBF</strong>
+                          <span data-i18n="strategy_b_desc">Keep simulated MTBF fixed; calculate max allowable MTTR</span>
                         </div>
                       </label>
                     </div>
@@ -461,35 +463,34 @@
           </div>
         </div>
 
-        <!-- Comparative Impact & Engineering Interpretation Section -->
+        <!-- Comparative Impact & Interpretation -->
         <div class="sim-impact-grid">
-          <!-- Impact Matrix Table -->
           <div class="sim-card">
-            <span class="sim-card-tag">STEP 4 • SCENARIO IMPACT (BASELINE VS WHAT-IF)</span>
+            <span class="sim-card-tag" data-i18n="sim_step4">STEP 4 • SCENARIO IMPACT (BASELINE VS WHAT-IF)</span>
             <table class="sim-comparison-table">
               <thead>
                 <tr>
-                  <th>Metric</th>
-                  <th>Simulated Baseline</th>
-                  <th>What-If Scenario</th>
-                  <th>Variance / Impact</th>
+                  <th data-i18n="col_metric">Metric</th>
+                  <th data-i18n="col_base">Simulated Baseline</th>
+                  <th data-i18n="col_whatif">What-If Scenario</th>
+                  <th data-i18n="col_impact">Variance / Impact</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>MTBF</strong> (Operating Duration)</td>
+                  <td><strong data-i18n="row_mtbf">MTBF</strong> <span data-i18n="sub_mtbf">(Operating Duration)</span></td>
                   <td id="simCmpBaseMtbf">-</td>
                   <td id="simCmpScenMtbf">-</td>
                   <td id="simCmpDeltaMtbf">-</td>
                 </tr>
                 <tr>
-                  <td><strong>MTTR</strong> (Corrective Latency)</td>
+                  <td><strong data-i18n="row_mttr">MTTR</strong> <span data-i18n="sub_mttr">(Corrective Latency)</span></td>
                   <td id="simCmpBaseMttr">-</td>
                   <td id="simCmpScenMttr">-</td>
                   <td id="simCmpDeltaMttr">-</td>
                 </tr>
                 <tr>
-                  <td><strong>Availability</strong> (Fleet Ratio)</td>
+                  <td><strong data-i18n="row_avail">Availability</strong> <span data-i18n="sub_avail">(Fleet Ratio)</span></td>
                   <td id="simCmpBaseAvail">-</td>
                   <td id="simCmpScenAvail">-</td>
                   <td id="simCmpDeltaAvail">-</td>
@@ -498,16 +499,15 @@
             </table>
           </div>
 
-          <!-- Interpretation Card -->
           <div class="sim-card sim-card-interpret">
-            <span class="sim-card-tag">STEP 5 • ENGINEERING INTERPRETATION</span>
+            <span class="sim-card-tag" data-i18n="sim_step5">STEP 5 • ENGINEERING INTERPRETATION</span>
             <div class="sim-interpret-body">
               <div class="sim-badge-pill" id="simFeasibilityBadge">SCENARIO FEASIBLE</div>
               <p class="sim-narrative" id="simInterpretationText">
                 Selecting a baseline failure code will automatically synthesize scenario sensitivity analysis.
               </p>
               <div class="sim-interpret-footer">
-                <span>Model: $A = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}}$ • Analytical assumptions strictly bounded by ISO 14224 protocol.</span>
+                <span data-i18n="interpret_footer">Model: $A = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}}$ • Analytical assumptions strictly bounded by ISO 14224 protocol.</span>
               </div>
             </div>
           </div>
@@ -517,12 +517,12 @@
     </main>
   </div>
 
-  <!-- Detail Panel / Side Drawer -->
+  <!-- Detail Drawer -->
   <aside class="detail-drawer" id="detailDrawer" aria-hidden="true">
     <div class="drawer-header">
       <div class="drawer-nav">
         <button class="btn-drawer-back" id="drawerBackBtn" style="display: none;">
-          <i class="fa-solid fa-arrow-left"></i> <span>Back</span>
+          <i class="fa-solid fa-arrow-left"></i> <span data-i18n="drawer_back">Back</span>
         </button>
         <span class="drawer-level-tag" id="drawerLevelTag">LEVEL 2 • ANALYTICAL DETAIL</span>
       </div>
@@ -538,51 +538,51 @@
       <div class="modal-header">
         <div class="modal-icon"><i class="fa-solid fa-lock"></i></div>
         <div>
-          <h3>Engineering Gateway</h3>
-          <span class="modal-sub">Administrative Access Protocol</span>
+          <h3 data-i18n="modal_auth_title">Engineering Gateway</h3>
+          <span class="modal-sub" data-i18n="modal_auth_sub">Administrative Access Protocol</span>
         </div>
         <button class="modal-close" id="closeLoginModal">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Enter authorization credentials to unlock live worksheet modification and cloud synchronization:</p>
+        <p class="modal-desc" data-i18n="modal_auth_desc">Enter authorization credentials to unlock live worksheet modification and cloud synchronization:</p>
         <div class="input-container">
           <input type="password" id="adminPassword" placeholder="Enter Authorization Code" class="modal-input" />
         </div>
         <p class="error-msg" id="loginError" style="display: none;">
-          <i class="fa-solid fa-circle-exclamation"></i> Invalid credential token. Access rejected.
+          <i class="fa-solid fa-circle-exclamation"></i> <span data-i18n="modal_auth_err">Invalid credential token. Access rejected.</span>
         </p>
       </div>
       <div class="modal-footer">
-        <button class="btn-tertiary" id="cancelLoginModal">Cancel</button>
-        <button class="btn-primary" id="submitLoginBtn">Authenticate</button>
+        <button class="btn-tertiary" id="cancelLoginModal" data-i18n="btn_cancel">Cancel</button>
+        <button class="btn-primary" id="submitLoginBtn" data-i18n="btn_auth">Authenticate</button>
       </div>
     </div>
   </div>
 
-  <!-- Executive Print / Export Modal -->
+  <!-- Export Brief Modal -->
   <div class="modal-overlay" id="exportModal">
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-icon"><i class="fa-regular fa-file-lines"></i></div>
         <div>
-          <h3>Executive Brief Export</h3>
-          <span class="modal-sub">Documentation Scope</span>
+          <h3 data-i18n="modal_export_title">Executive Brief Export</h3>
+          <span class="modal-sub" data-i18n="modal_export_sub">Documentation Scope</span>
         </div>
         <button class="modal-close" id="closeModalBtn">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Select subsystem domain to compile formatted operational brief:</p>
+        <p class="modal-desc" data-i18n="modal_export_desc">Select subsystem domain to compile formatted operational brief:</p>
         <div class="sheet-options-list" id="sheetOptionsList"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn-tertiary" id="cancelModalBtn">Dismiss</button>
-        <button class="btn-primary" id="confirmPrintBtn">Generate Brief</button>
+        <button class="btn-tertiary" id="cancelModalBtn" data-i18n="btn_dismiss">Dismiss</button>
+        <button class="btn-primary" id="confirmPrintBtn" data-i18n="btn_gen_brief">Generate Brief</button>
       </div>
     </div>
   </div>
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=11"></script>
+  <script src="script.js?v=12"></script>
 </body>
 </html>
