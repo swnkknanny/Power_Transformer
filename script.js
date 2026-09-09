@@ -2,7 +2,7 @@ let currentWorkbook = null;
 
 const fileInput = document.getElementById('excelFile');
 const sheetSelect = document.getElementById('sheetSelect');
-const fileControls = document.getElementById('fileControls');
+const subsystemControl = document.getElementById('subsystemControl');
 const tableContainer = document.getElementById('tableContainer');
 const currentSheetTitle = document.getElementById('currentSheetTitle');
 const searchInput = document.getElementById('searchInput');
@@ -29,9 +29,9 @@ fileInput.addEventListener('change', function(e) {
       sheetSelect.appendChild(option);
     });
 
-    fileControls.style.display = 'block';
+    subsystemControl.style.display = 'block';
 
-    // เลือกชีต TR เป็นค่าเริ่มต้น ถ้าไม่มีให้เลือกชีตแรก
+    // เริ่มต้นที่ชีต TR หรือชีตแรก
     const defaultSheet = currentWorkbook.SheetNames.includes('TR') ? 'TR' : currentWorkbook.SheetNames[0];
     sheetSelect.value = defaultSheet;
     loadRamSheet(defaultSheet);
@@ -46,12 +46,12 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `ตารางวิเคราะห์ RAM: ระบบ ${sheetName}`;
+  currentSheetTitle.textContent = `รายการวิเคราะห์ RAM: ระบบ ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 20px; text-align: center;">ไม่มีข้อมูลในระบบนี้</p>';
+    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: #787774;">ไม่มีข้อมูลในระบบนี้</p>';
     resetMetrics();
     return;
   }
@@ -79,10 +79,9 @@ function loadRamSheet(sheetName) {
     }
   });
 
-  // คำนวณเปอร์เซ็นต์ Availability
   const avgAvailPercent = countAvail > 0 ? (totalAvail / countAvail) * 100 : 0;
   
-  // อัปเดตการ์ด Availability: >= 96% ขึ้นเขียว, < 96% ขึ้นแดง
+  // เช็คเงื่อนไขสี Availability (>= 96% เขียว, < 96% แดง)
   avgAvailElem.textContent = countAvail > 0 ? avgAvailPercent.toFixed(2) + '%' : '-';
   avgAvailElem.classList.remove('status-green', 'status-red');
   
@@ -94,7 +93,6 @@ function loadRamSheet(sheetName) {
     }
   }
 
-  // อัปเดต Metric อื่นๆ
   totalModesElem.textContent = rows.length.toLocaleString();
   avgMtbfElem.textContent = countMtbf > 0 ? Math.round(totalMtbf / countMtbf).toLocaleString() : '-';
   avgMttrElem.textContent = countMttr > 0 ? (totalMttr / countMttr).toFixed(1) : '-';
@@ -102,7 +100,6 @@ function loadRamSheet(sheetName) {
   renderFormattedTable(sheet);
 }
 
-// สร้างตารางพร้อมแบ่งสัดส่วนคอลัมน์อัตโนมัติ (Auto Fit)
 function renderFormattedTable(sheet) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
   if (jsonData.length === 0) return;
@@ -110,7 +107,6 @@ function renderFormattedTable(sheet) {
   const headers = jsonData[0];
   const sampleRows = jsonData.slice(1, 15);
 
-  // คำนวณประเภทคอลัมน์อัตโนมัติ
   const colTypes = headers.map((header, colIndex) => {
     const title = (header || '').toString().trim().toUpperCase();
     
@@ -146,7 +142,6 @@ function renderFormattedTable(sheet) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
 
-      // ไฮไลต์สี Availability ในตาราง
       if (j === availColIndex && !isNaN(cellValue) && cellValue !== '') {
         const valNum = Number(cellValue);
         const percentVal = valNum <= 1 ? valNum * 100 : valNum;
@@ -171,7 +166,6 @@ function resetMetrics() {
   totalModesElem.textContent = '0';
 }
 
-// ค้นหาข้อมูลแบบ Real-time
 searchInput.addEventListener('input', function(e) {
   const query = e.target.value.toLowerCase();
   const trs = document.querySelectorAll('#ramTable tr');
