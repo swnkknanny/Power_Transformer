@@ -2,7 +2,7 @@ let currentWorkbook = null;
 let currentChart = null;
 let currentActiveFilter = 'all';
 
-// Security Protocol Credentials
+// รหัสผ่านสำหรับเข้าสู่ระบบแอดมิน
 const ADMIN_PASSWORD = '13102547'; 
 let isAdmin = false;
 
@@ -45,7 +45,7 @@ const totalModesElem = document.getElementById('totalModes');
 const worstAvailElem = document.getElementById('worstAvail');
 const worstMttrElem = document.getElementById('worstMttr');
 
-// Fetch Initial Repository Data
+// โหลดไฟล์เริ่มต้นจากระบบอัตโนมัติ
 async function autoLoadDefaultExcel() {
   try {
     const response = await fetch(DEFAULT_EXCEL_FILE);
@@ -61,8 +61,8 @@ function showManualUploadPrompt() {
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
       <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.4rem; color: #8E7C93; margin-bottom: 12px;"></i>
-      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Select Substation Worksheet (ALL_RAM.xlsx)</p>
-      <span style="font-size: 0.75rem; color: #888E94;">Click anywhere in this container to load local file telemetry</span>
+      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">เลือกไฟล์ข้อมูล (ALL_RAM.xlsx)</p>
+      <span style="font-size: 0.75rem; color: #888E94;">คลิกที่นี่เพื่อนำเข้าไฟล์ข้อมูลสำหรับเริ่มประมวลผล</span>
     </div>
   `;
 }
@@ -76,7 +76,7 @@ function handleWorkbookData(data) {
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = `Subsystem: ${name}`;
+    option.textContent = `ระบบ: ${name}`;
     sheetSelect.appendChild(option);
   });
 
@@ -102,7 +102,7 @@ sheetSelect.addEventListener('change', function(e) {
 });
 
 /* ============================================================
-   ADMIN GATEWAY AUTHENTICATION
+   ระบบตรวจสอบสิทธิ์แอดมิน (Admin Authentication)
    ============================================================ */
 loginBtn.addEventListener('click', () => {
   loginModal.classList.add('show');
@@ -145,24 +145,24 @@ function updateAuthUI() {
     userProfile.style.display = 'flex';
     adminUploadWidget.style.display = 'block';
     saveExcelBtn.style.display = 'flex';
-    modeBadge.textContent = 'ADMIN CONSOLE (UNLOCKED)';
+    modeBadge.textContent = 'ADMIN MODE (เปิดแก้ไขข้อมูล)';
     modeBadge.classList.add('admin');
-    editNotice.textContent = 'Active Edit Mode: Click on data cells to modify values';
+    editNotice.textContent = '✏️ โหมดแอดมิน: สามารถคลิกที่ช่องในตารางเพื่อพิมพ์แก้ไขข้อมูลได้โดยตรง';
     editNotice.style.color = '#8E7C93';
   } else {
     loginBtn.style.display = 'flex';
     userProfile.style.display = 'none';
     adminUploadWidget.style.display = 'none';
     saveExcelBtn.style.display = 'none';
-    modeBadge.textContent = 'VIEWER CONSOLE';
+    modeBadge.textContent = 'VIEWER MODE (โหมดดูข้อมูล)';
     modeBadge.classList.remove('admin');
-    editNotice.textContent = 'Read-Only Observation Mode';
+    editNotice.textContent = 'โหมดอ่านอย่างเดียว (Viewer Mode)';
     editNotice.style.color = 'var(--text-secondary)';
   }
 }
 
 /* ============================================================
-   EXECUTIVE METRICS & COMPUTATION ENGINE
+   การคำนวณและสรุปผลข้อมูลตัวชี้วัด (Metrics Engine)
    ============================================================ */
 function calculateSheetMetrics(rows) {
   let totalMtbf = 0, countMtbf = 0;
@@ -179,7 +179,7 @@ function calculateSheetMetrics(rows) {
     const availKey = Object.keys(r).find(k => k.trim().toUpperCase() === 'AVAILABILITY');
     const causeKey = Object.keys(r).find(k => k.trim().toUpperCase().includes('CAUSE'));
 
-    const compName = r[compKey] || 'Unknown Equipment';
+    const compName = r[compKey] || 'ไม่ระบุอุปกรณ์';
 
     if (mtbfKey && !isNaN(r[mtbfKey])) {
       totalMtbf += Number(r[mtbfKey]);
@@ -191,7 +191,7 @@ function calculateSheetMetrics(rows) {
       countMttr++;
       if (mttrVal > maxMttr) {
         maxMttr = mttrVal;
-        maxMttrItem = `${compName} (${mttrVal} hrs)`;
+        maxMttrItem = `${compName} (${mttrVal} ชม.)`;
       }
     }
     if (availKey && !isNaN(r[availKey])) {
@@ -226,12 +226,12 @@ function calculateSheetMetrics(rows) {
 }
 
 function loadRamSheet(sheetName) {
-  currentSheetTitle.textContent = `Diagnostic Matrix: Subsystem ${sheetName}`;
+  currentSheetTitle.textContent = `ตารางวิเคราะห์การบำรุงรักษาและ RAM: ระบบ ${sheetName}`;
   const sheet = currentWorkbook.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
   if (rows.length === 0) {
-    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">No records registered for this subsystem domain.</p>';
+    tableContainer.innerHTML = '<p style="padding: 24px; text-align: center; color: var(--text-muted);">ไม่มีรายการข้อมูลในระบบนี้</p>';
     resetMetrics();
     return;
   }
@@ -255,8 +255,7 @@ function loadRamSheet(sheetName) {
 }
 
 /* ============================================================
-   CHART.JS: EXECUTIVE CALM PALETTE ENGINE
-   Palette: Muted Amethyst (#8E7C93), Sage (#66756B), Champagne (#B7A58A), Charcoal Accent (#495057)
+   กราฟวงกลมสรุปสาเหตุ (Donut Chart - Executive Calm Palette)
    ============================================================ */
 function renderCauseChart(causeCounts) {
   const ctx = document.getElementById('causeChart').getContext('2d');
@@ -267,7 +266,7 @@ function renderCauseChart(causeCounts) {
   const labels = top4.map(i => i[0]);
   const data = top4.map(i => i[1]);
   if (others > 0) {
-    labels.push('Other Determinants');
+    labels.push('สาเหตุอื่นๆ');
     data.push(others);
   }
 
@@ -280,11 +279,11 @@ function renderCauseChart(causeCounts) {
       datasets: [{
         data: data,
         backgroundColor: [
-          '#8E7C93', // Muted Amethyst (Primary Accent)
-          '#66756B', // Muted Sage (Normal/Balanced)
-          '#B7A58A', // Champagne (Refined highlight)
+          '#8E7C93', // Muted Amethyst (สีหลัก)
+          '#66756B', // Muted Sage
+          '#B7A58A', // Champagne
           '#5F666D', // Charcoal Soft
-          '#C5C2BA'  // Soft Warm Stone
+          '#C5C2BA'  // Warm Stone
         ],
         borderWidth: 2,
         borderColor: '#FFFFFF'
@@ -308,8 +307,8 @@ function renderCauseChart(causeCounts) {
         },
         tooltip: {
           backgroundColor: '#343A40',
-          titleFont: { size: 11, family: 'Plus Jakarta Sans' },
-          bodyFont: { size: 11, family: 'Plus Jakarta Sans' },
+          titleFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
+          bodyFont: { size: 11, family: 'Plus Jakarta Sans, Sarabun' },
           padding: 10,
           cornerRadius: 6
         }
@@ -320,7 +319,7 @@ function renderCauseChart(causeCounts) {
 }
 
 /* ============================================================
-   TABLE RENDERING WITH AUTO-FIT & LIVE INLINE RE-COMPUTATION
+   การสร้างตารางและระบบแก้ไขข้อมูลแบบทันที (Live Inline Edit)
    ============================================================ */
 function renderFormattedTable(sheet, sheetName) {
   const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -409,7 +408,7 @@ function bindCellEditEvents(sheetName) {
       sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(newVal) : newVal;
       sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
 
-      // Recompute metrics instantly
+      // คำนวณ KPI ใหม่ทันที
       const updatedRows = XLSX.utils.sheet_to_json(sheet);
       const metrics = calculateSheetMetrics(updatedRows);
       avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
@@ -466,11 +465,11 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 /* ============================================================
-   EXECUTIVE BRIEF PRINT SCOPE
+   การสร้างหน้าสำหรับ Export PDF / สั่งพิมพ์
    ============================================================ */
 openExportModalBtn.addEventListener('click', function() {
   if (!currentWorkbook) {
-    alert('Please ensure data telemetry is loaded prior to generating documentation.');
+    alert('กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน');
     return;
   }
 
@@ -480,7 +479,7 @@ openExportModalBtn.addEventListener('click', function() {
   const currentOption = `
     <label class="sheet-radio-item">
       <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-      <span><strong>Active Workspace Subsystem (${currentSheet})</strong></span>
+      <span><strong>ระบบที่กำลังเปิดดูอยู่ (${currentSheet})</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
@@ -490,7 +489,7 @@ openExportModalBtn.addEventListener('click', function() {
       const item = `
         <label class="sheet-radio-item">
           <input type="radio" name="printSheetTarget" value="${name}" />
-          <span>Subsystem Scope: ${name}</span>
+          <span>ระบบ: ${name}</span>
         </label>
       `;
       sheetOptionsList.insertAdjacentHTML('beforeend', item);
@@ -500,7 +499,7 @@ openExportModalBtn.addEventListener('click', function() {
   const allOption = `
     <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
       <input type="radio" name="printSheetTarget" value="__ALL__" />
-      <span><strong>Consolidated Substation Fleet (All Subsystems)</strong></span>
+      <span><strong>ทุกระบบพร้อมกัน (All Subsystems)</strong></span>
     </label>
   `;
   sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
@@ -542,31 +541,31 @@ function buildPrintView(targetSheet) {
       <div class="print-page">
         <div class="print-header">
           <div>
-            <h2>RAM Analytics Operational Brief: Subsystem ${sName}</h2>
+            <h2>รายงานการวิเคราะห์การบำรุงรักษาและ RAM: ระบบ ${sName}</h2>
             <span style="font-size: 0.72rem; color: #666;">Substation Reliability, Availability & Maintenance Performance Data</span>
           </div>
           <div class="meta">
-            <div>Lead Analyst: <strong>Suwanan K. (Reliability Engineer)</strong></div>
-            <div>Documentation Timestamp: ${new Date().toLocaleDateString('en-GB')}</div>
+            <div>ผู้จัดทำ: <strong>Suwanan K. (วิศวกรความน่าเชื่อถือ)</strong></div>
+            <div>วันที่ออกรายงาน: ${new Date().toLocaleDateString('th-TH')}</div>
           </div>
         </div>
 
         <div class="print-kpi-grid">
           <div class="print-kpi-item">
-            <span>Fleet Availability (Target ≥ 96%)</span>
+            <span>ความพร้อมใช้งานเฉลี่ย (เป้าหมาย ≥ 96%)</span>
             <strong>${metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-'}</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Mean Time Between Failures</span>
-            <strong>${metrics.avgMtbf} hrs</strong>
+            <span>ระยะเวลาเฉลี่ยก่อนเกิดความเสียหาย (MTBF)</span>
+            <strong>${metrics.avgMtbf} ชม.</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Mean Time to Restore</span>
-            <strong>${metrics.avgMttr} hrs</strong>
+            <span>ระยะเวลาเฉลี่ยในการบำรุงรักษา (MTTR)</span>
+            <strong>${metrics.avgMttr} ชม.</strong>
           </div>
           <div class="print-kpi-item">
-            <span>Cataloged Failure Modes</span>
-            <strong>${metrics.totalModes} Modes</strong>
+            <span>จำนวนลักษณะข้อบกพร่องทั้งหมด</span>
+            <strong>${metrics.totalModes} รายการ</strong>
           </div>
         </div>
 
