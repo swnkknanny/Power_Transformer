@@ -303,7 +303,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ============================================================
-       SIMULATOR SECTION
+       SIMULATOR: TOMAFOX UPGRADED ARCHITECTURE
        ============================================================ */
     .simulator-section {
       background: var(--surface-card);
@@ -334,22 +334,53 @@
       border: 1px solid #C4E3DC; padding: 4px 10px; border-radius: 6px;
       display: inline-flex; align-items: center; gap: 5px;
     }
-    .btn-sim-reset {
-      background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary);
-      font-size: 0.72rem; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-sm);
-      cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
-    }
-    .btn-sim-reset:hover { background: var(--surface-subtle); color: var(--text-primary); }
 
+    /* Full-width Scenario Card */
+    .sim-scenario-card {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+    }
+
+    .sim-hierarchy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .sim-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sim-form-group label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sim-select:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      background-color: var(--surface-subtle);
+    }
+
+    /* Workspace Multi-Column Grid */
     .sim-dashboard-grid {
       display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
+      grid-template-columns: 380px minmax(0, 1fr);
       gap: 16px;
-      align-items: stretch;
-      width: 100%;
+      align-items: start;
     }
 
-    .sim-col-setup, .sim-col-workspace {
+    .sim-col-setup,
+    .sim-col-workspace {
       display: flex;
       flex-direction: column;
       gap: 14px;
@@ -374,65 +405,123 @@
     }
     .sim-card-head p { font-size: 0.68rem; color: var(--text-muted); margin: 2px 0 0 0; }
     .sim-flex-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .sim-header-note { font-size: 0.64rem; color: var(--brand-champagne); font-weight: 600; }
 
-    .sim-card-setup {
-      background: var(--surface-base);
-      height: 100%;
+    /* Parameter Blocks */
+    .sim-param-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--border-divider);
+    }
+
+    .sim-param-block:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .sim-block-header {
+      display: flex;
       justify-content: space-between;
+      align-items: center;
     }
-    .sim-form-group { display: flex; flex-direction: column; gap: 4px; }
-    .sim-form-group label, .sim-sub-label { font-size: 0.68rem; font-weight: 700; color: var(--text-secondary); }
-    .sim-select {
-      background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
-      padding: 7px 10px; font-size: 0.78rem; font-weight: 600; color: var(--text-primary);
-      outline: none; font-family: inherit; width: 100%;
-    }
-    .sim-specs-box {
-      background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
-      padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
-    }
-    .spec-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; font-size: 0.72rem; }
-    .spec-label { color: var(--text-muted); font-weight: 500; display: inline-flex; align-items: center; gap: 4px; min-width: 90px; }
-    .spec-label i { font-size: 0.65rem; color: var(--brand-champagne); }
-    .spec-val { color: var(--text-primary); font-weight: 600; text-align: right; word-break: break-word; }
-    .spec-cause-text { max-height: 44px; overflow-y: auto; font-weight: 500; line-height: 1.35; }
 
-    .sim-param-module { display: flex; flex-direction: column; gap: 5px; }
-    .sim-segmented-control {
-      display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 3px;
-      background: var(--surface-subtle); padding: 3px; border-radius: var(--radius-sm);
+    .sim-label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-primary);
     }
+
+    /* Segmented Control (Preset vs Custom) */
+    .sim-segmented-switch {
+      display: inline-flex;
+      background: var(--surface-subtle);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+
     .sim-seg-btn {
-      background: transparent; border: none; padding: 6px 4px; font-size: 0.68rem;
-      font-weight: 600; color: var(--text-secondary); border-radius: 4px; cursor: pointer;
-      transition: all 0.15s ease; font-family: inherit; white-space: nowrap;
-    }
-    .sim-seg-btn.active {
-      background: #FFFFFF; color: #529285; font-weight: 700;
-      box-shadow: 0 1px 3px rgba(52, 58, 64, 0.06);
+      background: transparent;
+      border: none;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
     }
 
-    .sim-controls-deck {
-      background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px;
+    .sim-seg-btn.active {
+      background: var(--surface-card);
+      color: var(--text-primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    .sim-pane { display: none; flex-direction: column; gap: 8px; }
-    .sim-pane.active { display: flex; }
+
+    /* Highlighted Preset Card */
+    .sim-preset-card {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--brand-amethyst);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+
+    .preset-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .preset-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .preset-value-row strong {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .preset-value-row .unit {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .preset-hint {
+      font-size: 0.66rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
     .sim-input-row { display: flex; justify-content: space-between; align-items: center; }
-    .input-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text-primary); }
-    .sim-input-pill {
+    .input-lbl { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+    .sim-val-input {
       display: flex; align-items: center; gap: 4px; background: var(--surface-base);
-      border: 1px solid var(--border-subtle); border-radius: 5px; padding: 3px 7px;
+      border: 1px solid var(--border-subtle); border-radius: 5px; padding: 3px 8px;
     }
-    .sim-input-pill.pill-accent { border-color: #529285; background: #E8F4F1; }
-    .sim-input-pill input {
-      width: 60px; border: none; background: transparent; font-size: 0.82rem;
+    .sim-val-input.pill-accent { border-color: #529285; background: #E8F4F1; }
+    .sim-val-input input {
+      width: 70px; border: none; background: transparent; font-size: 0.82rem;
       font-weight: 700; text-align: right; outline: none; color: var(--text-primary); font-family: inherit;
     }
-    .sim-input-pill span { font-size: 0.66rem; font-weight: 600; color: var(--text-muted); }
+    .sim-val-input span { font-size: 0.66rem; font-weight: 600; color: var(--text-muted); }
     .sim-slider {
       -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
-      background: var(--surface-subtle); border-radius: 2px; outline: none; cursor: pointer; margin: 2px 0;
+      background: var(--surface-subtle); border-radius: 2px; outline: none; cursor: pointer; margin: 4px 0 2px 0;
     }
     .sim-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
@@ -440,116 +529,243 @@
     }
     .sim-slider-scale { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); }
 
-    .sim-strategy-cluster {
-      display: flex; flex-direction: column; gap: 5px; margin-top: 2px; padding-top: 6px;
-      border-top: 1px dashed var(--border-divider);
+    /* Action Cluster */
+    .sim-actions-cluster {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
     }
-    .sim-strategy-opt {
-      display: flex; align-items: flex-start; gap: 6px; background: var(--surface-base);
-      border: 1px solid var(--border-subtle); padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer;
-    }
-    .sim-strategy-opt input[type="radio"] { accent-color: #529285; margin-top: 2px; }
-    .strategy-details strong { font-size: 0.68rem; display: block; color: var(--text-primary); }
-    .strategy-details span { font-size: 0.6rem; color: var(--text-muted); }
 
-    /* Right: Integrated Workspace */
-    .sim-baseline-strip { padding: 12px 16px; gap: 8px; }
-    .baseline-kpi-row {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    .sim-btn-run {
+      width: 100%;
+      padding: 10px 16px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--text-primary);
+      color: #FFFFFF;
+      border-radius: var(--radius-sm);
     }
-    .base-kpi-pill {
-      background: var(--surface-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
-      padding: 8px 12px; display: flex; flex-direction: column; gap: 2px;
+    .sim-btn-run:hover {
+      background: #1e2226;
+      color: #FFFFFF;
     }
-    .base-kpi-pill .kpi-tag {
-      font-size: 0.64rem; font-weight: 600; color: var(--text-muted);
-      display: inline-flex; align-items: center; gap: 4px;
-    }
-    .base-kpi-pill .kpi-num { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
-    .kpi-pill-avail { border-left: 3px solid #66756B; }
 
-    /* Large Comparative Board */
-    .sim-simulation-card { padding: 16px 20px; gap: 12px; }
-    .sim-compare-board {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      background: var(--surface-base); border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm); padding: 14px 20px;
-    }
-    .compare-seg { display: flex; flex-direction: column; gap: 2px; }
-    .compare-lbl { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-muted); }
-    .compare-seg h3 { font-size: 1.65rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; margin: 0; }
-    .compare-arrow { color: var(--border-divider); font-size: 1.15rem; }
-    
-    .seg-scenario {
-      position: relative; background: #FFFFFF; border: 1.5px solid var(--border-subtle);
-      padding: 8px 18px; border-radius: var(--radius-sm); min-width: 170px; transition: all 0.2s ease;
-    }
-    .seg-scenario.within-target { border-color: #66756B; }
-    .seg-scenario.within-target h3 { color: #66756B; }
-    .seg-scenario.below-target { border-color: #A65D57; background: #FAF0EE; }
-    .seg-scenario.below-target h3 { color: #A65D57; }
-    .threshold-tag { font-size: 0.6rem; font-weight: 700; color: var(--text-muted); }
-    .seg-diff { min-width: 100px; }
-    .seg-diff h3 { font-size: 1.4rem; }
-    .diff-state-caption { font-size: 0.62rem; color: var(--text-muted); }
-
-    /* Slider Track */
-    .sim-visual-track {
-      display: flex; flex-direction: column; gap: 5px; padding: 6px 12px;
-      background: var(--surface-base); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
-    }
-    .track-labels { display: flex; justify-content: space-between; font-size: 0.66rem; font-weight: 600; color: var(--text-secondary); }
-    .track-rail { position: relative; width: 100%; height: 4px; background: var(--border-divider); border-radius: 2px; }
-    .track-dot { position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; transition: left 0.15s ease; }
-    .dot-base { background: #5F666D; z-index: 2; }
-    .dot-scen { background: #529285; z-index: 3; }
-    .track-active-bar { position: absolute; height: 4px; background: rgba(82, 146, 133, 0.4); border-radius: 2px; }
-
-    /* Split Bottom Cards */
-    .sim-bottom-split {
+    /* Result Cards Triad */
+    .sim-results-triad {
       display: grid;
-      grid-template-columns: 58% 1fr;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .sim-result-pill {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sim-result-pill.highlight {
+      border-color: var(--status-healthy);
+    }
+
+    .sim-result-pill.highlight.warning-state {
+      border-color: var(--status-warning);
+      background: var(--status-warning-bg);
+    }
+
+    .res-label {
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .res-value {
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .res-sub {
+      font-size: 0.66rem;
+      color: var(--text-secondary);
+    }
+
+    /* Analytics Split: Calculation + Chart */
+    .sim-analytics-split {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
       gap: 14px;
+    }
+
+    /* Mathematical Formulation Board */
+    .calc-math-board {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', monospace;
+    }
+
+    .math-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+    }
+
+    .math-param {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .math-val {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .math-divider {
+      height: 1px;
+      background: var(--border-divider);
+      margin: 2px 0;
+    }
+
+    .math-formula {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-top: 4px;
+    }
+
+    .formula-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 0.75rem;
+      padding: 0 4px;
+    }
+
+    .numerator {
+      border-bottom: 1px solid var(--text-primary);
+      padding-bottom: 1px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .denominator {
+      padding-top: 1px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .formula-result {
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+
+    .formula-result strong {
+      color: var(--status-healthy);
+    }
+
+    /* Chart Canvas Wrapper */
+    .sim-chart-container {
+      position: relative;
+      height: 175px;
       width: 100%;
     }
-    .sim-impact-card, .sim-interpret-card { padding: 14px 16px; justify-content: flex-start; }
-    .sim-table-impact { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
-    .sim-table-impact th, .sim-table-impact td { padding: 8px 9px; border-bottom: 1px solid var(--border-subtle); text-align: left; }
-    .sim-table-impact th { font-size: 0.64rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; background: var(--surface-base); }
 
-    .interpret-status-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .interpret-pill { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 4px; }
-    .interpret-pill.status-within { background: #EDF2EE; color: #66756B; }
-    .interpret-pill.status-below { background: #FAF0EE; color: #A65D57; }
-    .interpret-target-lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; }
-    .interpret-narrative { font-size: 0.76rem; line-height: 1.5; color: var(--text-secondary); margin: 0; }
-
-    /* Key Takeaway */
-    .sim-takeaway-bar {
-      background: var(--surface-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
-      padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 10px; width: 100%;
+    /* Collapsible MTTR Reference Table */
+    .sim-reference-card {
+      padding: 14px 18px;
     }
-    .takeaway-badge {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 0.64rem;
-      font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.08em; white-space: nowrap;
-    }
-    .takeaway-sentence { font-size: 0.76rem; color: var(--text-primary); font-weight: 600; margin: 0; flex: 1; min-width: 240px; }
-    .sim-disclaimer-text { font-size: 0.63rem; color: var(--text-muted); text-align: right; line-height: 1.35; }
 
-    /* Helper styles */
-    .diff-up-green { color: #66756B; font-weight: 700; }
-    .diff-down-green { color: #66756B; font-weight: 700; }
-    .diff-up-red { color: #A65D57; font-weight: 700; }
-    .diff-down-red { color: #A65D57; font-weight: 700; }
-    .diff-neutral { color: var(--text-muted); font-weight: 600; }
+    .btn-toggle-ref {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      transition: transform 0.2s ease;
+    }
+
+    .btn-toggle-ref.collapsed i {
+      transform: rotate(-90deg);
+    }
+
+    .sim-reference-body {
+      transition: max-height 0.25s ease;
+      overflow: hidden;
+    }
+
+    .sim-reference-body.collapsed {
+      display: none;
+    }
+
+    .sim-ref-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.74rem;
+    }
+
+    .sim-ref-table th,
+    .sim-ref-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sim-ref-table tr:hover td {
+      background-color: var(--surface-subtle);
+    }
+
+    /* System Engineering Disclaimer Note */
+    .sim-system-disclaimer {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .sim-system-disclaimer i {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+
+    .sim-system-disclaimer p {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin: 0;
+    }
 
     /* Mobile & Tablet Optimizations */
     @media (max-width: 1100px) {
       .app-layout { grid-template-columns: 1fr; }
       .sidebar { border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 18px; }
+      .sim-hierarchy-grid { grid-template-columns: 1fr; }
       .sim-dashboard-grid { grid-template-columns: 1fr; }
-      .sim-bottom-split { grid-template-columns: 1fr; }
+      .sim-analytics-split { grid-template-columns: 1fr; }
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .insights-grid { grid-template-columns: 1fr; }
     }
@@ -559,29 +775,14 @@
       .topbar { flex-direction: column; align-items: stretch; gap: 10px; }
       .search-box { width: 100%; }
       .topbar-actions { justify-content: space-between; width: 100%; }
-
       .table-section { padding: 14px 10px; border-radius: var(--radius-md); }
       .table-frame { max-height: 400px; }
       table { min-width: 500px; font-size: 0.74rem; }
       th, td { padding: 8px 10px; }
-
       .kpi-grid { grid-template-columns: 1fr; }
-      
       .simulator-section { padding: 14px 12px; }
-      .sim-compare-board { 
-        flex-direction: column; 
-        align-items: stretch; 
-        text-align: center; 
-        padding: 12px 10px;
-        gap: 8px;
-      }
-      .compare-arrow { transform: rotate(90deg); margin: 2px 0; }
-      .seg-scenario { min-width: 0; width: 100%; padding: 10px; }
-      .seg-diff { min-width: 0; width: 100%; }
-
-      .baseline-kpi-row { grid-template-columns: 1fr; gap: 6px; }
-      .sim-takeaway-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
-      .sim-disclaimer-text { text-align: left; }
+      .sim-results-triad { grid-template-columns: 1fr; }
+      .sim-system-disclaimer { flex-direction: column; gap: 6px; }
     }
 
     /* Modals & Drawer */
@@ -599,7 +800,6 @@
     .btn-drawer-back { background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
     .drawer-level-tag { font-size: 0.6rem; font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.07em; }
     .drawer-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
-    .drawer-close:hover { color: var(--text-primary); }
     .drawer-body { padding: 18px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .drawer-title-group h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
     .drawer-title-group .drawer-subtitle { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
@@ -616,33 +816,18 @@
     .drawer-table th { background: var(--surface-base); color: var(--text-muted); font-weight: 600; }
     .drawer-btn-viewall { margin-top: 6px; width: 100%; padding: 8px; background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-primary); font-size: 0.72rem; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; font-family: inherit; }
 
-    /* ============================================================
-       MODALS: REDESIGNED WITH CARDS & PROPER SPACING
-       ============================================================ */
+    /* Modals */
     .modal-overlay { 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background: rgba(52, 58, 64, 0.4); 
-      backdrop-filter: blur(4px); 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      z-index: 1000; 
-      opacity: 0; 
-      pointer-events: none; 
-      transition: opacity 0.2s ease; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(52, 58, 64, 0.4); backdrop-filter: blur(4px); 
+      display: flex; align-items: center; justify-content: center; 
+      z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; 
     }
     .modal-overlay.show { opacity: 1; pointer-events: auto; }
     
     .modal-box { 
-      background: var(--surface-card); 
-      width: 92%; 
-      max-width: 440px; 
-      border-radius: var(--radius-lg); 
-      padding: 22px; 
+      background: var(--surface-card); width: 92%; max-width: 440px; 
+      border-radius: var(--radius-lg); padding: 22px; 
       box-shadow: 0 16px 36px rgba(52, 58, 64, 0.16); 
       border: 1px solid var(--border-subtle); 
     }
@@ -655,7 +840,6 @@
     .modal-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.82rem; outline: none; margin-bottom: 6px; }
     .error-msg { font-size: 0.72rem; color: var(--status-warning); margin-bottom: 8px; }
 
-    /* แก้ปัญหาปุ่ม Radio กองกัน: ให้แยกเป็นการ์ดแถวตรงสวยงาม */
     .sheet-options-list {
       display: flex !important;
       flex-direction: column !important;
@@ -796,7 +980,6 @@
         </div>
         
         <div class="topbar-actions">
-          <!-- Language Switcher Toggle -->
           <div class="lang-switch" id="langSwitch">
             <button class="btn-lang active" data-lang="en">EN</button>
             <span class="lang-divider">|</span>
@@ -990,7 +1173,7 @@
       </section>
 
       <!-- ============================================================
-           PERFECTED EXECUTIVE RAM WHAT-IF SIMULATOR
+           UPGRADED RAM WHAT-IF SIMULATOR
            ============================================================ -->
       <section class="simulator-section" id="simulatorSection">
         
@@ -998,282 +1181,229 @@
         <div class="sim-header">
           <div class="sim-header-text">
             <h2 class="sim-main-title">RAM WHAT-IF SIMULATOR</h2>
-            <p class="sim-subtitle">Test how changes in MTBF and MTTR affect Availability</p>
+            <p class="sim-subtitle">Scenario-based availability modeling with cause-dependent simulated MTTR parameters</p>
           </div>
           <div class="sim-header-actions">
-            <span class="sim-status-badge"><i class="fa-solid fa-flask"></i> Simulated Scenario</span>
-            <button class="btn-sim-reset" id="simResetBtn" title="Restore baseline parameters">
+            <span class="sim-status-badge"><i class="fa-solid fa-microchip"></i> Simulation Sandbox</span>
+            <button type="button" class="btn-action" id="simResetBtn" title="Reset parameters to baseline">
               <i class="fa-solid fa-rotate-left"></i> Reset
             </button>
           </div>
         </div>
 
-        <!-- 12-Column Dashboard Grid -->
+        <!-- Step 1: Scenario Selection (Full-Width Card) -->
+        <div class="sim-card sim-scenario-card">
+          <div class="sim-card-head">
+            <h3>What-If Scenario</h3>
+            <p>Select equipment and failure hierarchy to load simulated MTTR parameters</p>
+          </div>
+          <div class="sim-hierarchy-grid">
+            <div class="sim-form-group">
+              <label for="simEquipmentSelect"><i class="fa-solid fa-cube"></i> Equipment</label>
+              <select id="simEquipmentSelect" class="custom-select sim-select">
+                <option value="" disabled selected>Select Equipment...</option>
+              </select>
+            </div>
+            <div class="sim-form-group">
+              <label for="simFailureModeSelect"><i class="fa-solid fa-triangle-exclamation"></i> Failure Mode</label>
+              <select id="simFailureModeSelect" class="custom-select sim-select" disabled>
+                <option value="" disabled selected>Select Failure Mode...</option>
+              </select>
+            </div>
+            <div class="sim-form-group">
+              <label for="simFailureCauseSelect"><i class="fa-solid fa-circle-nodes"></i> Failure Cause</label>
+              <select id="simFailureCauseSelect" class="custom-select sim-select" disabled>
+                <option value="" disabled selected>Select Failure Cause...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Multi-Column Interactive Grid -->
         <div class="sim-dashboard-grid">
-
-          <!-- LEFT COLUMN: Scenario Setup Card (320px) -->
+          
+          <!-- LEFT COLUMN: Parameter Workbench -->
           <aside class="sim-col-setup">
-            <div class="sim-card sim-card-setup">
+            <div class="sim-card">
               <div class="sim-card-head">
-                <h3>SCENARIO SETUP</h3>
-                <p>Select a failure and adjust parameters</p>
+                <h3>Simulation Parameters</h3>
+                <p>Configure MTTR mode, operational MTBF, and target baseline</p>
               </div>
 
-              <!-- Failure Code Selector -->
-              <div class="sim-form-group">
-                <label for="simScenarioSelect">Failure Code</label>
-                <div class="sim-select-wrapper">
-                  <select id="simScenarioSelect" class="sim-select"></select>
+              <!-- MTTR Parameter Module -->
+              <div class="sim-param-block">
+                <div class="sim-block-header">
+                  <label class="sim-label">Repair Time (MTTR)</label>
+                  <div class="sim-segmented-switch">
+                    <button type="button" class="sim-seg-btn active" id="simModePresetBtn">Use Preset</button>
+                    <button type="button" class="sim-seg-btn" id="simModeCustomBtn">Custom</button>
+                  </div>
                 </div>
-              </div>
 
-              <!-- Context Specs Box -->
-              <div class="sim-specs-box">
-                <div class="spec-item">
-                  <span class="spec-label"><i class="fa-solid fa-cube"></i> Component</span>
-                  <strong class="spec-val" id="simCompName">-</strong>
+                <!-- Highlighted Preset Display -->
+                <div class="sim-preset-card" id="simPresetCard">
+                  <div class="preset-label">Simulated MTTR</div>
+                  <div class="preset-value-row">
+                    <strong id="simPresetVal">--</strong>
+                    <span class="unit">hours</span>
+                  </div>
+                  <p class="preset-hint" id="simPresetHint">Auto-filled based on the selected failure cause.</p>
                 </div>
-                <div class="spec-item">
-                  <span class="spec-label"><i class="fa-solid fa-triangle-exclamation"></i> Failure Mode</span>
-                  <span class="spec-val" id="simFailMode">-</span>
-                </div>
-                <div class="spec-item spec-cause-item">
-                  <span class="spec-label"><i class="fa-solid fa-circle-nodes"></i> Failure Cause</span>
-                  <span class="spec-val spec-cause-text" id="simFailCause">-</span>
-                </div>
-              </div>
 
-              <!-- Adjust Parameter Segmented Control -->
-              <div class="sim-param-module">
-                <label class="sim-sub-label">Adjust Parameter</label>
-                <div class="sim-segmented-control">
-                  <button class="sim-seg-btn active" data-mode="mttr">MTTR</button>
-                  <button class="sim-seg-btn" data-mode="mtbf">MTBF</button>
-                  <button class="sim-seg-btn" data-mode="target">Target Availability</button>
+                <!-- Editable Input (Custom mode override) -->
+                <div class="sim-input-row" id="simCustomInputRow" style="margin-top: 6px;">
+                  <span class="input-lbl">Operating MTTR (hrs)</span>
+                  <div class="sim-val-input">
+                    <input type="number" id="simMttrInput" min="0.5" max="150" step="0.5" value="18" readonly />
+                    <span>hrs</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Parameter Input Panes -->
-              <div class="sim-controls-deck">
-                
-                <!-- MODE 1: MTTR -->
-                <div class="sim-pane active" id="simPaneMttr">
-                  <div class="sim-input-row">
-                    <span class="input-lbl">New MTTR (hours)</span>
-                    <div class="sim-input-pill">
-                      <input type="number" id="simMttrNum" min="0.5" max="120" step="0.5" />
-                      <span>hrs</span>
-                    </div>
-                  </div>
-                  <input type="range" class="sim-slider" id="simMttrSlider" min="0.5" max="96" step="0.5" />
-                  <div class="sim-slider-scale">
-                    <span>0.5 hrs</span>
-                    <span>24 hrs</span>
-                    <span>48 hrs</span>
-                    <span>96 hrs</span>
+              <!-- MTBF Module -->
+              <div class="sim-param-block">
+                <div class="sim-input-row">
+                  <label for="simMtbfInput" class="sim-label">MTBF (hours)</label>
+                  <div class="sim-val-input">
+                    <input type="number" id="simMtbfInput" min="100" max="250000" step="100" value="4320" />
+                    <span>hrs</span>
                   </div>
                 </div>
+                <input type="range" class="sim-slider" id="simMtbfSlider" min="500" max="50000" step="250" value="4320" />
+                <div class="sim-slider-scale">
+                  <span>500 hrs</span>
+                  <span>25k hrs</span>
+                  <span>50k hrs</span>
+                </div>
+              </div>
 
-                <!-- MODE 2: MTBF -->
-                <div class="sim-pane" id="simPaneMtbf">
-                  <div class="sim-input-row">
-                    <span class="input-lbl">New MTBF (hours)</span>
-                    <div class="sim-input-pill">
-                      <input type="number" id="simMtbfNum" min="500" max="150000" step="250" />
-                      <span>hrs</span>
-                    </div>
-                  </div>
-                  <input type="range" class="sim-slider" id="simMtbfSlider" min="1000" max="100000" step="500" />
-                  <div class="sim-slider-scale">
-                    <span>1k hrs</span>
-                    <span>25k hrs</span>
-                    <span>50k hrs</span>
-                    <span>100k hrs</span>
+              <!-- Target Availability Module -->
+              <div class="sim-param-block">
+                <div class="sim-input-row">
+                  <label for="simTargetInput" class="sim-label">Target Availability (%)</label>
+                  <div class="sim-val-input pill-accent">
+                    <input type="number" id="simTargetInput" min="80.00" max="99.99" step="0.01" value="96.00" />
+                    <span>%</span>
                   </div>
                 </div>
+              </div>
 
-                <!-- MODE 3: Target Availability -->
-                <div class="sim-pane" id="simPaneTarget">
-                  <div class="sim-input-row">
-                    <span class="input-lbl">Target Availability (%)</span>
-                    <div class="sim-input-pill pill-accent">
-                      <input type="number" id="simTargetNum" min="90.00" max="99.99" step="0.01" />
-                      <span>%</span>
-                    </div>
-                  </div>
-                  <input type="range" class="sim-slider" id="simTargetSlider" min="95.00" max="99.99" step="0.01" />
-                  <div class="sim-slider-scale">
-                    <span>95.00%</span>
-                    <span>96.00%</span>
-                    <span>98.00%</span>
-                    <span>99.99%</span>
-                  </div>
-
-                  <!-- Two Strategies -->
-                  <div class="sim-strategy-cluster">
-                    <label class="sim-strategy-opt">
-                      <input type="radio" name="simStrategy" value="fixed-mttr" checked />
-                      <div class="strategy-details">
-                        <strong>Keep MTTR Fixed</strong>
-                        <span>Calculate Required MTBF</span>
-                      </div>
-                    </label>
-                    <label class="sim-strategy-opt">
-                      <input type="radio" name="simStrategy" value="fixed-mtbf" />
-                      <div class="strategy-details">
-                        <strong>Keep MTBF Fixed</strong>
-                        <span>Calculate Maximum MTTR</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
+              <!-- Run Simulation Actions -->
+              <div class="sim-actions-cluster">
+                <button type="button" class="btn-action sim-btn-run" id="simRunBtn">
+                  <i class="fa-solid fa-play"></i> Run Simulation
+                </button>
               </div>
             </div>
           </aside>
 
-          <!-- RIGHT COLUMN: Analysis Workspace -->
+          <!-- RIGHT COLUMN: Results & Calculation Analytics -->
           <main class="sim-col-workspace">
-
-            <!-- Card 1: Baseline Strip -->
-            <div class="sim-card sim-baseline-strip">
-              <div class="sim-card-head sim-flex-between">
-                <div>
-                  <h3>BASELINE</h3>
-                  <p>Current simulated parameters</p>
-                </div>
-                <span class="sim-header-note">Values from selected failure code</span>
+            
+            <!-- Compact Results Triad -->
+            <div class="sim-results-triad">
+              <div class="sim-card sim-result-pill">
+                <span class="res-label">Baseline Availability</span>
+                <strong class="res-value" id="simResBaseline">99.12%</strong>
+                <span class="res-sub">Selected equipment record</span>
               </div>
-
-              <div class="baseline-kpi-row">
-                <div class="base-kpi-pill">
-                  <span class="kpi-tag"><i class="fa-regular fa-clock"></i> MTBF</span>
-                  <strong class="kpi-num" id="simBaseMtbf">- hrs</strong>
-                </div>
-                <div class="base-kpi-pill">
-                  <span class="kpi-tag"><i class="fa-solid fa-screwdriver-wrench"></i> MTTR</span>
-                  <strong class="kpi-num" id="simBaseMttr">- hrs</strong>
-                </div>
-                <div class="base-kpi-pill kpi-pill-avail">
-                  <span class="kpi-tag"><i class="fa-regular fa-circle-check"></i> Availability</span>
-                  <strong class="kpi-num" id="simBaseAvail">-%</strong>
-                </div>
+              <div class="sim-card sim-result-pill highlight" id="simResSimulatedBox">
+                <span class="res-label">Simulated Availability</span>
+                <strong class="res-value" id="simResSimulated">--%</strong>
+                <span class="res-sub" id="simTargetIndicator">Target: ≥ 96.00%</span>
+              </div>
+              <div class="sim-card sim-result-pill">
+                <span class="res-label">Availability Change</span>
+                <strong class="res-value" id="simResChange">--%</strong>
+                <span class="res-sub" id="simChangeSub">Impact relative to baseline</span>
               </div>
             </div>
 
-            <!-- Card 2: What-If Comparative Board -->
-            <div class="sim-card sim-simulation-card">
-              <div class="sim-card-head">
-                <h3>WHAT-IF SIMULATION</h3>
-                <p>Adjust the parameter and see the impact in real time</p>
-              </div>
-
-              <!-- Visual Compare Board -->
-              <div class="sim-compare-board">
-                <div class="compare-seg">
-                  <span class="compare-lbl">BASELINE AVAILABILITY</span>
-                  <h3 id="simBoardBaseAvail">-%</h3>
-                </div>
-
-                <div class="compare-arrow">
-                  <i class="fa-solid fa-arrow-right"></i>
-                </div>
-
-                <div class="compare-seg seg-scenario" id="simBoardScenarioBox">
-                  <span class="compare-lbl">SCENARIO AVAILABILITY</span>
-                  <h3 id="simBoardScenAvail">-%</h3>
-                  <span class="threshold-tag" id="simBoardThresholdLabel">Target ≥ 96.00%</span>
-                </div>
-
-                <div class="compare-seg seg-diff" id="simBoardDeltaBox">
-                  <span class="compare-lbl">DIFFERENCE</span>
-                  <h3 id="simBoardDiffAvail">—</h3>
-                  <span class="diff-state-caption" id="simBoardDiffCaption">No variation</span>
-                </div>
-              </div>
-
-              <!-- Slider Visual Feedback Bar -->
-              <div class="sim-visual-track" id="simVisualTrack">
-                <div class="track-labels">
-                  <span id="trackLblBase">Baseline MTTR: 72.00 hrs</span>
-                  <span id="trackLblScen">Scenario MTTR: 72.00 hrs</span>
-                </div>
-                <div class="track-rail">
-                  <div class="track-dot dot-base" id="trackDotBase" title="Baseline position"></div>
-                  <div class="track-dot dot-scen" id="trackDotScen" title="Scenario position"></div>
-                  <div class="track-active-bar" id="trackActiveBar"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Card 3 & 4: Impact Summary & Interpretation -->
-            <div class="sim-bottom-split">
+            <!-- Live Calculation Verification & Chart Split -->
+            <div class="sim-analytics-split">
               
-              <!-- Impact Summary Table -->
-              <div class="sim-card sim-impact-card">
+              <!-- Calculation Walkthrough Box -->
+              <div class="sim-card sim-calc-card">
                 <div class="sim-card-head">
-                  <h3>IMPACT SUMMARY</h3>
-                  <p>Comparison between baseline and scenario</p>
+                  <h3>Reliability Calculation</h3>
+                  <p>A = MTBF / (MTBF + MTTR)</p>
                 </div>
-                <table class="sim-table-impact">
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Baseline</th>
-                      <th>Scenario</th>
-                      <th>Change</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><strong>MTBF</strong></td>
-                      <td id="simCmpBaseMtbf">-</td>
-                      <td id="simCmpScenMtbf">-</td>
-                      <td id="simCmpDeltaMtbf">-</td>
-                    </tr>
-                    <tr>
-                      <td><strong>MTTR</strong></td>
-                      <td id="simCmpBaseMttr">-</td>
-                      <td id="simCmpScenMttr">-</td>
-                      <td id="simCmpDeltaMttr">-</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Availability</strong></td>
-                      <td id="simCmpBaseAvail">-</td>
-                      <td id="simCmpScenAvail">-</td>
-                      <td id="simCmpDeltaAvail">-</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div class="calc-math-board">
+                  <div class="math-row">
+                    <span class="math-param">MTBF</span>
+                    <span class="math-val" id="calcParamMtbf">4,320 hrs</span>
+                  </div>
+                  <div class="math-row">
+                    <span class="math-param">MTTR</span>
+                    <span class="math-val" id="calcParamMttr">18 hrs</span>
+                  </div>
+                  <div class="math-divider"></div>
+                  <div class="math-formula">
+                    <div class="formula-line">
+                      <span>Availability</span> = 
+                      <span class="frac">
+                        <span class="numerator" id="calcFormulaNum">4,320</span>
+                        <span class="denominator" id="calcFormulaDen">4,320 + 18</span>
+                      </span>
+                    </div>
+                    <div class="formula-result">
+                      = <strong id="calcFormulaRes">99.59%</strong>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Interpretation Card -->
-              <div class="sim-card sim-interpret-card" id="simInterpretCard">
-                <div class="interpret-status-bar">
-                  <span class="interpret-pill status-within" id="simFeasibilityBadge">✓ WITHIN TARGET</span>
-                  <span class="interpret-target-lbl">Target: ≥ 96.00%</span>
+              <!-- Availability Comparison Visualizer -->
+              <div class="sim-card sim-chart-card">
+                <div class="sim-card-head">
+                  <h3>Availability Comparison</h3>
+                  <p>Baseline vs. Simulated Scenario against Target</p>
                 </div>
-                <p class="interpret-narrative" id="simInterpretationText">
-                  Under this simulated scenario, Availability remains above the target threshold.
-                </p>
+                <div class="sim-chart-container">
+                  <canvas id="simComparisonChart"></canvas>
+                </div>
               </div>
 
+            </div>
+
+            <!-- Collapsible Simulated MTTR Reference Matrix -->
+            <div class="sim-card sim-reference-card">
+              <div class="sim-card-head sim-flex-between" id="simRefHeader" style="cursor: pointer;">
+                <div>
+                  <h3>Simulated MTTR Reference Matrix</h3>
+                  <p>Predefined parameters for <span id="simRefEquipmentTitle" style="color: var(--brand-champagne); font-weight: 700;">Selected Equipment</span></p>
+                </div>
+                <button type="button" class="btn-toggle-ref" id="simRefToggleBtn">
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+              </div>
+              <div class="sim-reference-body" id="simRefBody">
+                <div class="table-frame" style="max-height: 220px;">
+                  <table class="sim-ref-table">
+                    <thead>
+                      <tr>
+                        <th>Failure Mode</th>
+                        <th>Failure Cause</th>
+                        <th style="text-align: right;">Preset MTTR (hrs)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="simRefTableBody">
+                      <tr>
+                        <td colspan="3" style="text-align: center; color: var(--text-muted);">Please select an equipment to populate simulated parameters.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
           </main>
         </div>
 
-        <!-- Card 5: Slim Key Takeaway Bar & Disclaimer -->
-        <div class="sim-takeaway-bar">
-          <div class="takeaway-badge">
-            <i class="fa-solid fa-bolt"></i> KEY TAKEAWAY
-          </div>
-          <p class="takeaway-sentence" id="simTakeawayText">
-            Under this simulated scenario, Availability remains above the 96% target.
-          </p>
-          <span class="sim-disclaimer-text">
-            MTBF and MTTR values are simulated parameters used for prototype RAM analysis while long-term historical failure data is not yet available.
-          </span>
+        <!-- Engineering System Note / Disclaimer Box -->
+        <div class="sim-system-disclaimer">
+          <i class="fa-solid fa-circle-info"></i>
+          <p>MTTR values in the What-If Simulator are predefined simulation parameters assigned according to failure causes. They are used for scenario analysis to evaluate the effect of repair time on equipment availability and do not represent actual historical maintenance records.</p>
         </div>
 
       </section>
@@ -1347,6 +1477,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=205"></script>
+  <script src="script.js?v=300"></script>
 </body>
 </html>
