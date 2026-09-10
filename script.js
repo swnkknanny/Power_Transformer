@@ -67,7 +67,43 @@ const i18nData = {
     modal_export_sub: "Documentation Scope",
     modal_export_desc: "Select subsystem domain to compile formatted operational brief:",
     btn_dismiss: "Dismiss",
-    btn_gen_brief: "Generate Brief"
+    btn_gen_brief: "Generate Brief",
+
+    // Simulator i18n
+    sim_title: "RAM WHAT-IF SIMULATOR",
+    sim_subtitle: "Scenario-based availability modeling with cause-dependent simulated MTTR parameters",
+    sim_sandbox_badge: "Simulation Sandbox",
+    sim_reset: "Reset",
+    sim_scenario_title: "What-If Scenario",
+    sim_scenario_desc: "Select equipment and failure hierarchy to load simulated MTTR parameters",
+    sim_lbl_equipment: "Equipment",
+    sim_lbl_failure_mode: "Failure Mode",
+    sim_lbl_failure_cause: "Failure Cause",
+    sim_params_title: "Simulation Parameters",
+    sim_params_desc: "Configure MTTR mode, operational MTBF, and target baseline",
+    sim_lbl_repair_time: "Repair Time (MTTR)",
+    sim_btn_preset: "Use Preset",
+    sim_btn_custom: "Custom",
+    sim_lbl_preset_mttr: "Simulated MTTR",
+    sim_hint_preset: "Auto-filled based on the selected failure cause.",
+    sim_lbl_operating_mttr: "Operating MTTR (hrs)",
+    sim_lbl_operating_mtbf: "MTBF (hours)",
+    sim_lbl_target_avail: "Target Availability (%)",
+    sim_btn_run: "Run Simulation",
+    sim_lbl_baseline_avail: "Baseline Availability",
+    sim_sub_baseline: "Selected equipment record",
+    sim_lbl_simulated_avail: "Simulated Availability",
+    sim_lbl_avail_change: "Availability Change",
+    sim_sub_change: "Impact relative to baseline",
+    sim_calc_title: "Reliability Calculation",
+    sim_chart_title: "Availability Comparison",
+    sim_chart_desc: "Baseline vs. Simulated Scenario against Target",
+    sim_ref_title: "Simulated MTTR Reference Matrix",
+    sim_ref_desc: "Predefined parameters for",
+    sim_col_mode: "Failure Mode",
+    sim_col_cause: "Failure Cause",
+    sim_col_preset_mttr: "Preset MTTR (hrs)",
+    sim_disclaimer: "MTTR values in the What-If Simulator are predefined simulation parameters assigned according to failure causes. They are used for scenario analysis to evaluate the effect of repair time on equipment availability and do not represent actual historical maintenance records."
   },
   th: {
     brand_sub: "ความน่าเชื่อถือของสถานีไฟฟ้า",
@@ -132,7 +168,43 @@ const i18nData = {
     modal_export_sub: "Executive Brief Export",
     modal_export_desc: "เลือกระบบย่อยที่ต้องการสร้างรายงานสรุป:",
     btn_dismiss: "ปิดหน้าต่าง",
-    btn_gen_brief: "พิมพ์รายงาน"
+    btn_gen_brief: "พิมพ์รายงาน",
+
+    // Simulator i18n (ภาษาไทย - ใช้คำทางการตามหลักวิศวกรรม)
+    sim_title: "แบบจำลอง RAM WHAT-IF",
+    sim_subtitle: "การจำลองความพร้อมใช้งานตามสถานการณ์ข้อบกพร่องและเวลาบำรุงรักษาจำลอง (MTTR)",
+    sim_sandbox_badge: "พื้นที่ทดลองจำลอง",
+    sim_reset: "รีเซ็ตค่า",
+    sim_scenario_title: "เลือกสถานการณ์จำลอง (What-If Scenario)",
+    sim_scenario_desc: "เลือกลำดับขั้นอุปกรณ์และข้อบกพร่องเพื่อดึงพารามิเตอร์ MTTR จำลอง",
+    sim_lbl_equipment: "อุปกรณ์",
+    sim_lbl_failure_mode: "ลักษณะข้อบกพร่อง (Failure Mode)",
+    sim_lbl_failure_cause: "สาเหตุข้อบกพร่อง (Failure Cause)",
+    sim_params_title: "กำหนดค่าพารามิเตอร์จำลอง",
+    sim_params_desc: "เลือกโหมด MTTR ปรับค่า MTBF และกำหนดเกณฑ์เป้าหมาย",
+    sim_lbl_repair_time: "เวลาบำรุงรักษา (MTTR)",
+    sim_btn_preset: "ใช้ค่าจำลอง (Preset)",
+    sim_btn_custom: "กำหนดเอง (Custom)",
+    sim_lbl_preset_mttr: "MTTR จำลองตามสาเหตุ",
+    sim_hint_preset: "กำหนดค่าอัตโนมัติตามสาเหตุข้อบกพร่องที่เลือก",
+    sim_lbl_operating_mttr: "เวลาบำรุงรักษาที่ใช้ (ชม.)",
+    sim_lbl_operating_mtbf: "ระยะเวลาทำงานก่อนเสียหาย MTBF (ชม.)",
+    sim_lbl_target_avail: "เป้าหมายความพร้อมใช้งาน (%)",
+    sim_btn_run: "ประมวลผลแบบจำลอง",
+    sim_lbl_baseline_avail: "ความพร้อมใช้งานเริ่มต้น",
+    sim_sub_baseline: "จากข้อมูลอุปกรณ์ปัจจุบัน",
+    sim_lbl_simulated_avail: "ความพร้อมใช้งานจำลอง",
+    sim_lbl_avail_change: "การเปลี่ยนแปลงความพร้อมใช้งาน",
+    sim_sub_change: "ผลต่างเทียบกับค่าเริ่มต้น",
+    sim_calc_title: "สูตรคำนวณความน่าเชื่อถือ",
+    sim_chart_title: "เปรียบเทียบความพร้อมใช้งาน",
+    sim_chart_desc: "ค่าเริ่มต้น เทียบกับ ผลจำลอง และเกณฑ์เป้าหมาย",
+    sim_ref_title: "ตารางอ้างอิงพารามิเตอร์ MTTR จำลอง",
+    sim_ref_desc: "พารามิเตอร์ที่กำหนดไว้สำหรับ",
+    sim_col_mode: "ลักษณะข้อบกพร่อง",
+    sim_col_cause: "สาเหตุข้อบกพร่อง",
+    sim_col_preset_mttr: "MTTR จำลอง (ชม.)",
+    sim_disclaimer: "ค่า MTTR ในแบบจำลอง What-If เป็นพารามิเตอร์จำลองที่กำหนดขึ้นตามลักษณะสาเหตุ เพื่อใช้ศึกษาผลกระทบของเวลาบำรุงรักษาต่อความพร้อมใช้งานของอุปกรณ์ มิใช่ข้อมูลประวัติการบำรุงรักษาจริงย้อนหลัง"
   }
 };
 
@@ -164,6 +236,11 @@ function setLanguage(lang) {
     titleEl.textContent = `${dict.table_title_prefix} ${sheetEl.value}`;
   }
   updateAuthUI();
+
+  // Re-run simulation to update dynamic labels, target indicator, and chart labels
+  if (typeof runSimulatorCalculation === 'function') {
+    runSimulatorCalculation();
+  }
 }
 
 // ============================================================
@@ -756,20 +833,16 @@ function applyTableFilter() {
 }
 
 // ============================================================
-// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (DATA & LOGIC CORE)
+// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (COMPLETE CORE)
 // ============================================================
 let updateSimulatorEquipment = null;
+let runSimulatorCalculation = null;
 
 function initSimulatorEngine() {
-  /**
-   * Deterministic Simulation Severity Heuristic:
-   * Maps existing Failure Causes (Thai & English) to practical rounded MTTR values:
-   * 2, 3, 4, 6, 8, 10, 12, 16, 18, 24, 30, 36, 48 hrs.
-   */
   function deriveSimulatedPresetMTTR(causeText, modeText) {
     const combined = `${modeText || ''} ${causeText || ''}`.toLowerCase();
 
-    // 1. Extensive intervention / Catastrophic damage (36 - 48 hrs)
+    // 1. Extensive repair / major equipment intervention (36 - 48 hrs)
     if (
       combined.includes("breakdown") || combined.includes("rupture") || 
       combined.includes("deformation") || combined.includes("short circuit") ||
@@ -840,10 +913,8 @@ function initSimulatorEngine() {
     return 10;
   }
 
-  // Normalized hierarchy registry
   let simulatedMTTRMap = {};
 
-  // Single shared simulation state object (Source of Truth)
   const simState = {
     selectedEquipment: "",
     selectedMode: "",
@@ -861,7 +932,6 @@ function initSimulatorEngine() {
 
   let simChartInstance = null;
 
-  // DOM references
   const eqSelect = document.getElementById("simEquipmentSelect");
   const modeSelect = document.getElementById("simFailureModeSelect");
   const causeSelect = document.getElementById("simFailureCauseSelect");
@@ -1034,7 +1104,11 @@ function initSimulatorEngine() {
     simState.presetMTTR = assignedMttr;
 
     if (presetVal) presetVal.textContent = simState.presetMTTR;
-    if (presetHint) presetHint.textContent = `Auto-filled based on: ${cause}`;
+    if (presetHint) {
+      presetHint.textContent = (currentLang === 'th')
+        ? `กำหนดค่าอัตโนมัติตาม: ${cause}`
+        : `Auto-filled based on: ${cause}`;
+    }
 
     if (!simState.isCustomMode) {
       simState.operatingMTTR = simState.presetMTTR;
@@ -1093,7 +1167,7 @@ function initSimulatorEngine() {
     }
   });
 
-  // MTBF range: 50 - 50,000 hrs
+  // Updated MTBF Listeners: Min floor 50
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
     simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
@@ -1122,13 +1196,14 @@ function initSimulatorEngine() {
       return;
     }
 
+    const dict = i18nData[currentLang] || i18nData.en;
     Object.entries(modes).forEach(([modeName, causesMap]) => {
       Object.entries(causesMap).forEach(([causeName, mttrHours]) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><strong>${modeName}</strong></td>
           <td>${causeName}</td>
-          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${mttrHours} hrs</td>
+          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${mttrHours} ${dict.unit_hrs}</td>
         `;
         refTableBody.appendChild(tr);
       });
@@ -1149,14 +1224,18 @@ function initSimulatorEngine() {
     simState.operatingMTTR = mttr;
     simState.targetAvailability = target;
 
+    // Availability = (MTBF / (MTBF + MTTR)) * 100
     const rawAvailability = (mtbf / (mtbf + mttr)) * 100;
     simState.simulatedAvailability = rawAvailability;
 
+    // Availability Change = Simulated - Baseline
     const delta = simState.simulatedAvailability - simState.baselineAvailability;
     simState.availabilityChange = delta;
-
     simState.meetsTarget = simState.simulatedAvailability >= simState.targetAvailability;
 
+    const dict = i18nData[currentLang] || i18nData.en;
+
+    // 1. Result Cards
     if (resSimulated) {
       resSimulated.textContent = `${simState.simulatedAvailability.toFixed(2)}%`;
       resSimulated.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
@@ -1185,14 +1264,21 @@ function initSimulatorEngine() {
     }
 
     if (targetIndicator) {
-      targetIndicator.textContent = simState.meetsTarget 
-        ? `Status: Meets Target (≥ ${target.toFixed(2)}%)` 
-        : `Status: Below Target (< ${target.toFixed(2)}%)`;
+      if (currentLang === 'th') {
+        targetIndicator.textContent = simState.meetsTarget 
+          ? `สถานะ: ผ่านเกณฑ์เป้าหมาย (≥ ${target.toFixed(2)}%)` 
+          : `สถานะ: ต่ำกว่าเกณฑ์เป้าหมาย (< ${target.toFixed(2)}%)`;
+      } else {
+        targetIndicator.textContent = simState.meetsTarget 
+          ? `Status: Meets Target (≥ ${target.toFixed(2)}%)` 
+          : `Status: Below Target (< ${target.toFixed(2)}%)`;
+      }
       targetIndicator.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
     }
 
-    if (calcMtbf) calcMtbf.textContent = `${mtbf.toLocaleString()} hrs`;
-    if (calcMttr) calcMttr.textContent = `${mttr.toFixed(1)} hrs`;
+    // 2. Math Walkthrough
+    if (calcMtbf) calcMtbf.textContent = `${mtbf.toLocaleString()} ${dict.unit_hrs}`;
+    if (calcMttr) calcMttr.textContent = `${mttr.toFixed(1)} ${dict.unit_hrs}`;
     if (calcNum) calcNum.textContent = mtbf.toLocaleString();
     if (calcDen) calcDen.textContent = `${mtbf.toLocaleString()} + ${mttr.toFixed(1)}`;
     if (calcRes) {
@@ -1200,8 +1286,11 @@ function initSimulatorEngine() {
       calcRes.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
     }
 
+    // 3. Comparison Chart
     renderComparisonChart(simState.baselineAvailability, simState.simulatedAvailability, simState.targetAvailability);
   }
+
+  runSimulatorCalculation = executeSimulation;
 
   function renderComparisonChart(baseline, simulated, target) {
     const canvas = document.getElementById("simComparisonChart");
@@ -1211,11 +1300,14 @@ function initSimulatorEngine() {
       simChartInstance.destroy();
     }
 
+    const baselineLabel = (currentLang === 'th') ? "ค่าเริ่มต้น (Baseline)" : "Baseline";
+    const simulatedLabel = (currentLang === 'th') ? "สถานการณ์จำลอง (Scenario)" : "Simulated Scenario";
+
     const ctx = canvas.getContext("2d");
     simChartInstance = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: ["Baseline", "Simulated Scenario"],
+        labels: [baselineLabel, simulatedLabel],
         datasets: [{
           data: [Number(baseline.toFixed(2)), Number(simulated.toFixed(2))],
           backgroundColor: ["#8E7C93", simulated >= target ? "#66756B" : "#A65D57"],
@@ -1247,7 +1339,7 @@ function initSimulatorEngine() {
           },
           x: {
             grid: { display: false },
-            ticks: { color: "#888E94", font: { size: 10, family: 'Plus Jakarta Sans' } }
+            ticks: { color: "#888E94", font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } }
           }
         }
       },
@@ -1270,8 +1362,9 @@ function initSimulatorEngine() {
           c.stroke();
           
           c.fillStyle = "#B7A58A";
-          c.font = "bold 9px 'Plus Jakarta Sans'";
-          c.fillText(`Target Availability = ${target.toFixed(0)}%`, xAxis.right - 120, yPos - 5);
+          c.font = "bold 9px 'Plus Jakarta Sans', Sarabun";
+          const targetText = (currentLang === 'th') ? `เป้าหมาย = ${target.toFixed(0)}%` : `Target = ${target.toFixed(0)}%`;
+          c.fillText(targetText, xAxis.right - 95, yPos - 5);
           c.restore();
         }
       }]
@@ -1296,7 +1389,6 @@ function initSimulatorEngine() {
   });
 
   runBtn?.addEventListener("click", executeSimulation);
-
   updateSimulatorEquipment();
 }
 
