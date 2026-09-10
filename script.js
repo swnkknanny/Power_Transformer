@@ -5,12 +5,12 @@ let currentLang = localStorage.getItem('RAM_DASHBOARD_LANG') || 'en';
 
 const i18nData = {
   en: {
-    brand_sub: "SUBSTATION RELIABILITY",
-    nav_heading: "INTELLIGENCE CONSOLE",
+    brand_sub: "Substation Reliability",
+    nav_heading: "Intelligence Console",
     nav_overview: "Overview",
     nav_simulator: "What-If Simulator",
-    panel_subsystem: "EQUIPMENT CLASS",
-    admin_override: "ADMIN DATA OVERRIDE",
+    panel_subsystem: "Equipment Class",
+    admin_override: "Admin Data Override",
     import_dataset: "Import New Dataset",
     sync_hint: "Syncs instantly to all devices",
     footer_desc: "Substation equipment reliability & maintenance lifecycle management system.",
@@ -37,14 +37,14 @@ const i18nData = {
     kpi_modes_target: "Active Registry",
     kpi_modes_footer: "Total failure mechanisms monitored",
     unit_hrs: "hrs",
-    tag_risk_prioritization: "RISK PRIORITIZATION",
+    tag_risk_prioritization: "Risk Prioritization",
     attention_vectors_title: "Subsystem Attention Vectors",
     lowest_avail_label: "Lowest Availability Component",
     inspect_btn: "Inspect",
     lowest_avail_note: "Priority candidate for condition-based maintenance to prevent unplanned outages.",
     peak_mttr_label: "Maximum Repair Latency (Peak MTTR)",
     peak_mttr_note: "Consider stocking specialized spares and optimizing maintenance staging procedures.",
-    tag_root_cause: "ROOT CAUSE SPECTRUM",
+    tag_root_cause: "Root Cause Spectrum",
     chart_cause_title: "Failure Cause Distribution",
     click_segment_hint: "Click segment to drill",
     table_title_prefix: "System Diagnostics & RAM Matrix: Class",
@@ -110,7 +110,7 @@ const i18nData = {
     nav_heading: "คอนโซลข้อมูลอัจฉริยะ",
     nav_overview: "ภาพรวมระบบ (Overview)",
     nav_simulator: "แบบจำลอง What-If",
-    panel_subsystem: "หมวดหมู่อุปกรณ์ (EQUIPMENT CLASS)",
+    panel_subsystem: "หมวดหมู่อุปกรณ์ (Equipment Class)",
     admin_override: "จัดการข้อมูลแอดมิน",
     import_dataset: "นำเข้าชุดข้อมูลใหม่ (Excel)",
     sync_hint: "ซิงค์ข้อมูลเรียลไทม์ทุกอุปกรณ์",
@@ -243,7 +243,7 @@ function setLanguage(lang) {
 }
 
 // ============================================================
-// 2. CORE VARIABLES & FIREBASE CONFIG
+// 2. CORE DATABASE & CONFIG
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
@@ -273,7 +273,7 @@ const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 const drillHistory = [];
 
 // ============================================================
-// 3. SECURE DOM EVENT BINDING
+// 3. SECURE DOM EVENT DELEGATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.btn-lang').forEach(btn => {
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Drawer Close
+  // Drawer Actions
   const drawerCloseBtn = document.getElementById('drawerCloseBtn');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
   const drawerBackBtn = document.getElementById('drawerBackBtn');
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // ผูกคลิกการ์ด KPI ทั้ง 4 ใบแบบตรงเป้าหมาย
+  // Drill-down KPI bindings
   const kpiMap = [
     { id: 'kpiCardAvail', type: 'availability' },
     { id: 'kpiCardMtbf', type: 'mtbf' },
@@ -395,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ผูกคลิกการ์ด Subsystem Attention Vectors (Lowest Avail & Peak MTTR)
   const worstAvailBlock = document.getElementById('insightWorstAvail');
   const worstMttrBlock = document.getElementById('insightWorstMttr');
 
@@ -471,7 +470,7 @@ function updateAuthUI() {
     }
     if (editNotice) {
       editNotice.textContent = dict.table_status_admin;
-      editNotice.style.color = '#8E7C93';
+      editNotice.style.color = '#148B86';
     }
   } else {
     if (loginBtn) loginBtn.style.display = 'flex';
@@ -541,9 +540,9 @@ function showManualUploadPrompt() {
   if (!tableContainer) return;
   tableContainer.innerHTML = `
     <div class="empty-state" style="cursor: pointer;" onclick="document.getElementById('excelFile').click()">
-      <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.4rem; color: #8E7C93; margin-bottom: 12px;"></i>
-      <p style="font-weight: 600; color: #343A40; margin-bottom: 4px;">Initialize Substation Dataset (ALL_RAM.xlsx)</p>
-      <span style="font-size: 0.75rem; color: #888E94;">Click here to upload and publish data live to all connected devices</span>
+      <i class="fa-solid fa-arrow-up-from-bracket" style="font-size: 2.4rem; color: #148B86; margin-bottom: 12px;"></i>
+      <p style="font-weight: 600; color: #18243A; margin-bottom: 4px;">Initialize Substation Dataset (ALL_RAM.xlsx)</p>
+      <span style="font-size: 0.75rem; color: #667085;">Click here to upload and publish data live to all connected devices</span>
     </div>
   `;
 }
@@ -743,7 +742,14 @@ function renderCauseChart(causeCounts) {
 
   if (currentChart) currentChart.destroy();
 
-  const chartColors = ['#8E7C93', '#66756B', '#B7A58A', '#5F666D', '#C5C2BA'];
+  // Warm-neutral + Restrained TOMAFOX palette
+  const chartColors = [
+    '#148B86', // TOMAFOX Teal Primary
+    '#66BFB5', // Light Teal
+    '#8B6B57', // Warm Brown
+    '#C9A892', // Beige Taupe
+    '#A1A9B7'  // Muted Cool Gray
+  ];
 
   currentChart = new Chart(ctx, {
     type: 'doughnut',
@@ -778,10 +784,17 @@ function renderCauseChart(causeCounts) {
             boxHeight: 8,
             usePointStyle: true,
             pointStyle: 'circle',
-            font: { size: 11, family: 'Plus Jakarta Sans, Sarabun', weight: '500' },
-            color: '#5F666D',
+            font: { size: 11, family: 'Prompt, Sarabun', weight: '500' },
+            color: '#667085',
             padding: 10
           }
+        },
+        tooltip: {
+          backgroundColor: '#18243A',
+          titleFont: { family: 'Prompt', size: 12 },
+          bodyFont: { family: 'Sarabun', size: 12 },
+          cornerRadius: 6,
+          padding: 10
         }
       },
       cutout: '72%'
@@ -892,7 +905,7 @@ function applyTableFilter() {
 }
 
 // ============================================================
-// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (COMPLETE CORE)
+// 6. WHAT-IF SIMULATOR ENGINE (Unchanged Logic & Strict Calculations)
 // ============================================================
 let updateSimulatorEquipment = null;
 let runSimulatorCalculation = null;
@@ -1262,7 +1275,7 @@ function initSimulatorEngine() {
         tr.innerHTML = `
           <td><strong>${modeName}</strong></td>
           <td>${causeName}</td>
-          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${mttrHours} ${dict.unit_hrs}</td>
+          <td style="text-align: right; font-weight: 600; color: var(--brand-teal);">${mttrHours} ${dict.unit_hrs}</td>
         `;
         refTableBody.appendChild(tr);
       });
@@ -1297,7 +1310,7 @@ function initSimulatorEngine() {
     // 1. Result Cards
     if (resSimulated) {
       resSimulated.textContent = `${simState.simulatedAvailability.toFixed(2)}%`;
-      resSimulated.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
+      resSimulated.style.color = simState.meetsTarget ? "var(--state-success)" : "var(--state-danger)";
     }
 
     if (resChange) {
@@ -1307,10 +1320,10 @@ function initSimulatorEngine() {
         resChange.style.color = "var(--text-muted)";
       } else if (roundedDelta > 0) {
         resChange.textContent = `+${roundedDelta.toFixed(2)}%`;
-        resChange.style.color = "var(--status-healthy)";
+        resChange.style.color = "var(--state-success)";
       } else {
         resChange.textContent = `${roundedDelta.toFixed(2)}%`;
-        resChange.style.color = "var(--status-warning)";
+        resChange.style.color = "var(--state-danger)";
       }
     }
 
@@ -1332,7 +1345,7 @@ function initSimulatorEngine() {
           ? `Status: Meets Target (≥ ${target.toFixed(2)}%)` 
           : `Status: Below Target (< ${target.toFixed(2)}%)`;
       }
-      targetIndicator.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
+      targetIndicator.style.color = simState.meetsTarget ? "var(--state-success)" : "var(--state-danger)";
     }
 
     // 2. Math Walkthrough
@@ -1342,7 +1355,7 @@ function initSimulatorEngine() {
     if (calcDen) calcDen.textContent = `${mtbf.toLocaleString()} + ${mttr.toFixed(1)}`;
     if (calcRes) {
       calcRes.textContent = `${simState.simulatedAvailability.toFixed(2)}%`;
-      calcRes.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
+      calcRes.style.color = simState.meetsTarget ? "var(--state-success)" : "var(--state-danger)";
     }
 
     // 3. Comparison Chart
@@ -1369,7 +1382,7 @@ function initSimulatorEngine() {
         labels: [baselineLabel, simulatedLabel],
         datasets: [{
           data: [Number(baseline.toFixed(2)), Number(simulated.toFixed(2))],
-          backgroundColor: ["#8E7C93", simulated >= target ? "#66756B" : "#A65D57"],
+          backgroundColor: ["#8B6B57", simulated >= target ? "#148B86" : "#C03225"],
           borderRadius: 4,
           barThickness: 32
         }]
@@ -1380,6 +1393,11 @@ function initSimulatorEngine() {
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor: '#18243A',
+            titleFont: { family: 'Prompt', size: 12 },
+            bodyFont: { family: 'Sarabun', size: 12 },
+            cornerRadius: 6,
+            padding: 10,
             callbacks: {
               label: (ctx) => `Availability: ${ctx.parsed.y.toFixed(2)}%`
             }
@@ -1389,16 +1407,16 @@ function initSimulatorEngine() {
           y: {
             min: Math.max(70, Math.floor(Math.min(baseline, simulated, target) - 2)),
             max: 100,
-            grid: { color: "rgba(0, 0, 0, 0.05)" },
+            grid: { color: "rgba(230, 222, 215, 0.6)" },
             ticks: {
-              color: "#888E94",
-              font: { size: 10 },
+              color: "#667085",
+              font: { size: 10, family: 'Prompt' },
               callback: (val) => `${val}%`
             }
           },
           x: {
             grid: { display: false },
-            ticks: { color: "#888E94", font: { size: 10, family: 'Plus Jakarta Sans, Sarabun' } }
+            ticks: { color: "#667085", font: { size: 11, family: 'Prompt' } }
           }
         }
       },
@@ -1414,14 +1432,14 @@ function initSimulatorEngine() {
           c.save();
           c.beginPath();
           c.setLineDash([4, 4]);
-          c.strokeStyle = "#B7A58A";
+          c.strokeStyle = "#5B3A2E";
           c.lineWidth = 1.5;
           c.moveTo(xAxis.left, yPos);
           c.lineTo(xAxis.right, yPos);
           c.stroke();
           
-          c.fillStyle = "#B7A58A";
-          c.font = "bold 9px 'Plus Jakarta Sans', Sarabun";
+          c.fillStyle = "#5B3A2E";
+          c.font = "bold 9px 'Prompt'";
           const targetText = (currentLang === 'th') ? `เป้าหมาย = ${target.toFixed(0)}%` : `Target = ${target.toFixed(0)}%`;
           c.fillText(targetText, xAxis.right - 95, yPos - 5);
           c.restore();
@@ -1452,7 +1470,7 @@ function initSimulatorEngine() {
 }
 
 // ============================================================
-// 7. GLOBAL DRILL-DOWN & DRAWER ENGINE (CRASH-PROOF)
+// 7. GLOBAL DRILL-DOWN & DRAWER ENGINE
 // ============================================================
 function openDrawer() {
   const detailDrawer = document.getElementById('detailDrawer');
@@ -1545,7 +1563,7 @@ function renderKpiDetail(metric) {
     sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
   } else {
     title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'CATALOGED FAILURE MODES';
-    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องทั้งหมดที่ถูกบันทึกไว้ในระบบย่อยนี้' : 'Registered failure mechanisms within current subsystem';
+    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องทั้งหมดที่ถูกบันทึกไว้ในหมวดหมู่นี้' : 'Registered failure mechanisms within current equipment class';
     sorted = [...allRows];
   }
 
@@ -1569,8 +1587,8 @@ function renderKpiDetail(metric) {
   `;
 
   sorted.forEach(r => {
-    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
-    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
+    const availColor = r.availability >= 96 ? 'var(--state-success)' : 'var(--state-danger)';
+    const mttrColor = r.mttr <= 10 ? 'inherit' : 'var(--state-danger)';
     html += `
       <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
         <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
@@ -1619,7 +1637,7 @@ function renderEquipmentDetail(compName) {
     <div class="drawer-kpi-strip">
       <div class="drawer-mini-kpi">
         <span>Availability</span>
-        <strong style="color: ${primary.availability >= 96 ? '#66756B' : '#A65D57'};">${primary.availability.toFixed(2)}%</strong>
+        <strong style="color: ${primary.availability >= 96 ? 'var(--state-success)' : 'var(--state-danger)'};">${primary.availability.toFixed(2)}%</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>MTBF</span>
@@ -1627,7 +1645,7 @@ function renderEquipmentDetail(compName) {
       </div>
       <div class="drawer-mini-kpi">
         <span>MTTR</span>
-        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(1)} ${dict.unit_hrs}</strong>
+        <strong style="color: ${primary.mttr > 10 ? 'var(--state-danger)' : 'inherit'};">${primary.mttr.toFixed(1)} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>${(currentLang === 'th') ? 'ข้อบกพร่องที่บันทึก' : 'Failure Modes'}</span>
@@ -1636,10 +1654,10 @@ function renderEquipmentDetail(compName) {
     </div>
     <div class="drawer-section">
       <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Diagnostic Summary'}</span>
-      <div style="font-size:0.76rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+      <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--bg-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
         <div><strong>${(currentLang === 'th') ? 'สาเหตุหลัก' : 'Primary Cause'}:</strong> ${primary.cause}</div>
         <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Failure Mode'}:</strong> ${primary.mode}</div>
-        <div style="margin-top:6px; font-size:0.7rem; color:var(--text-muted);">
+        <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
           ${isAttention
             ? ((currentLang === 'th') 
                ? 'คำแนะนำ: ชิ้นส่วนนี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ 96% หรือใช้เวลาบำรุงรักษา ควรตรวจสอบระบบฉนวนและจัดเตรียมอะไหล่สำรองล่วงหน้า' 
@@ -1898,7 +1916,7 @@ function buildPrintView(targetSheet) {
       for (let j = 0; j < headers.length; j++) {
         let val = r[j] !== undefined ? r[j] : '';
         if (j === availColIndex) {
-          const color = rowAvail >= 96 ? '#66756B' : '#A65D57';
+          const color = rowAvail >= 96 ? 'var(--state-success)' : 'var(--state-danger)';
           pageHtml += `<td style="color: ${color}; font-weight: bold; text-align: center;">${rowAvail.toFixed(2)}%</td>`;
         } else if (j === mtbfColIndex || j === mttrColIndex) {
           pageHtml += `<td>${!isNaN(val) && val !== '' ? Number(val).toFixed(2) : val}</td>`;
