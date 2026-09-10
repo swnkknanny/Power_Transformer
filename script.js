@@ -8,7 +8,6 @@ const i18nData = {
     brand_sub: "Substation Reliability",
     nav_heading: "Intelligence Console",
     nav_overview: "Overview",
-    nav_equipment_detail: "Equipment Detail",
     nav_simulator: "What-If Simulator",
     panel_subsystem: "Equipment Class",
     admin_override: "Admin Data Override",
@@ -25,26 +24,6 @@ const i18nData = {
     mode_admin: "ADMIN CONSOLE (LIVE CLOUD EDIT)",
     banner_title: "Substation Reliability & Performance Intelligence",
     banner_desc: "Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.",
-    
-    // 3D Equipment Viewer i18n
-    viewer_3d_badge: "Interactive 3D Model",
-    viewer_3d_heading: "Power Transformer (5,000 kVA)",
-    btn_reset_view: "Reset View",
-    model_loading: "Loading 3D model...",
-    model_error: "3D Model could not be loaded. Please ensure power-transformer-5000kva.glb exists in root directory.",
-    viewer_instruction: "Drag to rotate • Scroll to zoom",
-    overview_card_tag: "ASSET SPECIFICATIONS",
-    overview_equip_name: "Power Transformer",
-    overview_equip_sub: "Substation Main Power Unit • Rated 5,000 kVA",
-    lbl_rated_capacity: "Rated Capacity",
-    lbl_active_scope: "Active Scope",
-    lbl_operational_status: "Operational Status",
-    val_normal_condition: "Normal Condition",
-    lbl_engineering_std: "Engineering Standard",
-    view_ram_analysis: "View RAM Analysis",
-    view_what_if: "Simulate Mitigation",
-    overview_disclaimer_text: "Equipment specs reflect active substation operational boundary data.",
-
     kpi_avail_title: "Fleet Availability",
     kpi_avail_target: "Target ≥ 96.00%",
     kpi_avail_footer: "Operational uptime benchmark",
@@ -130,7 +109,6 @@ const i18nData = {
     brand_sub: "ความน่าเชื่อถือของสถานีไฟฟ้า",
     nav_heading: "คอนโซลข้อมูลอัจฉริยะ",
     nav_overview: "ภาพรวมระบบ (Overview)",
-    nav_equipment_detail: "รายละเอียดอุปกรณ์ 3 มิติ",
     nav_simulator: "แบบจำลอง What-If",
     panel_subsystem: "หมวดหมู่อุปกรณ์ (Equipment Class)",
     admin_override: "จัดการข้อมูลแอดมิน",
@@ -147,26 +125,6 @@ const i18nData = {
     mode_admin: "โหมดแอดมิน (ADMIN LIVE EDIT)",
     banner_title: "ระบบวิเคราะห์ความน่าเชื่อถือและประสิทธิภาพสถานีไฟฟ้า",
     banner_desc: "ติดตามความพร้อมใช้งาน (Availability) การกระจายตัวของข้อบกพร่อง และเพิ่มประสิทธิภาพการบำรุงรักษาอุปกรณ์สถานีไฟฟ้า",
-
-    // 3D Equipment Viewer i18n
-    viewer_3d_badge: "แบบจำลอง 3 มิติเชิงโต้ตอบ",
-    viewer_3d_heading: "หม้อแปลงไฟฟ้ากำลัง (Power Transformer 5,000 kVA)",
-    btn_reset_view: "รีเซ็ตมุมกล้อง",
-    model_loading: "กำลังโหลดโมเดล 3 มิติ...",
-    model_error: "ไม่สามารถโหลดโมเดล 3 มิติได้ กรุณาตรวจสอบไฟล์ power-transformer-5000kva.glb ในโฟลเดอร์หลัก",
-    viewer_instruction: "ลากเมาส์เพื่อหมุน 360° • เลื่อนลูกกลิ้งเพื่อซูม",
-    overview_card_tag: "ข้อมูลจำเพาะอุปกรณ์",
-    overview_equip_name: "หม้อแปลงไฟฟ้ากำลัง (Power Transformer)",
-    overview_equip_sub: "อุปกรณ์หลักสถานีไฟฟ้า • พิกัด 5,000 kVA",
-    lbl_rated_capacity: "พิกัดกำลังไฟฟ้า",
-    lbl_active_scope: "ระบบย่อยปัจจุบัน",
-    lbl_operational_status: "สถานะการทำงาน",
-    val_normal_condition: "สภาพการทำงานปกติ",
-    lbl_engineering_std: "มาตรฐานวิศวกรรม",
-    view_ram_analysis: "ดูการวิเคราะห์ RAM",
-    view_what_if: "จำลองการบำรุงรักษา",
-    overview_disclaimer_text: "ข้อมูลจำเพาะแสดงตามขอบเขตการทำงานจริงของสถานีไฟฟ้า",
-
     kpi_avail_title: "ความพร้อมใช้งานเฉลี่ย (Availability)",
     kpi_avail_target: "เป้าหมาย ≥ 96.00%",
     kpi_avail_footer: "เกณฑ์มาตรฐานความพร้อมใช้งาน",
@@ -285,7 +243,7 @@ function setLanguage(lang) {
 }
 
 // ============================================================
-// 2. CORE VARIABLES & FIREBASE CONFIG
+// 2. CORE DATABASE & CONFIG
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
@@ -315,7 +273,7 @@ const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 const drillHistory = [];
 
 // ============================================================
-// 3. SECURE DOM EVENT BINDING & 3D VIEWER LOGIC
+// 3. SECURE DOM EVENT DELEGATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.btn-lang').forEach(btn => {
@@ -325,52 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 3D Model-Viewer Controls & Event Handlers
-  const modelViewer = document.getElementById('transformerViewer');
-  const btnReset3DView = document.getElementById('btnReset3DView');
-  const btnJumpToTable = document.getElementById('btnJumpToTable');
-  const btnJumpToSimulator = document.getElementById('btnJumpToSimulator');
-  const overviewActiveScope = document.getElementById('overviewActiveScope');
-  const sheetSelect = document.getElementById('sheetSelect');
-
-  const DEFAULT_ORBIT = "45deg 75deg 105%";
-  const DEFAULT_FOV = "30deg";
-
-  if (btnReset3DView && modelViewer) {
-    btnReset3DView.addEventListener('click', () => {
-      modelViewer.cameraOrbit = DEFAULT_ORBIT;
-      modelViewer.fieldOfView = DEFAULT_FOV;
-      modelViewer.jumpCameraToGoal();
-    });
-  }
-
-  if (btnJumpToTable) {
-    btnJumpToTable.addEventListener('click', () => {
-      const tableSec = document.querySelector('.table-section');
-      if (tableSec) tableSec.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
-
-  if (btnJumpToSimulator) {
-    btnJumpToSimulator.addEventListener('click', () => {
-      const simSec = document.getElementById('simulatorSection');
-      if (simSec) simSec.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
-
-  if (sheetSelect && overviewActiveScope) {
-    sheetSelect.addEventListener('change', (e) => {
-      overviewActiveScope.textContent = `${e.target.value} Subsystem`;
-    });
-  }
-
-  if (modelViewer) {
-    modelViewer.addEventListener('error', (event) => {
-      console.warn("3D Equipment Viewer: GLB failed to load asynchronously.", event);
-    });
-  }
-
-  // Admin Gateway Modal
   const loginBtn = document.getElementById('loginBtn');
   const loginModal = document.getElementById('loginModal');
   const adminPasswordInput = document.getElementById('adminPassword');
@@ -406,6 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', () => {
       isAdmin = false;
       updateAuthUI();
+      const sheetSelect = document.getElementById('sheetSelect');
       if (currentWorkbook && sheetSelect) loadRamSheet(sheetSelect.value);
     });
   }
@@ -423,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const sheetSelect = document.getElementById('sheetSelect');
   if (sheetSelect) {
     sheetSelect.addEventListener('change', function(e) {
       if (currentWorkbook) {
@@ -828,6 +742,7 @@ function renderCauseChart(causeCounts) {
 
   if (currentChart) currentChart.destroy();
 
+  // Warm-neutral + Restrained TOMAFOX palette
   const chartColors = [
     '#148B86', // TOMAFOX Teal Primary
     '#66BFB5', // Light Teal
@@ -990,7 +905,7 @@ function applyTableFilter() {
 }
 
 // ============================================================
-// 6. WHAT-IF SIMULATOR ENGINE (Unchanged Logic & Calculations)
+// 6. WHAT-IF SIMULATOR ENGINE (Unchanged Logic & Strict Calculations)
 // ============================================================
 let updateSimulatorEquipment = null;
 let runSimulatorCalculation = null;
@@ -999,6 +914,7 @@ function initSimulatorEngine() {
   function deriveSimulatedPresetMTTR(causeText, modeText) {
     const combined = `${modeText || ''} ${causeText || ''}`.toLowerCase();
 
+    // 1. Extensive repair / major equipment intervention (36 - 48 hrs)
     if (
       combined.includes("breakdown") || combined.includes("rupture") || 
       combined.includes("deformation") || combined.includes("short circuit") ||
@@ -1008,6 +924,7 @@ function initSimulatorEngine() {
       return combined.includes("short circuit") || combined.includes("ลัดวงจร") ? 48 : 36;
     }
 
+    // 2. Major corrective maintenance / Serious degradation (24 - 30 hrs)
     if (
       combined.includes("flashover") || combined.includes("discharge") || 
       combined.includes("corrosion") || combined.includes("insulation") ||
@@ -1017,6 +934,7 @@ function initSimulatorEngine() {
       return combined.includes("insulation") || combined.includes("ฉนวน") ? 30 : 24;
     }
 
+    // 3. Complex repair / Leakage / Mechanical replacement (16 - 18 hrs)
     if (
       combined.includes("leak") || combined.includes("jam") || 
       combined.includes("erosion") || combined.includes("binding") ||
@@ -1026,6 +944,7 @@ function initSimulatorEngine() {
       return combined.includes("leak") || combined.includes("รั่ว") ? 18 : 16;
     }
 
+    // 4. Significant repair / Sensor / Contact issues (10 - 12 hrs)
     if (
       combined.includes("overheat") || combined.includes("wear") || 
       combined.includes("tap") || combined.includes("mechanism") ||
@@ -1035,6 +954,7 @@ function initSimulatorEngine() {
       return 12;
     }
 
+    // 5. Moderate repair / Secondary circuitry (6 - 8 hrs)
     if (
       combined.includes("circuit") || combined.includes("coil") || 
       combined.includes("switch") || combined.includes("relay") ||
@@ -1044,6 +964,7 @@ function initSimulatorEngine() {
       return 8;
     }
 
+    // 6. Minor repair / Minor adjustments (4 hrs)
     if (
       combined.includes("calibration") || combined.includes("adjustment") || 
       combined.includes("loose") || combined.includes("ปรับตั้ง") || 
@@ -1052,6 +973,7 @@ function initSimulatorEngine() {
       return 4;
     }
 
+    // 7. Very minor / quick corrective action (2 - 3 hrs)
     if (
       combined.includes("clean") || combined.includes("dust") || 
       combined.includes("dirt") || combined.includes("ทำความสะอาด") || 
@@ -1317,6 +1239,7 @@ function initSimulatorEngine() {
     }
   });
 
+  // Range 50 – 50,000 hrs
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
     simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
@@ -1547,7 +1470,7 @@ function initSimulatorEngine() {
 }
 
 // ============================================================
-// 7. GLOBAL DRILL-DOWN & DRAWER ENGINE (CRASH-PROOF)
+// 7. GLOBAL DRILL-DOWN & DRAWER ENGINE
 // ============================================================
 function openDrawer() {
   const detailDrawer = document.getElementById('detailDrawer');
