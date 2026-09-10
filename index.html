@@ -234,7 +234,7 @@
     .attention-note { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; line-height: 1.35; }
     .flex-between { display: flex; justify-content: space-between; align-items: flex-start; }
     .interactive-hint { font-size: 0.62rem; font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; background: var(--surface-base); padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border-subtle); }
-    .chart-wrapper { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; }
+    .chart-wrapper { position: relative; height: 180px; width: 100%; display: center; justify-content: center; align-items: center; }
 
     /* Table Section */
     .table-section {
@@ -775,7 +775,7 @@
       .sim-system-disclaimer { flex-direction: column; gap: 6px; }
     }
 
-    /* Modals & Drawer (ระดับ z-index สูงสุดและสไลด์เข้าขอบจอ 100%) */
+    /* Modals & Drawer */
     .detail-drawer {
       position: fixed; 
       top: 0; 
@@ -962,10 +962,11 @@
         </a>
       </nav>
 
+      <!-- ปรับหัวข้อเป็น EQUIPMENT CLASS เรียบร้อย -->
       <div class="control-panel">
-        <span class="panel-label" data-i18n="panel_subsystem">SUBSYSTEM DOMAIN</span>
+        <span class="panel-label" data-i18n="panel_subsystem">EQUIPMENT CLASS</span>
         <div id="subsystemControl" class="select-wrapper">
-          <select id="sheetSelect" class="custom-select" aria-label="Select Subsystem"></select>
+          <select id="sheetSelect" class="custom-select" aria-label="Select Equipment Class"></select>
         </div>
       </div>
 
@@ -1279,7 +1280,7 @@
                 </div>
               </div>
 
-              <!-- MTBF Module (Updated range: 50 – 50,000 hrs) -->
+              <!-- MTBF Module (ช่วง 50 – 50,000 hrs) -->
               <div class="sim-param-block">
                 <div class="sim-input-row">
                   <label for="simMtbfInput" class="sim-label" data-i18n="sim_lbl_operating_mtbf">MTBF (hours)</label>
@@ -1496,6 +1497,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=400"></script>
+  <script src="script.js?v=500"></script>
 </body>
 </html>
