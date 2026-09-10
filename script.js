@@ -761,9 +761,15 @@ function applyTableFilter() {
 let updateSimulatorEquipment = null;
 
 function initSimulatorEngine() {
+  /**
+   * Deterministic Simulation Severity Heuristic:
+   * Maps existing Failure Causes (Thai & English) to practical rounded MTTR values:
+   * 2, 3, 4, 6, 8, 10, 12, 16, 18, 24, 30, 36, 48 hrs.
+   */
   function deriveSimulatedPresetMTTR(causeText, modeText) {
     const combined = `${modeText || ''} ${causeText || ''}`.toLowerCase();
 
+    // 1. Extensive intervention / Catastrophic damage (36 - 48 hrs)
     if (
       combined.includes("breakdown") || combined.includes("rupture") || 
       combined.includes("deformation") || combined.includes("short circuit") ||
@@ -773,6 +779,7 @@ function initSimulatorEngine() {
       return combined.includes("short circuit") || combined.includes("ลัดวงจร") ? 48 : 36;
     }
 
+    // 2. Major corrective maintenance / Serious degradation (24 - 30 hrs)
     if (
       combined.includes("flashover") || combined.includes("discharge") || 
       combined.includes("corrosion") || combined.includes("insulation") ||
@@ -782,6 +789,7 @@ function initSimulatorEngine() {
       return combined.includes("insulation") || combined.includes("ฉนวน") ? 30 : 24;
     }
 
+    // 3. Complex repair / Leakage / Mechanical replacement (16 - 18 hrs)
     if (
       combined.includes("leak") || combined.includes("jam") || 
       combined.includes("erosion") || combined.includes("binding") ||
@@ -791,6 +799,7 @@ function initSimulatorEngine() {
       return combined.includes("leak") || combined.includes("รั่ว") ? 18 : 16;
     }
 
+    // 4. Significant repair / Sensor / Contact issues (10 - 12 hrs)
     if (
       combined.includes("overheat") || combined.includes("wear") || 
       combined.includes("tap") || combined.includes("mechanism") ||
@@ -800,6 +809,7 @@ function initSimulatorEngine() {
       return 12;
     }
 
+    // 5. Moderate repair / Secondary circuitry (6 - 8 hrs)
     if (
       combined.includes("circuit") || combined.includes("coil") || 
       combined.includes("switch") || combined.includes("relay") ||
@@ -809,6 +819,7 @@ function initSimulatorEngine() {
       return 8;
     }
 
+    // 6. Minor repair / Minor adjustments (4 hrs)
     if (
       combined.includes("calibration") || combined.includes("adjustment") || 
       combined.includes("loose") || combined.includes("ปรับตั้ง") || 
@@ -817,6 +828,7 @@ function initSimulatorEngine() {
       return 4;
     }
 
+    // 7. Very minor / quick corrective action (2 - 3 hrs)
     if (
       combined.includes("clean") || combined.includes("dust") || 
       combined.includes("dirt") || combined.includes("ทำความสะอาด") || 
@@ -828,8 +840,10 @@ function initSimulatorEngine() {
     return 10;
   }
 
+  // Normalized hierarchy registry
   let simulatedMTTRMap = {};
 
+  // Single shared simulation state object (Source of Truth)
   const simState = {
     selectedEquipment: "",
     selectedMode: "",
@@ -847,6 +861,7 @@ function initSimulatorEngine() {
 
   let simChartInstance = null;
 
+  // DOM references
   const eqSelect = document.getElementById("simEquipmentSelect");
   const modeSelect = document.getElementById("simFailureModeSelect");
   const causeSelect = document.getElementById("simFailureCauseSelect");
@@ -1078,15 +1093,16 @@ function initSimulatorEngine() {
     }
   });
 
+  // MTBF range: 50 - 50,000 hrs
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
-    simState.operatingMTBF = Math.max(1, parseFloat(this.value) || 1);
+    simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
     executeSimulation();
   });
 
   mtbfInput?.addEventListener("input", function() {
     if (mtbfSlider) mtbfSlider.value = this.value;
-    simState.operatingMTBF = Math.max(1, parseFloat(this.value) || 1);
+    simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
     executeSimulation();
   });
 
@@ -1125,7 +1141,7 @@ function initSimulatorEngine() {
   });
 
   function executeSimulation() {
-    const mtbf = Math.max(1, parseFloat(mtbfInput?.value) || simState.operatingMTBF || 4320);
+    const mtbf = Math.max(50, parseFloat(mtbfInput?.value) || simState.operatingMTBF || 4320);
     const mttr = Math.max(0.1, parseFloat(mttrInput?.value) || simState.operatingMTTR || 18);
     const target = Math.min(99.99, Math.max(0, parseFloat(targetInput?.value) || simState.targetAvailability || 96.00));
 
