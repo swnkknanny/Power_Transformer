@@ -188,8 +188,9 @@
     .kpi-card {
       background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
       padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-executive); min-width: 0;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
     }
-    .kpi-card.interactive { cursor: pointer; transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease; }
+    .kpi-card.interactive { cursor: pointer; }
     .kpi-card.interactive:hover { transform: translateY(-2px); border-color: var(--brand-amethyst); box-shadow: 0 4px 14px rgba(52, 58, 64, 0.06); }
     .kpi-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
     .kpi-title { font-size: 0.72rem; color: var(--text-secondary); font-weight: 600; }
@@ -218,8 +219,9 @@
     .attention-block {
       display: flex; align-items: flex-start; gap: 12px; padding: 12px;
       background: var(--surface-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+      transition: background 0.15s, border-color 0.15s;
     }
-    .attention-block.interactive { cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .attention-block.interactive { cursor: pointer; }
     .attention-block.interactive:hover { background: var(--surface-card); border-color: var(--border-divider); }
     .attention-indicator { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
     .indicator-warn { background-color: var(--status-warning); }
@@ -335,7 +337,6 @@
       display: inline-flex; align-items: center; gap: 5px;
     }
 
-    /* Full-width Scenario Card */
     .sim-scenario-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -371,7 +372,6 @@
       background-color: var(--surface-subtle);
     }
 
-    /* Workspace Multi-Column Grid */
     .sim-dashboard-grid {
       display: grid;
       grid-template-columns: 380px minmax(0, 1fr);
@@ -406,7 +406,6 @@
     .sim-card-head p { font-size: 0.68rem; color: var(--text-muted); margin: 2px 0 0 0; }
     .sim-flex-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 
-    /* Parameter Blocks */
     .sim-param-block {
       display: flex;
       flex-direction: column;
@@ -432,7 +431,6 @@
       color: var(--text-primary);
     }
 
-    /* Segmented Control (Preset vs Custom) */
     .sim-segmented-switch {
       display: inline-flex;
       background: var(--surface-subtle);
@@ -461,7 +459,6 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* Highlighted Preset Card */
     .sim-preset-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -529,7 +526,6 @@
     }
     .sim-slider-scale { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); }
 
-    /* Action Cluster */
     .sim-actions-cluster {
       display: flex;
       gap: 10px;
@@ -554,7 +550,6 @@
       color: #FFFFFF;
     }
 
-    /* Result Cards Triad */
     .sim-results-triad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -597,14 +592,12 @@
       color: var(--text-secondary);
     }
 
-    /* Analytics Split: Calculation + Chart */
     .sim-analytics-split {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
       gap: 14px;
     }
 
-    /* Mathematical Formulation Board */
     .calc-math-board {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -685,14 +678,12 @@
       color: var(--status-healthy);
     }
 
-    /* Chart Canvas Wrapper */
     .sim-chart-container {
       position: relative;
       height: 175px;
       width: 100%;
     }
 
-    /* Collapsible MTTR Reference Table */
     .sim-reference-card {
       padding: 14px 18px;
     }
@@ -735,7 +726,6 @@
       background-color: var(--surface-subtle);
     }
 
-    /* System Engineering Disclaimer Note */
     .sim-system-disclaimer {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -785,21 +775,50 @@
       .sim-system-disclaimer { flex-direction: column; gap: 6px; }
     }
 
-    /* Modals & Drawer */
+    /* Modals & Drawer (ระดับ z-index สูงสุดและสไลด์เข้าขอบจอ 100%) */
     .detail-drawer {
-      position: fixed; top: 0; right: -100%; width: 35vw; min-width: 340px; max-width: 540px; height: 100vh;
-      background-color: var(--surface-card); border-left: 1px solid var(--border-subtle);
-      box-shadow: -8px 0 32px rgba(52, 58, 64, 0.08); z-index: 1200; display: flex; flex-direction: column;
+      position: fixed; 
+      top: 0; 
+      right: -100%; 
+      width: 35vw; 
+      min-width: 360px; 
+      max-width: 540px; 
+      height: 100vh;
+      background-color: var(--surface-card); 
+      border-left: 1px solid var(--border-subtle);
+      box-shadow: -8px 0 32px rgba(52, 58, 64, 0.16); 
+      z-index: 2000 !important; 
+      display: flex; 
+      flex-direction: column;
       transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .detail-drawer.open { right: 0; }
-    .drawer-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(52, 58, 64, 0.25); backdrop-filter: blur(2px); z-index: 1100; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
-    .drawer-backdrop.show { opacity: 1; pointer-events: auto; }
+    .detail-drawer.open { 
+      right: 0 !important; 
+    }
+    .drawer-backdrop { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh; 
+      background: rgba(52, 58, 64, 0.35); 
+      backdrop-filter: blur(2px); 
+      z-index: 1999 !important; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.25s ease; 
+    }
+    .drawer-backdrop.show { 
+      opacity: 1 !important; 
+      pointer-events: auto !important; 
+    }
+
     .drawer-header { padding: 16px 18px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: var(--surface-card); position: sticky; top: 0; z-index: 5; }
     .drawer-nav { display: flex; align-items: center; gap: 8px; }
     .btn-drawer-back { background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
     .drawer-level-tag { font-size: 0.6rem; font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.07em; }
     .drawer-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
+    .drawer-close:hover { color: var(--text-primary); }
     .drawer-body { padding: 18px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .drawer-title-group h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
     .drawer-title-group .drawer-subtitle { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
@@ -1477,6 +1496,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=305"></script>
+  <script src="script.js?v=400"></script>
 </body>
 </html>
