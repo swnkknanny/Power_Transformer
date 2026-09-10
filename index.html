@@ -10,12 +10,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   
-  <!-- Font Awesome Proportional Outline Icons -->
+  <!-- Font Awesome Outline Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
   <!-- SheetJS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google model-viewer for 3D GLB Rendering -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -55,7 +58,7 @@
       --accent-warm-medium: #8B6B57;
       --accent-beige: #C9A892;
 
-      /* Restrained Semantic Indicators (Combined with Icons & Labels) */
+      /* Restrained Semantic Indicators */
       --state-success: #17835E;
       --state-success-bg: #E8F5EF;
       --state-warning: #B5740C;
@@ -98,9 +101,7 @@
       width: 100%;
     }
 
-    /* ============================================================
-       SIDEBAR (Warm Off-White + Geometric Infinity Brand)
-       ============================================================ */
+    /* Sidebar */
     .sidebar {
       background-color: var(--bg-sidebar);
       padding: 24px 18px;
@@ -318,9 +319,7 @@
       line-height: 1.45;
     }
 
-    /* ============================================================
-       TOPBAR & MAIN VIEWPORT
-       ============================================================ */
+    /* Topbar */
     .main-body {
       padding: 24px 30px;
       display: flex;
@@ -472,9 +471,7 @@
     .btn-logout { background: transparent; border: none; font-size: 0.84rem; color: var(--text-muted); cursor: pointer; padding: 2px 4px; }
     .btn-logout:hover { color: var(--state-danger); }
 
-    /* ============================================================
-       BANNER & EXECUTIVE KPI CARDS
-       ============================================================ */
+    /* Banner */
     .banner-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .status-indicator {
       font-family: 'Prompt', sans-serif;
@@ -516,6 +513,266 @@
       margin-top: 3px;
     }
 
+    /* ============================================================
+       EQUIPMENT DETAIL & 3D VIEWER STYLING
+       ============================================================ */
+    .equipment-detail-section {
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .equipment-detail-grid {
+      display: grid;
+      grid-template-columns: 58% minmax(0, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .viewer-3d-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .viewer-3d-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .viewer-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .viewer-badge {
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--brand-teal);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .viewer-heading {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .btn-reset-view {
+      font-size: 0.76rem;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+    }
+
+    .btn-reset-view:hover {
+      background: var(--bg-subtle);
+      border-color: var(--border-divider);
+    }
+
+    .viewer-stage-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: radial-gradient(circle at center, #FFFFFF 0%, #F5F2EE 85%, #EFEBE4 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    model-viewer#transformerViewer {
+      width: 100%;
+      height: 100%;
+      --poster-color: transparent;
+      outline: none;
+    }
+
+    .model-loading-poster {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-base);
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .loading-label {
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .model-error-state {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background: var(--bg-base);
+      color: var(--state-danger);
+      gap: 10px;
+      font-size: 0.78rem;
+    }
+
+    .model-error-state i {
+      font-size: 1.8rem;
+    }
+
+    .viewer-footer-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--bg-subtle);
+    }
+
+    .instruction-text {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .render-spec-tag {
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    /* Equipment Overview Panel */
+    .equipment-overview-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: var(--shadow-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .overview-panel-head {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .overview-panel-head h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .equipment-spec-sub {
+      font-size: 0.76rem;
+      color: var(--text-secondary);
+    }
+
+    .specs-data-deck {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .spec-tile {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tile-lbl {
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.66rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tile-val {
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .text-status-healthy {
+      color: var(--state-success) !important;
+    }
+
+    .overview-actions-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-jump {
+      flex: 1;
+      justify-content: center;
+      padding: 9px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--bg-base);
+      color: var(--text-primary);
+    }
+
+    .btn-jump:hover {
+      background: var(--brand-teal-light);
+      border-color: var(--brand-teal);
+      color: var(--brand-teal);
+    }
+
+    .overview-disclaimer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--bg-subtle);
+      padding-top: 10px;
+    }
+
+    /* KPI Grid */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -613,9 +870,7 @@
     .status-green { color: var(--state-success) !important; }
     .status-red { color: var(--state-danger) !important; }
 
-    /* ============================================================
-       INSIGHTS & DENSE DONUT MATRIX
-       ============================================================ */
+    /* Insights Grid */
     .insights-grid {
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
@@ -732,9 +987,7 @@
       align-items: center;
     }
 
-    /* ============================================================
-       DIAGNOSTIC MATRIX TABLE
-       ============================================================ */
+    /* Table Section */
     .table-section {
       background: var(--bg-surface); 
       border: 1px solid var(--border-subtle); 
@@ -877,9 +1130,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ============================================================
-       WHAT-IF SIMULATOR (Industrial Restyled Layout)
-       ============================================================ */
+    /* Simulator Section */
     .simulator-section {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
@@ -1375,12 +1626,12 @@
       margin: 0;
     }
 
-    /* ============================================================
-       RESPONSIVE ADAPTABILITY
-       ============================================================ */
+    /* Responsive */
     @media (max-width: 1100px) {
       .app-layout { grid-template-columns: 1fr; }
       .sidebar { border-right: none; border-bottom: 1px solid var(--border-subtle); padding: 18px; }
+      .equipment-detail-grid { grid-template-columns: 1fr; }
+      .viewer-stage-wrapper { height: 340px; }
       .sim-hierarchy-grid { grid-template-columns: 1fr; }
       .sim-dashboard-grid { grid-template-columns: 1fr; }
       .sim-analytics-split { grid-template-columns: 1fr; }
@@ -1393,6 +1644,9 @@
       .topbar { flex-direction: column; align-items: stretch; gap: 10px; }
       .search-box { width: 100%; }
       .topbar-actions { justify-content: space-between; width: 100%; }
+      .viewer-stage-wrapper { height: 280px; }
+      .specs-data-deck { grid-template-columns: 1fr; }
+      .overview-actions-row { flex-direction: column; }
       .table-section { padding: 16px 12px; border-radius: var(--radius-md); }
       .table-frame { max-height: 400px; }
       table { min-width: 520px; font-size: 0.76rem; }
@@ -1403,9 +1657,7 @@
       .sim-system-disclaimer { flex-direction: column; gap: 6px; }
     }
 
-    /* ============================================================
-       DETAIL DRAWER & SYSTEM MODALS
-       ============================================================ */
+    /* Detail Drawer */
     .detail-drawer {
       position: fixed; 
       top: 0; 
@@ -1639,6 +1891,10 @@
           <i class="fa-solid fa-chart-pie"></i>
           <span data-i18n="nav_overview">Overview</span>
         </a>
+        <a href="#equipmentDetailSection" class="nav-item">
+          <i class="fa-solid fa-cube"></i>
+          <span data-i18n="nav_equipment_detail">Equipment Detail</span>
+        </a>
         <a href="#simulatorSection" class="nav-item">
           <i class="fa-solid fa-sliders"></i>
           <span data-i18n="nav_simulator">What-If Simulator</span>
@@ -1730,6 +1986,107 @@
             <h1 data-i18n="banner_title">Substation Reliability & Performance Intelligence</h1>
             <p data-i18n="banner_desc">Real-time equipment availability benchmarking, failure mode distribution, and maintenance optimization analytics.</p>
           </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           EQUIPMENT DETAIL & 3D VIEWER SECTION (360° GLB)
+           ============================================================ -->
+      <section class="equipment-detail-section" id="equipmentDetailSection">
+        <div class="equipment-detail-grid">
+          
+          <!-- 3D Equipment Viewer Card (58% width on desktop) -->
+          <div class="viewer-3d-card">
+            <div class="viewer-3d-header">
+              <div class="viewer-title-group">
+                <span class="viewer-badge"><i class="fa-solid fa-cube"></i> <span data-i18n="viewer_3d_badge">Interactive 3D Model</span></span>
+                <h2 class="viewer-heading" data-i18n="viewer_3d_heading">Power Transformer (5,000 kVA)</h2>
+              </div>
+              <button type="button" class="btn-action btn-reset-view" id="btnReset3DView" title="Reset camera to initial angle">
+                <i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_reset_view">Reset View</span>
+              </button>
+            </div>
+
+            <!-- 3D Canvas Stage -->
+            <div class="viewer-stage-wrapper">
+              <model-viewer 
+                id="transformerViewer"
+                src="./power-transformer-5000kva.glb"
+                alt="Power Transformer 5000kVA 3D Engineering Model"
+                camera-controls
+                touch-action="pan-y"
+                interaction-prompt="none"
+                shadow-intensity="1"
+                exposure="1.05"
+                shadow-softness="0.8"
+                camera-orbit="45deg 75deg 105%"
+                min-camera-orbit="auto auto 50%"
+                max-camera-orbit="auto auto 200%"
+                field-of-view="30deg"
+                loading="lazy">
+                
+                <!-- Loading State Overlay -->
+                <div slot="poster" class="model-loading-poster">
+                  <div class="spinner-ring"></div>
+                  <span class="loading-label" data-i18n="model_loading">Loading 3D model...</span>
+                </div>
+
+                <!-- Error Fallback Message -->
+                <div slot="error" class="model-error-state">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span data-i18n="model_error">3D Model could not be loaded. Please ensure power-transformer-5000kva.glb exists in root directory.</span>
+                </div>
+              </model-viewer>
+            </div>
+
+            <div class="viewer-footer-bar">
+              <span class="instruction-text"><i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="viewer_instruction">Drag to rotate • Scroll to zoom</span></span>
+              <span class="render-spec-tag">WebGL PBR 3D Engine</span>
+            </div>
+          </div>
+
+          <!-- Equipment Overview Panel (42% width on desktop) -->
+          <div class="equipment-overview-panel">
+            <div class="overview-panel-head">
+              <span class="card-tag" data-i18n="overview_card_tag">ASSET SPECIFICATIONS</span>
+              <h3 id="overviewEquipName" data-i18n="overview_equip_name">Power Transformer</h3>
+              <span class="equipment-spec-sub" data-i18n="overview_equip_sub">Substation Main Power Unit • Rated 5,000 kVA</span>
+            </div>
+
+            <div class="specs-data-deck">
+              <div class="spec-tile">
+                <span class="tile-lbl"><i class="fa-solid fa-bolt"></i> <span data-i18n="lbl_rated_capacity">Rated Capacity</span></span>
+                <strong class="tile-val">5,000 kVA</strong>
+              </div>
+              <div class="spec-tile">
+                <span class="tile-lbl"><i class="fa-solid fa-layer-group"></i> <span data-i18n="lbl_active_scope">Active Scope</span></span>
+                <strong class="tile-val" id="overviewActiveScope">TR Subsystem</strong>
+              </div>
+              <div class="spec-tile">
+                <span class="tile-lbl"><i class="fa-solid fa-heart-pulse"></i> <span data-i18n="lbl_operational_status">Operational Status</span></span>
+                <strong class="tile-val text-status-healthy" id="overviewStatusVal" data-i18n="val_normal_condition">Normal Condition</strong>
+              </div>
+              <div class="spec-tile">
+                <span class="tile-lbl"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="lbl_engineering_std">Engineering Standard</span></span>
+                <strong class="tile-val">IEEE C57 / ISO 14224</strong>
+              </div>
+            </div>
+
+            <div class="overview-actions-row">
+              <button type="button" class="btn-action btn-jump" id="btnJumpToTable">
+                <i class="fa-solid fa-table-cells"></i> <span data-i18n="view_ram_analysis">View RAM Analysis</span>
+              </button>
+              <button type="button" class="btn-action btn-jump" id="btnJumpToSimulator">
+                <i class="fa-solid fa-sliders"></i> <span data-i18n="view_what_if">Simulate Mitigation</span>
+              </button>
+            </div>
+
+            <div class="overview-disclaimer">
+              <i class="fa-solid fa-circle-info"></i>
+              <span data-i18n="overview_disclaimer_text">Equipment specs reflect active substation operational boundary data.</span>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -1875,7 +2232,7 @@
         </div>
       </section>
 
-      <!-- What-If Simulator (Professional Engineering Layout) -->
+      <!-- What-If Simulator -->
       <section class="simulator-section" id="simulatorSection">
         
         <div class="sim-header">
@@ -2170,6 +2527,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=600"></script>
+  <script src="script.js?v=700"></script>
 </body>
 </html>
