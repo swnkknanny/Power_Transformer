@@ -335,7 +335,6 @@
       display: inline-flex; align-items: center; gap: 5px;
     }
 
-    /* Full-width Scenario Card */
     .sim-scenario-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -371,7 +370,6 @@
       background-color: var(--surface-subtle);
     }
 
-    /* Workspace Multi-Column Grid */
     .sim-dashboard-grid {
       display: grid;
       grid-template-columns: 380px minmax(0, 1fr);
@@ -406,7 +404,6 @@
     .sim-card-head p { font-size: 0.68rem; color: var(--text-muted); margin: 2px 0 0 0; }
     .sim-flex-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 
-    /* Parameter Blocks */
     .sim-param-block {
       display: flex;
       flex-direction: column;
@@ -432,7 +429,6 @@
       color: var(--text-primary);
     }
 
-    /* Segmented Control (Preset vs Custom) */
     .sim-segmented-switch {
       display: inline-flex;
       background: var(--surface-subtle);
@@ -461,7 +457,6 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
-    /* Highlighted Preset Card */
     .sim-preset-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -529,7 +524,6 @@
     }
     .sim-slider-scale { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); }
 
-    /* Action Cluster */
     .sim-actions-cluster {
       display: flex;
       gap: 10px;
@@ -554,7 +548,6 @@
       color: #FFFFFF;
     }
 
-    /* Result Cards Triad */
     .sim-results-triad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -597,14 +590,12 @@
       color: var(--text-secondary);
     }
 
-    /* Analytics Split: Calculation + Chart */
     .sim-analytics-split {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
       gap: 14px;
     }
 
-    /* Mathematical Formulation Board */
     .calc-math-board {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -685,14 +676,12 @@
       color: var(--status-healthy);
     }
 
-    /* Chart Canvas Wrapper */
     .sim-chart-container {
       position: relative;
       height: 175px;
       width: 100%;
     }
 
-    /* Collapsible MTTR Reference Table */
     .sim-reference-card {
       padding: 14px 18px;
     }
@@ -735,7 +724,6 @@
       background-color: var(--surface-subtle);
     }
 
-    /* System Engineering Disclaimer Note */
     .sim-system-disclaimer {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -800,6 +788,7 @@
     .btn-drawer-back { background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
     .drawer-level-tag { font-size: 0.6rem; font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.07em; }
     .drawer-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
+    .drawer-close:hover { color: var(--text-primary); }
     .drawer-body { padding: 18px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .drawer-title-group h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
     .drawer-title-group .drawer-subtitle { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
@@ -1260,18 +1249,18 @@
                 </div>
               </div>
 
-              <!-- MTBF Module -->
+              <!-- MTBF Module (ช่วง 50 - 50,000 ชม.) -->
               <div class="sim-param-block">
                 <div class="sim-input-row">
                   <label for="simMtbfInput" class="sim-label">MTBF (hours)</label>
                   <div class="sim-val-input">
-                    <input type="number" id="simMtbfInput" min="100" max="250000" step="100" value="4320" />
+                    <input type="number" id="simMtbfInput" min="50" max="50000" step="50" value="4320" />
                     <span>hrs</span>
                   </div>
                 </div>
-                <input type="range" class="sim-slider" id="simMtbfSlider" min="500" max="50000" step="250" value="4320" />
+                <input type="range" class="sim-slider" id="simMtbfSlider" min="50" max="50000" step="50" value="4320" />
                 <div class="sim-slider-scale">
-                  <span>500 hrs</span>
+                  <span>50 hrs</span>
                   <span>25k hrs</span>
                   <span>50k hrs</span>
                 </div>
@@ -1477,6 +1466,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=300"></script>
+  <script src="script.js?v=301"></script>
 </body>
 </html>
