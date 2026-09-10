@@ -170,7 +170,7 @@ const i18nData = {
     btn_dismiss: "ปิดหน้าต่าง",
     btn_gen_brief: "พิมพ์รายงาน",
 
-    // Simulator i18n (ภาษาไทย - ใช้คำทางการตามหลักวิศวกรรม)
+    // Simulator i18n
     sim_title: "แบบจำลอง RAM WHAT-IF",
     sim_subtitle: "การจำลองความพร้อมใช้งานตามสถานการณ์ข้อบกพร่องและเวลาบำรุงรักษาจำลอง (MTTR)",
     sim_sandbox_badge: "พื้นที่ทดลองจำลอง",
@@ -237,7 +237,6 @@ function setLanguage(lang) {
   }
   updateAuthUI();
 
-  // Re-run simulation to update dynamic labels, target indicator, and chart labels
   if (typeof runSimulatorCalculation === 'function') {
     runSimulatorCalculation();
   }
@@ -359,21 +358,71 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Drawer Close
   const drawerCloseBtn = document.getElementById('drawerCloseBtn');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
-  if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
-  if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
-
   const drawerBackBtn = document.getElementById('drawerBackBtn');
+
+  if (drawerCloseBtn) drawerCloseBtn.onclick = closeDrawer;
+  if (drawerBackdrop) drawerBackdrop.onclick = closeDrawer;
   if (drawerBackBtn) {
-    drawerBackBtn.addEventListener('click', () => {
+    drawerBackBtn.onclick = () => {
       if (drillHistory.length > 1) {
         drillHistory.pop();
         renderDrillView(drillHistory[drillHistory.length - 1], false);
       } else {
         closeDrawer();
       }
-    });
+    };
+  }
+
+  // ผูกคลิกการ์ด KPI ทั้ง 4 ใบแบบตรงเป้าหมาย
+  const kpiMap = [
+    { id: 'kpiCardAvail', type: 'availability' },
+    { id: 'kpiCardMtbf', type: 'mtbf' },
+    { id: 'kpiCardMttr', type: 'mttr' },
+    { id: 'kpiCardModes', type: 'modes' }
+  ];
+
+  kpiMap.forEach(item => {
+    const el = document.getElementById(item.id);
+    if (el) {
+      el.style.cursor = 'pointer';
+      el.onclick = (e) => {
+        e.preventDefault();
+        openDrillKpi(item.type);
+      };
+    }
+  });
+
+  // ผูกคลิกการ์ด Subsystem Attention Vectors (Lowest Avail & Peak MTTR)
+  const worstAvailBlock = document.getElementById('insightWorstAvail');
+  const worstMttrBlock = document.getElementById('insightWorstMttr');
+
+  if (worstAvailBlock) {
+    worstAvailBlock.style.cursor = 'pointer';
+    worstAvailBlock.onclick = (e) => {
+      e.preventDefault();
+      const sheet = document.getElementById('sheetSelect')?.value || 'TR';
+      const rows = getNormalizedRows(sheet);
+      if (rows.length > 0) {
+        const worst = [...rows].sort((a, b) => a.availability - b.availability)[0];
+        if (worst) openDrillEquipment(worst.component);
+      }
+    };
+  }
+
+  if (worstMttrBlock) {
+    worstMttrBlock.style.cursor = 'pointer';
+    worstMttrBlock.onclick = (e) => {
+      e.preventDefault();
+      const sheet = document.getElementById('sheetSelect')?.value || 'TR';
+      const rows = getNormalizedRows(sheet);
+      if (rows.length > 0) {
+        const worst = [...rows].sort((a, b) => b.mttr - a.mttr)[0];
+        if (worst) openDrillEquipment(worst.component);
+      }
+    };
   }
 
   initExportEvents();
@@ -711,6 +760,16 @@ function renderCauseChart(causeCounts) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      onClick: (event, elements) => {
+        if (elements && elements.length > 0) {
+          const index = elements[0].index;
+          const clickedCategory = labels[index];
+          openDrillCategory(clickedCategory);
+        }
+      },
+      onHover: (event, chartElement) => {
+        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+      },
       plugins: {
         legend: {
           position: 'right',
@@ -1167,7 +1226,7 @@ function initSimulatorEngine() {
     }
   });
 
-  // Updated MTBF Listeners: Min floor 50
+  // Updated MTBF range Floor 50
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
     simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
@@ -1393,24 +1452,30 @@ function initSimulatorEngine() {
 }
 
 // ============================================================
-// 7. DRAWER & EXPORT REPORT ENGINE
+// 7. GLOBAL DRILL-DOWN & DRAWER ENGINE (CRASH-PROOF)
 // ============================================================
 function openDrawer() {
   const detailDrawer = document.getElementById('detailDrawer');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
-  if (!detailDrawer || !drawerBackdrop) return;
-  detailDrawer.classList.add('open');
-  drawerBackdrop.classList.add('show');
-  detailDrawer.setAttribute('aria-hidden', 'false');
+  if (detailDrawer) {
+    detailDrawer.classList.add('open');
+    detailDrawer.setAttribute('aria-hidden', 'false');
+  }
+  if (drawerBackdrop) {
+    drawerBackdrop.classList.add('show');
+  }
 }
 
 function closeDrawer() {
   const detailDrawer = document.getElementById('detailDrawer');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
-  if (!detailDrawer || !drawerBackdrop) return;
-  detailDrawer.classList.remove('open');
-  drawerBackdrop.classList.remove('show');
-  detailDrawer.setAttribute('aria-hidden', 'true');
+  if (detailDrawer) {
+    detailDrawer.classList.remove('open');
+    detailDrawer.setAttribute('aria-hidden', 'true');
+  }
+  if (drawerBackdrop) {
+    drawerBackdrop.classList.remove('show');
+  }
   drillHistory.length = 0;
 }
 
@@ -1441,9 +1506,83 @@ function renderDrillView(viewState, shouldOpen = true) {
   if (shouldOpen) openDrawer();
 }
 
+function openDrillKpi(metric) {
+  pushDrillView({ type: 'kpi', metric: metric, level: 2 });
+}
+
+function openDrillCategory(categoryName) {
+  pushDrillView({ type: 'category', category: categoryName, level: 2 });
+}
+
 function openDrillEquipment(rawCompName) {
   const compName = decodeURIComponent(rawCompName);
   pushDrillView({ type: 'equipment', equipmentName: compName, level: 3 });
+}
+
+function renderKpiDetail(metric) {
+  const drawerContent = document.getElementById('drawerContent');
+  const sheetSelect = document.getElementById('sheetSelect');
+  if (!drawerContent || !sheetSelect) return;
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+  const dict = i18nData[currentLang] || i18nData.en;
+
+  let title = '';
+  let sub = '';
+  let sorted = [];
+
+  if (metric === 'availability') {
+    title = (currentLang === 'th') ? 'การจัดอันดับความพร้อมใช้งาน (AVAILABILITY)' : 'FLEET AVAILABILITY RANKING';
+    sub = (currentLang === 'th') ? 'เรียงจากความพร้อมใช้งานต่ำสุดไปหาสูงสุด (เกณฑ์เป้าหมาย ≥ 96.00%)' : 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
+    sorted = [...allRows].sort((a, b) => a.availability - b.availability);
+  } else if (metric === 'mtbf') {
+    title = (currentLang === 'th') ? 'การจัดอันดับความน่าเชื่อถือ (MTBF)' : 'MTBF RELIABILITY SPECTRUM';
+    sub = (currentLang === 'th') ? 'เรียงจากตัวที่เสียหายบ่อยที่สุด (MTBF ต่ำสุด) ไปยังตัวที่ทนทานที่สุด' : 'Ranked from lowest MTBF (highest failure frequency) to highest';
+    sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
+  } else if (metric === 'mttr') {
+    title = (currentLang === 'th') ? 'การจัดอันดับเวลาบำรุงรักษา (MTTR)' : 'REPAIR LATENCY (MTTR) RANKING';
+    sub = (currentLang === 'th') ? 'เรียงจากตัวที่ใช้เวลาซ่อมนานที่สุดไปน้อยที่สุด (เกณฑ์ ≤ 10 ชม.)' : 'Ranked from highest repair duration to lowest (Limit ≤ 10h)';
+    sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
+  } else {
+    title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'CATALOGED FAILURE MODES';
+    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องทั้งหมดที่ถูกบันทึกไว้ในระบบย่อยนี้' : 'Registered failure mechanisms within current subsystem';
+    sorted = [...allRows];
+  }
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${title}</h2>
+      <div class="drawer-subtitle">${sub}</div>
+    </div>
+    <div class="drawer-section">
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'อันดับอุปกรณ์ตามตัวชี้วัด' : 'Equipment Diagnostic Ranks'}</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
+            <th style="text-align:right;">Avail</th>
+            <th style="text-align:right;">MTBF</th>
+            <th style="text-align:right;">MTTR</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  sorted.forEach(r => {
+    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
+    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
+    html += `
+      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
+        <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
+        <td style="color:${availColor}; font-weight:700; text-align:right;">${r.availability.toFixed(2)}%</td>
+        <td style="text-align:right;">${r.mtbf.toFixed(1)}h</td>
+        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'}; text-align:right;">${r.mttr.toFixed(1)}h</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table></div>`;
+  drawerContent.innerHTML = html;
 }
 
 function renderEquipmentDetail(compName) {
@@ -1477,7 +1616,6 @@ function renderEquipmentDetail(compName) {
         ${statusBadge}
       </div>
     </div>
-
     <div class="drawer-kpi-strip">
       <div class="drawer-mini-kpi">
         <span>Availability</span>
@@ -1485,43 +1623,41 @@ function renderEquipmentDetail(compName) {
       </div>
       <div class="drawer-mini-kpi">
         <span>MTBF</span>
-        <strong>${primary.mtbf.toFixed(2)} ${dict.unit_hrs}</strong>
+        <strong>${primary.mtbf.toFixed(1)} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
         <span>MTTR</span>
-        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(2)} ${dict.unit_hrs}</strong>
+        <strong style="color: ${primary.mttr > 10 ? '#A65D57' : 'inherit'};">${primary.mttr.toFixed(1)} ${dict.unit_hrs}</strong>
       </div>
       <div class="drawer-mini-kpi">
-        <span>${(currentLang === 'th') ? 'จำนวนลักษณะข้อบกพร่อง' : 'Failure Modes'}</span>
+        <span>${(currentLang === 'th') ? 'ข้อบกพร่องที่บันทึก' : 'Failure Modes'}</span>
         <strong>${matchedRows.length}</strong>
       </div>
     </div>
-
     <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Equipment Diagnostic Details'}</span>
-      <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Diagnostic Summary'}</span>
+      <div style="font-size:0.76rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
         <div><strong>${(currentLang === 'th') ? 'สาเหตุหลัก' : 'Primary Cause'}:</strong> ${primary.cause}</div>
-        <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่องหลัก' : 'Dominant Failure Mode'}:</strong> ${primary.mode}</div>
-        <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
+        <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Failure Mode'}:</strong> ${primary.mode}</div>
+        <div style="margin-top:6px; font-size:0.7rem; color:var(--text-muted);">
           ${isAttention
             ? ((currentLang === 'th') 
-               ? 'คำแนะนำ: อุปกรณ์นี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวน หน้าสัมผัสทางไฟฟ้า และกลไกขับเคลื่อน' 
-               : 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.')
+               ? 'คำแนะนำ: ชิ้นส่วนนี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ 96% หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวนและจัดเตรียมอะไหล่สำรองล่วงหน้า' 
+               : 'Advisory: Availability or MTTR breaches engineering thresholds. Inspection of seals and insulation recommended.')
             : ((currentLang === 'th')
-               ? 'ประสิทธิภาพการทำงานอยู่ภายใต้เกณฑ์มาตรฐาน ISO 14224 และ IEEE' 
-               : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.')}
+               ? 'ประสิทธิภาพการทำงานอยู่ในเกณฑ์ปกติมาตรฐาน ISO 14224' 
+               : 'Operational performance operates within designated reliability thresholds.')}
         </div>
       </div>
     </div>
-
     <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึก' : 'Registered Subsystem Events'}</span>
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึก' : 'Registered Incidents'}</span>
       <table class="drawer-table">
         <thead>
           <tr>
             <th>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Mode'}</th>
-            <th>${(currentLang === 'th') ? 'สาเหตุ' : 'Reported Cause'}</th>
-            <th>Downtime</th>
+            <th>${(currentLang === 'th') ? 'สาเหตุ' : 'Cause'}</th>
+            <th style="text-align:right;">Downtime</th>
           </tr>
         </thead>
         <tbody>
@@ -1532,7 +1668,76 @@ function renderEquipmentDetail(compName) {
       <tr>
         <td><strong>${r.mode}</strong></td>
         <td>${r.cause}</td>
-        <td>${r.mttr.toFixed(2)}h</td>
+        <td style="text-align:right;">${r.mttr.toFixed(1)}h</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table></div>`;
+  drawerContent.innerHTML = html;
+}
+
+function renderCategoryDetail(categoryName) {
+  const drawerContent = document.getElementById('drawerContent');
+  const sheetSelect = document.getElementById('sheetSelect');
+  if (!drawerContent || !sheetSelect) return;
+  const currentSheet = sheetSelect.value;
+  const allRows = getNormalizedRows(currentSheet);
+  const dict = i18nData[currentLang] || i18nData.en;
+  
+  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
+  const categoryRows = allRows.filter(r => {
+    if (isOther) {
+      return !['Electrical', 'Mechanical', 'เสื่อมสภาพ', 'โครงแตก'].some(top => r.cause.toLowerCase().includes(top.toLowerCase()));
+    }
+    return r.cause.toLowerCase().includes(categoryName.toLowerCase());
+  });
+
+  const totalFailures = categoryRows.length;
+  const totalSubsystemFailures = allRows.length;
+  const sharePct = totalSubsystemFailures > 0 ? ((totalFailures / totalSubsystemFailures) * 100).toFixed(1) : '0.0';
+  const avgDowntime = totalFailures > 0
+    ? (categoryRows.reduce((acc, r) => acc + r.mttr, 0) / totalFailures).toFixed(1)
+    : '0.0';
+
+  let html = `
+    <div class="drawer-title-group">
+      <h2>${categoryName.toUpperCase()}</h2>
+      <div class="drawer-subtitle">
+        <span>${sharePct}% ${(currentLang === 'th') ? 'ของเหตุการณ์ทั้งหมด' : 'of Total Subsystem Incidents'}</span>
+        <span>•</span>
+        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'} ${currentSheet}</span>
+      </div>
+    </div>
+    <div class="drawer-kpi-strip">
+      <div class="drawer-mini-kpi">
+        <span>${(currentLang === 'th') ? 'จำนวนครั้งที่พบ' : 'Failure Events'}</span>
+        <strong>${totalFailures}</strong>
+      </div>
+      <div class="drawer-mini-kpi">
+        <span>${(currentLang === 'th') ? 'เวลาบำรุงรักษาเฉลี่ย' : 'Avg Repair Latency'}</span>
+        <strong>${avgDowntime} ${dict.unit_hrs}</strong>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'อุปกรณ์ที่ได้รับผลกระทบ' : 'Affected Equipment'}</span>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
+            <th>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Mode'}</th>
+            <th style="text-align:right;">MTTR</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  categoryRows.forEach(r => {
+    html += `
+      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
+        <td><strong>${r.component}</strong></td>
+        <td>${r.mode}</td>
+        <td style="text-align:right;">${r.mttr.toFixed(1)} ${dict.unit_hrs}</td>
       </tr>
     `;
   });
@@ -1540,12 +1745,30 @@ function renderEquipmentDetail(compName) {
   html += `
         </tbody>
       </table>
+      <button class="drawer-btn-viewall" onclick="applyCategoryFilterToMatrix('${categoryName}')">
+        ${(currentLang === 'th') ? `กรองตารางเฉพาะกลุ่ม ${categoryName} →` : `Filter Matrix to ${categoryName} Failures →`}
+      </button>
     </div>
   `;
 
   drawerContent.innerHTML = html;
 }
 
+function applyCategoryFilterToMatrix(categoryName) {
+  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.value = isOther ? '' : categoryName;
+    applyTableFilter();
+  }
+  closeDrawer();
+  const ramTableEl = document.getElementById('ramTable');
+  if (ramTableEl) ramTableEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================
+// 8. EXPORT REPORT ENGINE
+// ============================================================
 function initExportEvents() {
   const openExportModalBtn = document.getElementById('openExportModalBtn');
   const exportModal = document.getElementById('exportModal');
