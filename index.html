@@ -335,6 +335,7 @@
       display: inline-flex; align-items: center; gap: 5px;
     }
 
+    /* Full-width Scenario Card */
     .sim-scenario-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -370,6 +371,7 @@
       background-color: var(--surface-subtle);
     }
 
+    /* Workspace Multi-Column Grid */
     .sim-dashboard-grid {
       display: grid;
       grid-template-columns: 380px minmax(0, 1fr);
@@ -404,6 +406,7 @@
     .sim-card-head p { font-size: 0.68rem; color: var(--text-muted); margin: 2px 0 0 0; }
     .sim-flex-between { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 
+    /* Parameter Blocks */
     .sim-param-block {
       display: flex;
       flex-direction: column;
@@ -429,6 +432,7 @@
       color: var(--text-primary);
     }
 
+    /* Segmented Control (Preset vs Custom) */
     .sim-segmented-switch {
       display: inline-flex;
       background: var(--surface-subtle);
@@ -457,6 +461,7 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
+    /* Highlighted Preset Card */
     .sim-preset-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -524,6 +529,7 @@
     }
     .sim-slider-scale { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-muted); }
 
+    /* Action Cluster */
     .sim-actions-cluster {
       display: flex;
       gap: 10px;
@@ -548,6 +554,7 @@
       color: #FFFFFF;
     }
 
+    /* Result Cards Triad */
     .sim-results-triad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -590,12 +597,14 @@
       color: var(--text-secondary);
     }
 
+    /* Analytics Split: Calculation + Chart */
     .sim-analytics-split {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
       gap: 14px;
     }
 
+    /* Mathematical Formulation Board */
     .calc-math-board {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -676,12 +685,14 @@
       color: var(--status-healthy);
     }
 
+    /* Chart Canvas Wrapper */
     .sim-chart-container {
       position: relative;
       height: 175px;
       width: 100%;
     }
 
+    /* Collapsible MTTR Reference Table */
     .sim-reference-card {
       padding: 14px 18px;
     }
@@ -724,6 +735,7 @@
       background-color: var(--surface-subtle);
     }
 
+    /* System Engineering Disclaimer Note */
     .sim-system-disclaimer {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -788,7 +800,6 @@
     .btn-drawer-back { background: var(--surface-base); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
     .drawer-level-tag { font-size: 0.6rem; font-weight: 700; color: var(--brand-champagne); letter-spacing: 0.07em; }
     .drawer-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; line-height: 1; padding: 0 4px; }
-    .drawer-close:hover { color: var(--text-primary); }
     .drawer-body { padding: 18px 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
     .drawer-title-group h2 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
     .drawer-title-group .drawer-subtitle { font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
@@ -1169,13 +1180,13 @@
         <!-- Header -->
         <div class="sim-header">
           <div class="sim-header-text">
-            <h2 class="sim-main-title">RAM WHAT-IF SIMULATOR</h2>
-            <p class="sim-subtitle">Scenario-based availability modeling with cause-dependent simulated MTTR parameters</p>
+            <h2 class="sim-main-title" data-i18n="sim_title">RAM WHAT-IF SIMULATOR</h2>
+            <p class="sim-subtitle" data-i18n="sim_subtitle">Scenario-based availability modeling with cause-dependent simulated MTTR parameters</p>
           </div>
           <div class="sim-header-actions">
-            <span class="sim-status-badge"><i class="fa-solid fa-microchip"></i> Simulation Sandbox</span>
+            <span class="sim-status-badge"><i class="fa-solid fa-microchip"></i> <span data-i18n="sim_sandbox_badge">Simulation Sandbox</span></span>
             <button type="button" class="btn-action" id="simResetBtn" title="Reset parameters to baseline">
-              <i class="fa-solid fa-rotate-left"></i> Reset
+              <i class="fa-solid fa-rotate-left"></i> <span data-i18n="sim_reset">Reset</span>
             </button>
           </div>
         </div>
@@ -1183,24 +1194,24 @@
         <!-- Step 1: Scenario Selection (Full-Width Card) -->
         <div class="sim-card sim-scenario-card">
           <div class="sim-card-head">
-            <h3>What-If Scenario</h3>
-            <p>Select equipment and failure hierarchy to load simulated MTTR parameters</p>
+            <h3 data-i18n="sim_scenario_title">What-If Scenario</h3>
+            <p data-i18n="sim_scenario_desc">Select equipment and failure hierarchy to load simulated MTTR parameters</p>
           </div>
           <div class="sim-hierarchy-grid">
             <div class="sim-form-group">
-              <label for="simEquipmentSelect"><i class="fa-solid fa-cube"></i> Equipment</label>
+              <label for="simEquipmentSelect"><i class="fa-solid fa-cube"></i> <span data-i18n="sim_lbl_equipment">Equipment</span></label>
               <select id="simEquipmentSelect" class="custom-select sim-select">
                 <option value="" disabled selected>Select Equipment...</option>
               </select>
             </div>
             <div class="sim-form-group">
-              <label for="simFailureModeSelect"><i class="fa-solid fa-triangle-exclamation"></i> Failure Mode</label>
+              <label for="simFailureModeSelect"><i class="fa-solid fa-triangle-exclamation"></i> <span data-i18n="sim_lbl_failure_mode">Failure Mode</span></label>
               <select id="simFailureModeSelect" class="custom-select sim-select" disabled>
                 <option value="" disabled selected>Select Failure Mode...</option>
               </select>
             </div>
             <div class="sim-form-group">
-              <label for="simFailureCauseSelect"><i class="fa-solid fa-circle-nodes"></i> Failure Cause</label>
+              <label for="simFailureCauseSelect"><i class="fa-solid fa-circle-nodes"></i> <span data-i18n="sim_lbl_failure_cause">Failure Cause</span></label>
               <select id="simFailureCauseSelect" class="custom-select sim-select" disabled>
                 <option value="" disabled selected>Select Failure Cause...</option>
               </select>
@@ -1215,47 +1226,47 @@
           <aside class="sim-col-setup">
             <div class="sim-card">
               <div class="sim-card-head">
-                <h3>Simulation Parameters</h3>
-                <p>Configure MTTR mode, operational MTBF, and target baseline</p>
+                <h3 data-i18n="sim_params_title">Simulation Parameters</h3>
+                <p data-i18n="sim_params_desc">Configure MTTR mode, operational MTBF, and target baseline</p>
               </div>
 
               <!-- MTTR Parameter Module -->
               <div class="sim-param-block">
                 <div class="sim-block-header">
-                  <label class="sim-label">Repair Time (MTTR)</label>
+                  <label class="sim-label" data-i18n="sim_lbl_repair_time">Repair Time (MTTR)</label>
                   <div class="sim-segmented-switch">
-                    <button type="button" class="sim-seg-btn active" id="simModePresetBtn">Use Preset</button>
-                    <button type="button" class="sim-seg-btn" id="simModeCustomBtn">Custom</button>
+                    <button type="button" class="sim-seg-btn active" id="simModePresetBtn" data-i18n="sim_btn_preset">Use Preset</button>
+                    <button type="button" class="sim-seg-btn" id="simModeCustomBtn" data-i18n="sim_btn_custom">Custom</button>
                   </div>
                 </div>
 
                 <!-- Highlighted Preset Display -->
                 <div class="sim-preset-card" id="simPresetCard">
-                  <div class="preset-label">Simulated MTTR</div>
+                  <div class="preset-label" data-i18n="sim_lbl_preset_mttr">Simulated MTTR</div>
                   <div class="preset-value-row">
                     <strong id="simPresetVal">--</strong>
-                    <span class="unit">hours</span>
+                    <span class="unit" data-i18n="unit_hrs">hours</span>
                   </div>
-                  <p class="preset-hint" id="simPresetHint">Auto-filled based on the selected failure cause.</p>
+                  <p class="preset-hint" id="simPresetHint" data-i18n="sim_hint_preset">Auto-filled based on the selected failure cause.</p>
                 </div>
 
                 <!-- Editable Input (Custom mode override) -->
                 <div class="sim-input-row" id="simCustomInputRow" style="margin-top: 6px;">
-                  <span class="input-lbl">Operating MTTR (hrs)</span>
+                  <span class="input-lbl" data-i18n="sim_lbl_operating_mttr">Operating MTTR (hrs)</span>
                   <div class="sim-val-input">
                     <input type="number" id="simMttrInput" min="0.5" max="150" step="0.5" value="18" readonly />
-                    <span>hrs</span>
+                    <span data-i18n="unit_hrs">hrs</span>
                   </div>
                 </div>
               </div>
 
-              <!-- MTBF Module (ช่วง 50 - 50,000 ชม.) -->
+              <!-- MTBF Module (Updated range: 50 – 50,000 hrs) -->
               <div class="sim-param-block">
                 <div class="sim-input-row">
-                  <label for="simMtbfInput" class="sim-label">MTBF (hours)</label>
+                  <label for="simMtbfInput" class="sim-label" data-i18n="sim_lbl_operating_mtbf">MTBF (hours)</label>
                   <div class="sim-val-input">
                     <input type="number" id="simMtbfInput" min="50" max="50000" step="50" value="4320" />
-                    <span>hrs</span>
+                    <span data-i18n="unit_hrs">hrs</span>
                   </div>
                 </div>
                 <input type="range" class="sim-slider" id="simMtbfSlider" min="50" max="50000" step="50" value="4320" />
@@ -1269,7 +1280,7 @@
               <!-- Target Availability Module -->
               <div class="sim-param-block">
                 <div class="sim-input-row">
-                  <label for="simTargetInput" class="sim-label">Target Availability (%)</label>
+                  <label for="simTargetInput" class="sim-label" data-i18n="sim_lbl_target_avail">Target Availability (%)</label>
                   <div class="sim-val-input pill-accent">
                     <input type="number" id="simTargetInput" min="80.00" max="99.99" step="0.01" value="96.00" />
                     <span>%</span>
@@ -1280,7 +1291,7 @@
               <!-- Run Simulation Actions -->
               <div class="sim-actions-cluster">
                 <button type="button" class="btn-action sim-btn-run" id="simRunBtn">
-                  <i class="fa-solid fa-play"></i> Run Simulation
+                  <i class="fa-solid fa-play"></i> <span data-i18n="sim_btn_run">Run Simulation</span>
                 </button>
               </div>
             </div>
@@ -1292,19 +1303,19 @@
             <!-- Compact Results Triad -->
             <div class="sim-results-triad">
               <div class="sim-card sim-result-pill">
-                <span class="res-label">Baseline Availability</span>
+                <span class="res-label" data-i18n="sim_lbl_baseline_avail">Baseline Availability</span>
                 <strong class="res-value" id="simResBaseline">99.12%</strong>
-                <span class="res-sub">Selected equipment record</span>
+                <span class="res-sub" data-i18n="sim_sub_baseline">Selected equipment record</span>
               </div>
               <div class="sim-card sim-result-pill highlight" id="simResSimulatedBox">
-                <span class="res-label">Simulated Availability</span>
+                <span class="res-label" data-i18n="sim_lbl_simulated_avail">Simulated Availability</span>
                 <strong class="res-value" id="simResSimulated">--%</strong>
                 <span class="res-sub" id="simTargetIndicator">Target: ≥ 96.00%</span>
               </div>
               <div class="sim-card sim-result-pill">
-                <span class="res-label">Availability Change</span>
+                <span class="res-label" data-i18n="sim_lbl_avail_change">Availability Change</span>
                 <strong class="res-value" id="simResChange">--%</strong>
-                <span class="res-sub" id="simChangeSub">Impact relative to baseline</span>
+                <span class="res-sub" id="simChangeSub" data-i18n="sim_sub_change">Impact relative to baseline</span>
               </div>
             </div>
 
@@ -1314,7 +1325,7 @@
               <!-- Calculation Walkthrough Box -->
               <div class="sim-card sim-calc-card">
                 <div class="sim-card-head">
-                  <h3>Reliability Calculation</h3>
+                  <h3 data-i18n="sim_calc_title">Reliability Calculation</h3>
                   <p>A = MTBF / (MTBF + MTTR)</p>
                 </div>
                 <div class="calc-math-board">
@@ -1345,8 +1356,8 @@
               <!-- Availability Comparison Visualizer -->
               <div class="sim-card sim-chart-card">
                 <div class="sim-card-head">
-                  <h3>Availability Comparison</h3>
-                  <p>Baseline vs. Simulated Scenario against Target</p>
+                  <h3 data-i18n="sim_chart_title">Availability Comparison</h3>
+                  <p data-i18n="sim_chart_desc">Baseline vs. Simulated Scenario against Target</p>
                 </div>
                 <div class="sim-chart-container">
                   <canvas id="simComparisonChart"></canvas>
@@ -1359,8 +1370,8 @@
             <div class="sim-card sim-reference-card">
               <div class="sim-card-head sim-flex-between" id="simRefHeader" style="cursor: pointer;">
                 <div>
-                  <h3>Simulated MTTR Reference Matrix</h3>
-                  <p>Predefined parameters for <span id="simRefEquipmentTitle" style="color: var(--brand-champagne); font-weight: 700;">Selected Equipment</span></p>
+                  <h3 data-i18n="sim_ref_title">Simulated MTTR Reference Matrix</h3>
+                  <p><span data-i18n="sim_ref_desc">Predefined parameters for</span> <span id="simRefEquipmentTitle" style="color: var(--brand-champagne); font-weight: 700;">Selected Equipment</span></p>
                 </div>
                 <button type="button" class="btn-toggle-ref" id="simRefToggleBtn">
                   <i class="fa-solid fa-chevron-down"></i>
@@ -1371,9 +1382,9 @@
                   <table class="sim-ref-table">
                     <thead>
                       <tr>
-                        <th>Failure Mode</th>
-                        <th>Failure Cause</th>
-                        <th style="text-align: right;">Preset MTTR (hrs)</th>
+                        <th data-i18n="sim_col_mode">Failure Mode</th>
+                        <th data-i18n="sim_col_cause">Failure Cause</th>
+                        <th style="text-align: right;" data-i18n="sim_col_preset_mttr">Preset MTTR (hrs)</th>
                       </tr>
                     </thead>
                     <tbody id="simRefTableBody">
@@ -1392,7 +1403,7 @@
         <!-- Engineering System Note / Disclaimer Box -->
         <div class="sim-system-disclaimer">
           <i class="fa-solid fa-circle-info"></i>
-          <p>MTTR values in the What-If Simulator are predefined simulation parameters assigned according to failure causes. They are used for scenario analysis to evaluate the effect of repair time on equipment availability and do not represent actual historical maintenance records.</p>
+          <p data-i18n="sim_disclaimer">MTTR values in the What-If Simulator are predefined simulation parameters assigned according to failure causes. They are used for scenario analysis to evaluate the effect of repair time on equipment availability and do not represent actual historical maintenance records.</p>
         </div>
 
       </section>
@@ -1466,6 +1477,6 @@
 
   <div id="printContainer" class="print-container"></div>
 
-  <script src="script.js?v=301"></script>
+  <script src="script.js?v=305"></script>
 </body>
 </html>
