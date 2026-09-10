@@ -9,7 +9,7 @@ const i18nData = {
     nav_heading: "INTELLIGENCE CONSOLE",
     nav_overview: "Overview",
     nav_simulator: "What-If Simulator",
-    panel_subsystem: "SUBSYSTEM DOMAIN",
+    panel_subsystem: "EQUIPMENT CLASS",
     admin_override: "ADMIN DATA OVERRIDE",
     import_dataset: "Import New Dataset",
     sync_hint: "Syncs instantly to all devices",
@@ -47,7 +47,7 @@ const i18nData = {
     tag_root_cause: "ROOT CAUSE SPECTRUM",
     chart_cause_title: "Failure Cause Distribution",
     click_segment_hint: "Click segment to drill",
-    table_title_prefix: "System Diagnostics & RAM Matrix: Subsystem",
+    table_title_prefix: "System Diagnostics & RAM Matrix: Class",
     table_status_viewer: "Read-Only Observation Mode",
     table_status_admin: "Active Cloud Edit Mode: MTBF/MTTR edits auto-calculate Availability",
     table_sub_title: "Click any equipment row to access comprehensive operational analytics.",
@@ -55,7 +55,7 @@ const i18nData = {
     filter_critical: "Avail < 96%",
     filter_high_mttr: "MTTR > 10 hrs",
     connecting_cloud: "Connecting to Realtime Cloud Database...",
-    no_records: "No records registered for this subsystem domain.",
+    no_records: "No records registered for this equipment class.",
     drawer_back: "Back",
     modal_auth_title: "Engineering Gateway",
     modal_auth_sub: "Administrative Access Protocol",
@@ -65,7 +65,7 @@ const i18nData = {
     btn_auth: "Authenticate",
     modal_export_title: "Executive Brief Export",
     modal_export_sub: "Documentation Scope",
-    modal_export_desc: "Select subsystem domain to compile formatted operational brief:",
+    modal_export_desc: "Select equipment class scope to compile formatted operational brief:",
     btn_dismiss: "Dismiss",
     btn_gen_brief: "Generate Brief",
 
@@ -110,7 +110,7 @@ const i18nData = {
     nav_heading: "คอนโซลข้อมูลอัจฉริยะ",
     nav_overview: "ภาพรวมระบบ (Overview)",
     nav_simulator: "แบบจำลอง What-If",
-    panel_subsystem: "เลือกระบบย่อย (SUBSYSTEM)",
+    panel_subsystem: "หมวดหมู่อุปกรณ์ (EQUIPMENT CLASS)",
     admin_override: "จัดการข้อมูลแอดมิน",
     import_dataset: "นำเข้าชุดข้อมูลใหม่ (Excel)",
     sync_hint: "ซิงค์ข้อมูลเรียลไทม์ทุกอุปกรณ์",
@@ -148,7 +148,7 @@ const i18nData = {
     tag_root_cause: "การกระจายตัวของสาเหตุ",
     chart_cause_title: "สัดส่วนสาเหตุข้อบกพร่อง (Failure Cause)",
     click_segment_hint: "คลิกที่กราฟเพื่อเจาะลึกข้อมูล",
-    table_title_prefix: "ตารางวิเคราะห์การบำรุงรักษาและ RAM: ระบบ",
+    table_title_prefix: "ตารางวิเคราะห์การบำรุงรักษาและ RAM: หมวด",
     table_status_viewer: "โหมดอ่านอย่างเดียว (Viewer Mode)",
     table_status_admin: "โหมดแอดมิน: แก้ไข MTBF/MTTR แล้วคำนวณ Availability อัตโนมัติ",
     table_sub_title: "คลิกที่แถวอุปกรณ์เพื่อดูประวัติและการวิเคราะห์เชิงลึก",
@@ -156,7 +156,7 @@ const i18nData = {
     filter_critical: "วิกฤต (< 96%)",
     filter_high_mttr: "MTTR สูง (> 10 ชม.)",
     connecting_cloud: "กำลังเชื่อมต่อฐานข้อมูลคลาวด์แบบเรียลไทม์...",
-    no_records: "ไม่มีรายการข้อมูลในระบบย่อยนี้",
+    no_records: "ไม่มีรายการข้อมูลในหมวดหมู่อุปกรณ์นี้",
     drawer_back: "ย้อนกลับ",
     modal_auth_title: "ระบบยืนยันสิทธิ์แอดมิน",
     modal_auth_sub: "Engineering Administrative Access",
@@ -166,7 +166,7 @@ const i18nData = {
     btn_auth: "ยืนยันสิทธิ์",
     modal_export_title: "พิมพ์รายงานสรุปผลผู้บริหาร",
     modal_export_sub: "Executive Brief Export",
-    modal_export_desc: "เลือกระบบย่อยที่ต้องการสร้างรายงานสรุป:",
+    modal_export_desc: "เลือกหมวดหมู่อุปกรณ์ที่ต้องการสร้างรายงานสรุป:",
     btn_dismiss: "ปิดหน้าต่าง",
     btn_gen_brief: "พิมพ์รายงาน",
 
@@ -562,7 +562,7 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
   currentWorkbook.SheetNames.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = (currentLang === 'th') ? `ระบบย่อย: ${name}` : `Subsystem: ${name}`;
+    option.textContent = (currentLang === 'th') ? `หมวด: ${name}` : `Class: ${name}`;
     sheetSelect.appendChild(option);
   });
 
@@ -1226,7 +1226,7 @@ function initSimulatorEngine() {
     }
   });
 
-  // Updated MTBF range Floor 50
+  // Range 50 – 50,000 hrs
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
     simState.operatingMTBF = Math.max(50, parseFloat(this.value) || 50);
@@ -1611,7 +1611,7 @@ function renderEquipmentDetail(compName) {
       <div class="drawer-subtitle">
         <span>${primary.id}</span>
         <span>•</span>
-        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'}: ${currentSheet}</span>
+        <span>${(currentLang === 'th') ? 'หมวด' : 'Class'}: ${currentSheet}</span>
         <span>•</span>
         ${statusBadge}
       </div>
@@ -1642,7 +1642,7 @@ function renderEquipmentDetail(compName) {
         <div style="margin-top:6px; font-size:0.7rem; color:var(--text-muted);">
           ${isAttention
             ? ((currentLang === 'th') 
-               ? 'คำแนะนำ: ชิ้นส่วนนี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ 96% หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวนและจัดเตรียมอะไหล่สำรองล่วงหน้า' 
+               ? 'คำแนะนำ: ชิ้นส่วนนี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ 96% หรือใช้เวลาบำรุงรักษา ควรตรวจสอบระบบฉนวนและจัดเตรียมอะไหล่สำรองล่วงหน้า' 
                : 'Advisory: Availability or MTTR breaches engineering thresholds. Inspection of seals and insulation recommended.')
             : ((currentLang === 'th')
                ? 'ประสิทธิภาพการทำงานอยู่ในเกณฑ์ปกติมาตรฐาน ISO 14224' 
@@ -1704,9 +1704,9 @@ function renderCategoryDetail(categoryName) {
     <div class="drawer-title-group">
       <h2>${categoryName.toUpperCase()}</h2>
       <div class="drawer-subtitle">
-        <span>${sharePct}% ${(currentLang === 'th') ? 'ของเหตุการณ์ทั้งหมด' : 'of Total Subsystem Incidents'}</span>
+        <span>${sharePct}% ${(currentLang === 'th') ? 'ของเหตุการณ์ทั้งหมด' : 'of Total Incidents'}</span>
         <span>•</span>
-        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'} ${currentSheet}</span>
+        <span>${(currentLang === 'th') ? 'หมวด' : 'Class'} ${currentSheet}</span>
       </div>
     </div>
     <div class="drawer-kpi-strip">
@@ -1788,7 +1788,7 @@ function initExportEvents() {
       const currentOption = `
         <label class="sheet-radio-item">
           <input type="radio" name="printSheetTarget" value="${currentSheet}" checked />
-          <span><strong>${(currentLang === 'th') ? 'ระบบย่อยที่กำลังเปิดอยู่' : 'Active Workspace Subsystem'} (${currentSheet})</strong></span>
+          <span><strong>${(currentLang === 'th') ? 'หมวดที่กำลังเปิดอยู่' : 'Active Class'} (${currentSheet})</strong></span>
         </label>
       `;
       sheetOptionsList.insertAdjacentHTML('beforeend', currentOption);
@@ -1798,7 +1798,7 @@ function initExportEvents() {
           const item = `
             <label class="sheet-radio-item">
               <input type="radio" name="printSheetTarget" value="${name}" />
-              <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem Scope'}: ${name}</span>
+              <span>${(currentLang === 'th') ? 'หมวด' : 'Class'}: ${name}</span>
             </label>
           `;
           sheetOptionsList.insertAdjacentHTML('beforeend', item);
@@ -1853,7 +1853,7 @@ function buildPrintView(targetSheet) {
       <div class="print-page">
         <div class="print-header">
           <div>
-            <h2>${(currentLang === 'th') ? 'รายงานสรุปผลการวิเคราะห์การบำรุงรักษาและ RAM' : 'RAM Analytics Operational Brief'}: Subsystem ${sName}</h2>
+            <h2>${(currentLang === 'th') ? 'รายงานสรุปผลการวิเคราะห์การบำรุงรักษาและ RAM' : 'RAM Analytics Operational Brief'}: Class ${sName}</h2>
             <span style="font-size: 0.72rem; color: #666;">Substation Reliability, Availability & Maintenance Performance Data</span>
           </div>
           <div class="meta">
