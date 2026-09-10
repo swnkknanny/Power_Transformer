@@ -200,7 +200,6 @@ const drillHistory = [];
 // 3. SECURE DOM EVENT BINDING
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Switch Language
   document.querySelectorAll('.btn-lang').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -208,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Admin Gateway Modal
   const loginBtn = document.getElementById('loginBtn');
   const loginModal = document.getElementById('loginModal');
   const adminPasswordInput = document.getElementById('adminPassword');
@@ -249,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Upload Excel
   const fileInput = document.getElementById('excelFile');
   if (fileInput) {
     fileInput.addEventListener('change', function(e) {
@@ -263,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Subsystem Selector
   const sheetSelect = document.getElementById('sheetSelect');
   if (sheetSelect) {
     sheetSelect.addEventListener('change', function(e) {
@@ -274,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Search & Filter
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.addEventListener('input', applyTableFilter);
 
@@ -287,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Drawer
   const drawerCloseBtn = document.getElementById('drawerCloseBtn');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
   if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
@@ -305,14 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Export Events
   initExportEvents();
-
-  // Load language & cloud database
   setLanguage(currentLang);
   initRealtimeCloudSync();
-  
-  // Initialize Upgraded Simulator
   initSimulatorEngine();
 });
 
@@ -463,7 +452,6 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
     renderDrillView(drillHistory[drillHistory.length - 1], false);
   }
 
-  // Update Simulator Equipment Dropdown
   if (typeof updateSimulatorEquipment === 'function') {
     updateSimulatorEquipment();
   }
@@ -768,81 +756,97 @@ function applyTableFilter() {
 }
 
 // ============================================================
-// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (COMPLETE)
+// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (DATA & LOGIC CORE)
 // ============================================================
 let updateSimulatorEquipment = null;
 
 function initSimulatorEngine() {
-  // Predefined simulated parameter dictionary based on failure causes
-  const simulatedPresetRegistry = {
-    "GIS": {
-      "Gas System Failure": {
-        "Gas Leakage": 18,
-        "Moisture Ingress": 24,
-        "Density Monitor Trip": 8
-      },
-      "Insulation Failure": {
-        "Insulation Defect": 12,
-        "Partial Discharge Breakdown": 36
-      },
-      "Control System Failure": {
-        "Control Circuit Failure": 8,
-        "Auxiliary Switch Malfunction": 6
-      }
-    },
-    "TR": {
-      "Winding Failure": {
-        "Inter-turn Short Circuit": 72,
-        "Winding Deformation": 96
-      },
-      "Bushing Failure": {
-        "Bushing Flashover": 24,
-        "Capacitance Tap Degradation": 16
-      },
-      "OLTC Failure": {
-        "Contact Wear": 14,
-        "Mechanism Jam": 10
-      }
-    },
-    "HV": {
-      "Operating Mechanism Failure": {
-        "Trip Coil Open Circuit": 6,
-        "Linkage Binding": 12
-      },
-      "Interrupter Failure": {
-        "Nozzle Erosion": 20,
-        "Vacuum Loss": 30
-      }
-    },
-    "MV": {
-      "Busbar Breakdown": {
-        "Flashover": 12,
-        "Insulator Cracking": 18
-      },
-      "Switchgear Contact Defect": {
-        "Contact Overheating": 8,
-        "Spring Fatigue": 6
-      }
-    },
-    "LV": {
-      "Thermal Overload": {
-        "Terminal Loose Connection": 4,
-        "Cable Insulation Breakdown": 8
-      },
-      "Switching Mechanism": {
-        "Breaker Jammed": 6
-      }
+  function deriveSimulatedPresetMTTR(causeText, modeText) {
+    const combined = `${modeText || ''} ${causeText || ''}`.toLowerCase();
+
+    if (
+      combined.includes("breakdown") || combined.includes("rupture") || 
+      combined.includes("deformation") || combined.includes("short circuit") ||
+      combined.includes("ระเบิด") || combined.includes("ขาด") || 
+      combined.includes("ลัดวงจร") || combined.includes("แตกหักรุนแรง")
+    ) {
+      return combined.includes("short circuit") || combined.includes("ลัดวงจร") ? 48 : 36;
     }
+
+    if (
+      combined.includes("flashover") || combined.includes("discharge") || 
+      combined.includes("corrosion") || combined.includes("insulation") ||
+      combined.includes("ฉนวน") || combined.includes("เสื่อมสภาพ") || 
+      combined.includes("วาบไฟ") || combined.includes("ผุกร่อน")
+    ) {
+      return combined.includes("insulation") || combined.includes("ฉนวน") ? 30 : 24;
+    }
+
+    if (
+      combined.includes("leak") || combined.includes("jam") || 
+      combined.includes("erosion") || combined.includes("binding") ||
+      combined.includes("รั่ว") || combined.includes("ติดขัด") || 
+      combined.includes("สึกหรอ") || combined.includes("ฝืด")
+    ) {
+      return combined.includes("leak") || combined.includes("รั่ว") ? 18 : 16;
+    }
+
+    if (
+      combined.includes("overheat") || combined.includes("wear") || 
+      combined.includes("tap") || combined.includes("mechanism") ||
+      combined.includes("ร้อนจัด") || combined.includes("กลไก") || 
+      combined.includes("หน้าสัมผัส")
+    ) {
+      return 12;
+    }
+
+    if (
+      combined.includes("circuit") || combined.includes("coil") || 
+      combined.includes("switch") || combined.includes("relay") ||
+      combined.includes("วงจร") || combined.includes("คอยล์") || 
+      combined.includes("สวิตช์") || combined.includes("รีเลย์")
+    ) {
+      return 8;
+    }
+
+    if (
+      combined.includes("calibration") || combined.includes("adjustment") || 
+      combined.includes("loose") || combined.includes("ปรับตั้ง") || 
+      combined.includes("หลวม")
+    ) {
+      return 4;
+    }
+
+    if (
+      combined.includes("clean") || combined.includes("dust") || 
+      combined.includes("dirt") || combined.includes("ทำความสะอาด") || 
+      combined.includes("ฝุ่น")
+    ) {
+      return 2;
+    }
+
+    return 10;
+  }
+
+  let simulatedMTTRMap = {};
+
+  const simState = {
+    selectedEquipment: "",
+    selectedMode: "",
+    selectedCause: "",
+    baselineAvailability: 100.00,
+    presetMTTR: 18,
+    operatingMTTR: 18,
+    operatingMTBF: 4320,
+    targetAvailability: 96.00,
+    simulatedAvailability: 99.59,
+    availabilityChange: -0.41,
+    meetsTarget: true,
+    isCustomMode: false
   };
 
-  let selectedEquipment = "GIS";
-  let selectedMode = "";
-  let selectedCause = "";
-  let activePresetMttr = 18;
-  let isCustomMode = false;
   let simChartInstance = null;
 
-  // DOM Elements
   const eqSelect = document.getElementById("simEquipmentSelect");
   const modeSelect = document.getElementById("simFailureModeSelect");
   const causeSelect = document.getElementById("simFailureCauseSelect");
@@ -864,6 +868,7 @@ function initSimulatorEngine() {
   const resSimulated = document.getElementById("simResSimulated");
   const resChange = document.getElementById("simResChange");
   const resSimBox = document.getElementById("simResSimulatedBox");
+  const targetIndicator = document.getElementById("simTargetIndicator");
 
   const calcMtbf = document.getElementById("calcParamMtbf");
   const calcMttr = document.getElementById("calcParamMttr");
@@ -876,48 +881,93 @@ function initSimulatorEngine() {
   const refToggleBtn = document.getElementById("simRefToggleBtn");
   const refBody = document.getElementById("simRefBody");
 
+  function buildHierarchyFromDataset() {
+    simulatedMTTRMap = {};
+    const sheetNames = (currentWorkbook && currentWorkbook.SheetNames) ? currentWorkbook.SheetNames : [];
+
+    sheetNames.forEach(sheetName => {
+      const rows = getNormalizedRows(sheetName);
+      if (!rows || rows.length === 0) return;
+
+      if (!simulatedMTTRMap[sheetName]) {
+        simulatedMTTRMap[sheetName] = {};
+      }
+
+      rows.forEach(r => {
+        const mode = (r.mode && String(r.mode).trim()) || "General Functional Mode";
+        const cause = (r.cause && String(r.cause).trim()) || "Operational Stress";
+
+        if (!simulatedMTTRMap[sheetName][mode]) {
+          simulatedMTTRMap[sheetName][mode] = {};
+        }
+
+        if (!simulatedMTTRMap[sheetName][mode][cause]) {
+          const rawMttr = Number(r.mttr);
+          simulatedMTTRMap[sheetName][mode][cause] = (rawMttr > 0)
+            ? Math.round(rawMttr)
+            : deriveSimulatedPresetMTTR(cause, mode);
+        }
+      });
+    });
+
+    if (Object.keys(simulatedMTTRMap).length === 0) {
+      simulatedMTTRMap["GIS"] = {
+        "Gas System Failure": { "Gas Leakage": 18, "Moisture Ingress": 24, "Density Monitor Trip": 8 },
+        "Insulation Failure": { "Insulation Defect": 12, "Partial Discharge Breakdown": 36 },
+        "Control System Failure": { "Control Circuit Failure": 8, "Auxiliary Switch Malfunction": 6 }
+      };
+      simulatedMTTRMap["TR"] = {
+        "Winding Failure": { "Inter-turn Short Circuit": 48, "Winding Deformation": 36 },
+        "Bushing Failure": { "Bushing Flashover": 24, "Capacitance Tap Degradation": 16 },
+        "OLTC Failure": { "Contact Wear": 12, "Mechanism Jam": 10 }
+      };
+    }
+  }
+
   updateSimulatorEquipment = function() {
+    buildHierarchyFromDataset();
     if (!eqSelect) return;
+
     eqSelect.innerHTML = '<option value="" disabled selected>Select Equipment...</option>';
+    const equipments = Object.keys(simulatedMTTRMap);
 
-    const sheets = (currentWorkbook && currentWorkbook.SheetNames) ? currentWorkbook.SheetNames : [];
-    const available = Object.keys(simulatedPresetRegistry);
-    const combined = [...new Set([...sheets, ...available])];
-
-    combined.forEach(eq => {
+    equipments.forEach(eq => {
       const opt = document.createElement("option");
       opt.value = eq;
       opt.textContent = eq;
       eqSelect.appendChild(opt);
     });
 
-    if (eqSelect.options.length > 1) {
-      eqSelect.selectedIndex = 1;
-      eqSelect.dispatchEvent(new Event("change"));
+    if (equipments.length > 0) {
+      eqSelect.value = equipments[0];
+      handleEquipmentChange(equipments[0]);
     }
   };
 
-  // 1. Equipment Select Cascade
-  eqSelect?.addEventListener("change", function() {
-    selectedEquipment = this.value;
-    selectedMode = "";
-    selectedCause = "";
+  function handleEquipmentChange(equipment) {
+    simState.selectedEquipment = equipment;
+    simState.selectedMode = "";
+    simState.selectedCause = "";
+
+    const rows = getNormalizedRows(equipment);
+    if (rows.length > 0) {
+      const metrics = calculateSheetMetrics(rows);
+      const parsedAvail = parseFloat(metrics.avgAvail);
+      simState.baselineAvailability = !isNaN(parsedAvail) ? parsedAvail : 100.00;
+    } else {
+      simState.baselineAvailability = 100.00;
+    }
+
+    if (resBaseline) {
+      resBaseline.textContent = `${simState.baselineAvailability.toFixed(2)}%`;
+    }
 
     modeSelect.innerHTML = '<option value="" disabled selected>Select Failure Mode...</option>';
     modeSelect.disabled = false;
     causeSelect.innerHTML = '<option value="" disabled selected>Select Failure Cause...</option>';
     causeSelect.disabled = true;
 
-    // Retrieve Modes from registry or sheet
-    let modes = [];
-    if (simulatedPresetRegistry[selectedEquipment]) {
-      modes = Object.keys(simulatedPresetRegistry[selectedEquipment]);
-    } else {
-      const rows = getNormalizedRows(selectedEquipment);
-      modes = [...new Set(rows.map(r => r.mode))].filter(Boolean);
-      if (modes.length === 0) modes = ["General Electrical Defect", "Mechanical Stress"];
-    }
-
+    const modes = Object.keys(simulatedMTTRMap[equipment] || {});
     modes.forEach(m => {
       const opt = document.createElement("option");
       opt.value = m;
@@ -925,40 +975,24 @@ function initSimulatorEngine() {
       modeSelect.appendChild(opt);
     });
 
-    // Auto-select first mode
-    if (modeSelect.options.length > 1) {
-      modeSelect.selectedIndex = 1;
-      modeSelect.dispatchEvent(new Event("change"));
+    if (modes.length > 0) {
+      modeSelect.value = modes[0];
+      handleModeChange(modes[0]);
     }
 
-    // Update Baseline Availability
-    const rows = getNormalizedRows(selectedEquipment);
-    if (rows.length > 0) {
-      const m = calculateSheetMetrics(rows);
-      if (resBaseline && m.avgAvail !== '-') {
-        resBaseline.textContent = `${m.avgAvail}%`;
-      }
-    }
+    renderReferenceTable(equipment);
+  }
 
-    renderReferenceTable(selectedEquipment);
-  });
-
-  // 2. Failure Mode Select Cascade
-  modeSelect?.addEventListener("change", function() {
-    selectedMode = this.value;
-    selectedCause = "";
+  function handleModeChange(mode) {
+    simState.selectedMode = mode;
+    simState.selectedCause = "";
 
     causeSelect.innerHTML = '<option value="" disabled selected>Select Failure Cause...</option>';
     causeSelect.disabled = false;
 
-    let causes = [];
-    if (simulatedPresetRegistry[selectedEquipment] && simulatedPresetRegistry[selectedEquipment][selectedMode]) {
-      causes = Object.keys(simulatedPresetRegistry[selectedEquipment][selectedMode]);
-    } else {
-      const rows = getNormalizedRows(selectedEquipment);
-      causes = [...new Set(rows.filter(r => r.mode === selectedMode).map(r => r.cause))].filter(Boolean);
-      if (causes.length === 0) causes = ["Thermal Aging", "Operational Overload"];
-    }
+    const causes = Object.keys(
+      (simulatedMTTRMap[simState.selectedEquipment] && simulatedMTTRMap[simState.selectedEquipment][mode]) || {}
+    );
 
     causes.forEach(c => {
       const opt = document.createElement("option");
@@ -967,172 +1001,192 @@ function initSimulatorEngine() {
       causeSelect.appendChild(opt);
     });
 
-    // Auto-select first cause
-    if (causeSelect.options.length > 1) {
-      causeSelect.selectedIndex = 1;
-      causeSelect.dispatchEvent(new Event("change"));
+    if (causes.length > 0) {
+      causeSelect.value = causes[0];
+      handleCauseChange(causes[0]);
     }
+  }
+
+  function handleCauseChange(cause) {
+    simState.selectedCause = cause;
+
+    const assignedMttr = (
+      simulatedMTTRMap[simState.selectedEquipment] &&
+      simulatedMTTRMap[simState.selectedEquipment][simState.selectedMode] &&
+      simulatedMTTRMap[simState.selectedEquipment][simState.selectedMode][cause]
+    ) ? simulatedMTTRMap[simState.selectedEquipment][simState.selectedMode][cause] : 10;
+
+    simState.presetMTTR = assignedMttr;
+
+    if (presetVal) presetVal.textContent = simState.presetMTTR;
+    if (presetHint) presetHint.textContent = `Auto-filled based on: ${cause}`;
+
+    if (!simState.isCustomMode) {
+      simState.operatingMTTR = simState.presetMTTR;
+      if (mttrInput) {
+        mttrInput.value = simState.operatingMTTR;
+        mttrInput.readOnly = true;
+      }
+    }
+
+    executeSimulation();
+  }
+
+  eqSelect?.addEventListener("change", function() {
+    handleEquipmentChange(this.value);
   });
 
-  // 3. Failure Cause Select: Auto Preset MTTR
+  modeSelect?.addEventListener("change", function() {
+    handleModeChange(this.value);
+  });
+
   causeSelect?.addEventListener("change", function() {
-    selectedCause = this.value;
-
-    let preset = 18;
-    if (simulatedPresetRegistry[selectedEquipment] &&
-        simulatedPresetRegistry[selectedEquipment][selectedMode] &&
-        simulatedPresetRegistry[selectedEquipment][selectedMode][selectedCause]) {
-      preset = simulatedPresetRegistry[selectedEquipment][selectedMode][selectedCause];
-    } else {
-      const rows = getNormalizedRows(selectedEquipment);
-      const match = rows.find(r => r.cause === selectedCause);
-      if (match && match.mttr > 0) preset = match.mttr;
-    }
-
-    activePresetMttr = preset;
-    if (presetVal) presetVal.textContent = activePresetMttr;
-    if (presetHint) presetHint.textContent = `Auto-filled based on: ${selectedCause}`;
-
-    if (!isCustomMode && mttrInput) {
-      mttrInput.value = activePresetMttr;
-    }
-
-    runSimulation();
+    handleCauseChange(this.value);
   });
 
-  // Preset vs Custom Toggle
   modePresetBtn?.addEventListener("click", function() {
-    isCustomMode = false;
+    simState.isCustomMode = false;
     this.classList.add("active");
     modeCustomBtn?.classList.remove("active");
+
+    simState.operatingMTTR = simState.presetMTTR;
     if (mttrInput) {
+      mttrInput.value = simState.operatingMTTR;
       mttrInput.readOnly = true;
-      mttrInput.value = activePresetMttr;
     }
     if (presetCard) presetCard.style.opacity = "1";
-    runSimulation();
+
+    executeSimulation();
   });
 
   modeCustomBtn?.addEventListener("click", function() {
-    isCustomMode = true;
+    simState.isCustomMode = true;
     this.classList.add("active");
     modePresetBtn?.classList.remove("active");
+
     if (mttrInput) {
       mttrInput.readOnly = false;
       mttrInput.focus();
     }
-    if (presetCard) presetCard.style.opacity = "0.75";
+    if (presetCard) presetCard.style.opacity = "0.7";
   });
 
-  // Slider Synchronizations
+  mttrInput?.addEventListener("input", function() {
+    if (simState.isCustomMode) {
+      simState.operatingMTTR = Math.max(0.1, parseFloat(this.value) || 0.1);
+      executeSimulation();
+    }
+  });
+
   mtbfSlider?.addEventListener("input", function() {
     if (mtbfInput) mtbfInput.value = this.value;
-    runSimulation();
+    simState.operatingMTBF = Math.max(1, parseFloat(this.value) || 1);
+    executeSimulation();
   });
 
   mtbfInput?.addEventListener("input", function() {
     if (mtbfSlider) mtbfSlider.value = this.value;
-    runSimulation();
+    simState.operatingMTBF = Math.max(1, parseFloat(this.value) || 1);
+    executeSimulation();
   });
 
-  mttrInput?.addEventListener("input", function() {
-    if (isCustomMode) runSimulation();
+  targetInput?.addEventListener("input", function() {
+    simState.targetAvailability = Math.min(99.99, Math.max(0, parseFloat(this.value) || 96.00));
+    executeSimulation();
   });
 
-  targetInput?.addEventListener("input", runSimulation);
+  function renderReferenceTable(equipment) {
+    if (refTitle) refTitle.textContent = `${equipment} Hierarchy`;
+    if (!refTableBody) return;
+    refTableBody.innerHTML = "";
 
-  // Toggle Reference Matrix
+    const modes = simulatedMTTRMap[equipment];
+    if (!modes || Object.keys(modes).length === 0) {
+      refTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No records registered for ${equipment}.</td></tr>`;
+      return;
+    }
+
+    Object.entries(modes).forEach(([modeName, causesMap]) => {
+      Object.entries(causesMap).forEach(([causeName, mttrHours]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${modeName}</strong></td>
+          <td>${causeName}</td>
+          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${mttrHours} hrs</td>
+        `;
+        refTableBody.appendChild(tr);
+      });
+    });
+  }
+
   document.getElementById("simRefHeader")?.addEventListener("click", function() {
     if (refBody) refBody.classList.toggle("collapsed");
     if (refToggleBtn) refToggleBtn.classList.toggle("collapsed");
   });
 
-  function renderReferenceTable(eq) {
-    if (refTitle) refTitle.textContent = `${eq} Hierarchy`;
-    if (!refTableBody) return;
-    refTableBody.innerHTML = "";
+  function executeSimulation() {
+    const mtbf = Math.max(1, parseFloat(mtbfInput?.value) || simState.operatingMTBF || 4320);
+    const mttr = Math.max(0.1, parseFloat(mttrInput?.value) || simState.operatingMTTR || 18);
+    const target = Math.min(99.99, Math.max(0, parseFloat(targetInput?.value) || simState.targetAvailability || 96.00));
 
-    const dataset = simulatedPresetRegistry[eq];
-    if (dataset) {
-      Object.entries(dataset).forEach(([mode, causes]) => {
-        Object.entries(causes).forEach(([cause, hours]) => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td><strong>${mode}</strong></td>
-            <td>${cause}</td>
-            <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${hours} hrs</td>
-          `;
-          refTableBody.appendChild(row);
-        });
-      });
-    } else {
-      const rows = getNormalizedRows(eq);
-      if (rows.length === 0) {
-        refTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No records available.</td></tr>`;
-        return;
-      }
-      rows.slice(0, 8).forEach(r => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><strong>${r.mode}</strong></td>
-          <td>${r.cause}</td>
-          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${r.mttr.toFixed(1)} hrs</td>
-        `;
-        refTableBody.appendChild(row);
-      });
-    }
-  }
+    simState.operatingMTBF = mtbf;
+    simState.operatingMTTR = mttr;
+    simState.targetAvailability = target;
 
-  // Calculation Engine & Visualization
-  function runSimulation() {
-    const currentMtbf = Math.max(1, parseFloat(mtbfInput?.value) || 4320);
-    const currentMttr = Math.max(0.1, parseFloat(mttrInput?.value) || activePresetMttr);
-    const targetAvail = Math.min(99.99, Math.max(0, parseFloat(targetInput?.value) || 96.00));
+    const rawAvailability = (mtbf / (mtbf + mttr)) * 100;
+    simState.simulatedAvailability = rawAvailability;
 
-    // Availability = MTBF / (MTBF + MTTR)
-    const simAvail = calculateAvailabilityFormula(currentMtbf, currentMttr);
+    const delta = simState.simulatedAvailability - simState.baselineAvailability;
+    simState.availabilityChange = delta;
 
-    let baselineAvail = 99.12;
-    if (resBaseline) {
-      const parsed = parseFloat(resBaseline.textContent.replace("%", "").trim());
-      if (!isNaN(parsed) && parsed > 0) baselineAvail = parsed;
+    simState.meetsTarget = simState.simulatedAvailability >= simState.targetAvailability;
+
+    if (resSimulated) {
+      resSimulated.textContent = `${simState.simulatedAvailability.toFixed(2)}%`;
+      resSimulated.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
     }
 
-    const delta = simAvail - baselineAvail;
-
-    // Update Result Cards
-    if (resSimulated) resSimulated.textContent = `${simAvail.toFixed(2)}%`;
     if (resChange) {
-      const sign = delta >= 0 ? "+" : "";
-      resChange.textContent = `${sign}${delta.toFixed(2)}%`;
-      resChange.style.color = delta >= 0 ? "var(--status-healthy)" : "var(--status-warning)";
+      const roundedDelta = Number(delta.toFixed(2));
+      if (Math.abs(roundedDelta) === 0) {
+        resChange.textContent = "0.00%";
+        resChange.style.color = "var(--text-muted)";
+      } else if (roundedDelta > 0) {
+        resChange.textContent = `+${roundedDelta.toFixed(2)}%`;
+        resChange.style.color = "var(--status-healthy)";
+      } else {
+        resChange.textContent = `${roundedDelta.toFixed(2)}%`;
+        resChange.style.color = "var(--status-warning)";
+      }
     }
 
-    // State styling against Target Availability
     if (resSimBox) {
-      if (simAvail >= targetAvail) {
+      if (simState.meetsTarget) {
         resSimBox.classList.remove("warning-state");
-        if (resSimulated) resSimulated.style.color = "var(--status-healthy)";
       } else {
         resSimBox.classList.add("warning-state");
-        if (resSimulated) resSimulated.style.color = "var(--status-warning)";
       }
     }
 
-    // Math Walkthrough Display
-    if (calcMtbf) calcMtbf.textContent = `${currentMtbf.toLocaleString()} hrs`;
-    if (calcMttr) calcMttr.textContent = `${currentMttr.toFixed(1)} hrs`;
-    if (calcNum) calcNum.textContent = currentMtbf.toLocaleString();
-    if (calcDen) calcDen.textContent = `${currentMtbf.toLocaleString()} + ${currentMttr.toFixed(1)}`;
-    if (calcRes) {
-      calcRes.textContent = `${simAvail.toFixed(2)}%`;
-      calcRes.style.color = simAvail >= targetAvail ? "var(--status-healthy)" : "var(--status-warning)";
+    if (targetIndicator) {
+      targetIndicator.textContent = simState.meetsTarget 
+        ? `Status: Meets Target (≥ ${target.toFixed(2)}%)` 
+        : `Status: Below Target (< ${target.toFixed(2)}%)`;
+      targetIndicator.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
     }
 
-    renderComparisonChart(baselineAvail, simAvail, targetAvail);
+    if (calcMtbf) calcMtbf.textContent = `${mtbf.toLocaleString()} hrs`;
+    if (calcMttr) calcMttr.textContent = `${mttr.toFixed(1)} hrs`;
+    if (calcNum) calcNum.textContent = mtbf.toLocaleString();
+    if (calcDen) calcDen.textContent = `${mtbf.toLocaleString()} + ${mttr.toFixed(1)}`;
+    if (calcRes) {
+      calcRes.textContent = `${simState.simulatedAvailability.toFixed(2)}%`;
+      calcRes.style.color = simState.meetsTarget ? "var(--status-healthy)" : "var(--status-warning)";
+    }
+
+    renderComparisonChart(simState.baselineAvailability, simState.simulatedAvailability, simState.targetAvailability);
   }
 
-  // Chart Rendering
   function renderComparisonChart(baseline, simulated, target) {
     const canvas = document.getElementById("simComparisonChart");
     if (!canvas) return;
@@ -1147,7 +1201,7 @@ function initSimulatorEngine() {
       data: {
         labels: ["Baseline", "Simulated Scenario"],
         datasets: [{
-          data: [baseline, simulated],
+          data: [Number(baseline.toFixed(2)), Number(simulated.toFixed(2))],
           backgroundColor: ["#8E7C93", simulated >= target ? "#66756B" : "#A65D57"],
           borderRadius: 4,
           barThickness: 32
@@ -1166,7 +1220,7 @@ function initSimulatorEngine() {
         },
         scales: {
           y: {
-            min: Math.max(80, Math.floor(Math.min(baseline, simulated, target) - 2)),
+            min: Math.max(70, Math.floor(Math.min(baseline, simulated, target) - 2)),
             max: 100,
             grid: { color: "rgba(0, 0, 0, 0.05)" },
             ticks: {
@@ -1182,7 +1236,7 @@ function initSimulatorEngine() {
         }
       },
       plugins: [{
-        id: "targetLine",
+        id: "targetReferenceLine",
         afterDraw: (chart) => {
           const yAxis = chart.scales.y;
           const xAxis = chart.scales.x;
@@ -1201,27 +1255,31 @@ function initSimulatorEngine() {
           
           c.fillStyle = "#B7A58A";
           c.font = "bold 9px 'Plus Jakarta Sans'";
-          c.fillText(`Target: ${target}%`, xAxis.right - 60, yPos - 4);
+          c.fillText(`Target Availability = ${target.toFixed(0)}%`, xAxis.right - 120, yPos - 5);
           c.restore();
         }
       }]
     });
   }
 
-  // Reset Button
   resetBtn?.addEventListener("click", () => {
     if (eqSelect && eqSelect.options.length > 1) {
       eqSelect.selectedIndex = 1;
-      eqSelect.dispatchEvent(new Event("change"));
+      handleEquipmentChange(eqSelect.value);
     }
     if (mtbfInput) mtbfInput.value = 4320;
     if (mtbfSlider) mtbfSlider.value = 4320;
     if (targetInput) targetInput.value = 96.00;
-    modePresetBtn?.click();
-    runSimulation();
+    
+    simState.isCustomMode = false;
+    modePresetBtn?.classList.add("active");
+    modeCustomBtn?.classList.remove("active");
+    if (mttrInput) mttrInput.readOnly = true;
+
+    executeSimulation();
   });
 
-  runBtn?.addEventListener("click", runSimulation);
+  runBtn?.addEventListener("click", executeSimulation);
 
   updateSimulatorEquipment();
 }
@@ -1328,6 +1386,23 @@ function renderEquipmentDetail(compName) {
       <div class="drawer-mini-kpi">
         <span>${(currentLang === 'th') ? 'จำนวนลักษณะข้อบกพร่อง' : 'Failure Modes'}</span>
         <strong>${matchedRows.length}</strong>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Equipment Diagnostic Details'}</span>
+      <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
+        <div><strong>${(currentLang === 'th') ? 'สาเหตุหลัก' : 'Primary Cause'}:</strong> ${primary.cause}</div>
+        <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่องหลัก' : 'Dominant Failure Mode'}:</strong> ${primary.mode}</div>
+        <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
+          ${isAttention
+            ? ((currentLang === 'th') 
+               ? 'คำแนะนำ: อุปกรณ์นี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวน หน้าสัมผัสทางไฟฟ้า และกลไกขับเคลื่อน' 
+               : 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.')
+            : ((currentLang === 'th')
+               ? 'ประสิทธิภาพการทำงานอยู่ภายใต้เกณฑ์มาตรฐาน ISO 14224 และ IEEE' 
+               : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.')}
+        </div>
       </div>
     </div>
 
