@@ -164,14 +164,10 @@ function setLanguage(lang) {
     titleEl.textContent = `${dict.table_title_prefix} ${sheetEl.value}`;
   }
   updateAuthUI();
-
-  if (typeof recalculateWhatIfScenario === 'function') {
-    recalculateWhatIfScenario();
-  }
 }
 
 // ============================================================
-// 2. CORE SETUP & FIREBASE
+// 2. CORE VARIABLES & FIREBASE CONFIG
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyBqx1bOZmefAAftxirrlEjwWR8_-6gB0sQ",
@@ -199,16 +195,12 @@ let isAdmin = false;
 
 const DEFAULT_EXCEL_FILE = 'ALL_RAM.xlsx';
 const drillHistory = [];
-let activeSegmentIndex = null;
-
-let simCurrentMode = 'mttr';
-let simActiveRow = null;
 
 // ============================================================
-// 3. SECURE DOM EVENT INITIALIZATION
+// 3. SECURE DOM EVENT BINDING
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // สลับภาษา
+  // Switch Language
   document.querySelectorAll('.btn-lang').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -216,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Admin Gateway Modal Open
+  // Admin Gateway Modal
   const loginBtn = document.getElementById('loginBtn');
   const loginModal = document.getElementById('loginModal');
   const adminPasswordInput = document.getElementById('adminPassword');
@@ -234,13 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Admin Modal Close
   const closeLoginModal = document.getElementById('closeLoginModal');
   const cancelLoginModal = document.getElementById('cancelLoginModal');
   if (closeLoginModal) closeLoginModal.addEventListener('click', closeLogin);
   if (cancelLoginModal) cancelLoginModal.addEventListener('click', closeLogin);
 
-  // Admin Submit
   const submitLoginBtn = document.getElementById('submitLoginBtn');
   if (submitLoginBtn) submitLoginBtn.addEventListener('click', checkAdminPassword);
   if (adminPasswordInput) {
@@ -249,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Logout
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -260,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // File Upload
+  // Upload Excel
   const fileInput = document.getElementById('excelFile');
   if (fileInput) {
     fileInput.addEventListener('change', function(e) {
@@ -280,17 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
     sheetSelect.addEventListener('change', function(e) {
       if (currentWorkbook) {
         loadRamSheet(e.target.value);
-        populateSimulatorDropdown(e.target.value);
         closeDrawer();
       }
     });
   }
 
-  // Search Input
+  // Search & Filter
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.addEventListener('input', applyTableFilter);
 
-  // Filter Buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -300,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Drawer Close
+  // Drawer
   const drawerCloseBtn = document.getElementById('drawerCloseBtn');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
   if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
@@ -318,17 +305,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Simulator Events
-  initSimulatorEventListeners();
-
   // Export Events
   initExportEvents();
 
-  // Load Initial Language
+  // Load language & cloud database
   setLanguage(currentLang);
-
-  // Load Data
   initRealtimeCloudSync();
+  
+  // Initialize Upgraded Simulator
+  initSimulatorEngine();
 });
 
 function closeLogin() {
@@ -390,7 +375,7 @@ function updateAuthUI() {
 }
 
 // ============================================================
-// 4. FIREBASE SYNC ENGINE
+// 4. REALTIME DATABASE SYNC
 // ============================================================
 function initRealtimeCloudSync() {
   RAM_DOC_REF.onSnapshot((doc) => {
@@ -406,7 +391,7 @@ function initRealtimeCloudSync() {
       fetchDefaultRepoFile();
     }
   }, (error) => {
-    console.warn('Firestore fallback to local file:', error);
+    console.warn('Firestore fallback to local:', error);
     fetchDefaultRepoFile();
   });
 }
@@ -478,25 +463,18 @@ function handleWorkbookData(data, shouldPublishToCloud = false) {
     renderDrillView(drillHistory[drillHistory.length - 1], false);
   }
 
-  populateSimulatorDropdown(targetSheet);
+  // Update Simulator Equipment Dropdown
+  if (typeof updateSimulatorEquipment === 'function') {
+    updateSimulatorEquipment();
+  }
 }
 
 // ============================================================
-// 5. RAM CALCULATIONS
+// 5. RAM MATRIX & CALCULATIONS
 // ============================================================
 function calculateAvailabilityFormula(mtbf, mttr) {
   if (mtbf <= 0 || (mtbf + mttr) <= 0) return 0;
   return (mtbf / (mtbf + mttr)) * 100;
-}
-
-function calculateRequiredMtbf(targetAvailDecimal, mttr) {
-  if (targetAvailDecimal >= 1 || targetAvailDecimal <= 0) return 0;
-  return (targetAvailDecimal * mttr) / (1 - targetAvailDecimal);
-}
-
-function calculateRequiredMttr(targetAvailDecimal, mtbf) {
-  if (targetAvailDecimal <= 0) return 0;
-  return (mtbf * (1 - targetAvailDecimal)) / targetAvailDecimal;
 }
 
 function getNormalizedRows(sheetName) {
@@ -538,8 +516,7 @@ function getNormalizedRows(sheetName) {
       availability: Number(availVal.toFixed(2)),
       cause: failureCause,
       mode: failureMode,
-      subsystem: sheetName,
-      isAttention: availVal < 96 || mttrVal > 10
+      subsystem: sheetName
     };
   });
 }
@@ -612,7 +589,6 @@ function loadRamSheet(sheetName) {
 
   if (rows.length === 0) {
     if (tableContainer) tableContainer.innerHTML = `<p style="padding: 24px; text-align: center; color: var(--text-muted);">${dict.no_records}</p>`;
-    resetMetrics();
     return;
   }
 
@@ -636,9 +612,6 @@ function loadRamSheet(sheetName) {
   renderFormattedTable(currentWorkbook.Sheets[sheetName], sheetName);
 }
 
-// ============================================================
-// 6. CHART ENGINE
-// ============================================================
 function renderCauseChart(causeCounts) {
   const chartEl = document.getElementById('causeChart');
   if (!chartEl) return;
@@ -673,17 +646,6 @@ function renderCauseChart(causeCounts) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      onClick: (event, elements) => {
-        if (elements && elements.length > 0) {
-          const index = elements[0].index;
-          activeSegmentIndex = index;
-          const clickedCategory = labels[index];
-          openDrillCategory(clickedCategory);
-        }
-      },
-      onHover: (event, chartElement) => {
-        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-      },
       plugins: {
         legend: {
           position: 'right',
@@ -703,9 +665,6 @@ function renderCauseChart(causeCounts) {
   });
 }
 
-// ============================================================
-// 7. TABLE MATRIX
-// ============================================================
 function renderFormattedTable(sheet, sheetName) {
   const tableContainer = document.getElementById('tableContainer');
   if (!tableContainer) return;
@@ -757,7 +716,6 @@ function renderFormattedTable(sheet, sheetName) {
     for (let j = 0; j < headers.length; j++) {
       let cellValue = row[j] !== undefined ? row[j] : '';
       const colClass = colTypes[j];
-      
       const isCalculatedCol = (j === availColIndex);
       const editableAttr = (isAdmin && !isCalculatedCol) ? 'contenteditable="true"' : '';
 
@@ -785,99 +743,7 @@ function renderFormattedTable(sheet, sheetName) {
     });
   });
 
-  if (isAdmin) {
-    bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, availColIndex);
-  }
-
   applyTableFilter();
-}
-
-function bindCellEditEvents(sheetName, headers, mtbfColIndex, mttrColIndex, availColIndex) {
-  const editableCells = document.querySelectorAll('#ramTable td[contenteditable="true"]');
-  editableCells.forEach(cell => {
-    cell.addEventListener('blur', function() {
-      const rowIdx = parseInt(this.parentElement.getAttribute('data-row'));
-      const colIdx = parseInt(this.getAttribute('data-col'));
-      const newVal = this.textContent.trim();
-
-      const sheet = currentWorkbook.Sheets[sheetName];
-      const cellAddress = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
-
-      if (!sheet[cellAddress]) sheet[cellAddress] = {};
-      sheet[cellAddress].v = !isNaN(newVal) && newVal !== '' ? Number(Number(newVal).toFixed(2)) : newVal;
-      sheet[cellAddress].t = !isNaN(newVal) && newVal !== '' ? 'n' : 's';
-
-      if (colIdx === mtbfColIndex || colIdx === mttrColIndex) {
-        const mtbfAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mtbfColIndex });
-        const mttrAddr = XLSX.utils.encode_cell({ r: rowIdx, c: mttrColIndex });
-        const currentMtbf = sheet[mtbfAddr] && !isNaN(sheet[mtbfAddr].v) ? Number(sheet[mtbfAddr].v) : 0;
-        const currentMttr = sheet[mttrAddr] && !isNaN(sheet[mttrAddr].v) ? Number(sheet[mttrAddr].v) : 0;
-
-        const newAvail = calculateAvailabilityFormula(currentMtbf, currentMttr);
-
-        if (availColIndex !== -1) {
-          const availAddr = XLSX.utils.encode_cell({ r: rowIdx, c: availColIndex });
-          if (!sheet[availAddr]) sheet[availAddr] = {};
-          sheet[availAddr].v = Number(newAvail.toFixed(2));
-          sheet[availAddr].t = 'n';
-        }
-
-        const rowElem = this.parentElement;
-        rowElem.setAttribute('data-avail', newAvail.toFixed(2));
-        rowElem.setAttribute('data-mttr', currentMttr.toFixed(2));
-
-        const availCell = rowElem.querySelector('.cell-avail');
-        if (availCell) {
-          const badgeClass = newAvail >= 96 ? 'badge-pass' : 'badge-fail';
-          availCell.innerHTML = `<span class="${badgeClass}">${newAvail.toFixed(2)}%</span>`;
-        }
-      }
-
-      syncWorkbookToCloud();
-
-      const rows = getNormalizedRows(sheetName);
-      const metrics = calculateSheetMetrics(rows);
-      const avgAvailElem = document.getElementById('avgAvail');
-      const avgMtbfElem = document.getElementById('avgMtbf');
-      const avgMttrElem = document.getElementById('avgMttr');
-      const worstAvailElem = document.getElementById('worstAvail');
-      const worstMttrElem = document.getElementById('worstMttr');
-
-      if (avgAvailElem) {
-        avgAvailElem.textContent = metrics.avgAvail !== '-' ? metrics.avgAvail + '%' : '-';
-        avgAvailElem.classList.remove('status-green', 'status-red');
-        if (metrics.avgAvail !== '-') {
-          avgAvailElem.classList.add(parseFloat(metrics.avgAvail) >= 96 ? 'status-green' : 'status-red');
-        }
-      }
-      if (avgMtbfElem) avgMtbfElem.textContent = metrics.avgMtbf;
-      if (avgMttrElem) avgMttrElem.textContent = metrics.avgMttr;
-      if (worstAvailElem) worstAvailElem.textContent = metrics.minAvailItem;
-      if (worstMttrElem) worstMttrElem.textContent = metrics.maxMttrItem;
-
-      populateSimulatorDropdown(sheetName);
-    });
-  });
-}
-
-function resetMetrics() {
-  const avgAvailElem = document.getElementById('avgAvail');
-  const avgMtbfElem = document.getElementById('avgMtbf');
-  const avgMttrElem = document.getElementById('avgMttr');
-  const totalModesElem = document.getElementById('totalModes');
-  const worstAvailElem = document.getElementById('worstAvail');
-  const worstMttrElem = document.getElementById('worstMttr');
-
-  if (avgAvailElem) {
-    avgAvailElem.textContent = '-%';
-    avgAvailElem.classList.remove('status-green', 'status-red');
-  }
-  if (avgMtbfElem) avgMtbfElem.textContent = '-';
-  if (avgMttrElem) avgMttrElem.textContent = '-';
-  if (totalModesElem) totalModesElem.textContent = '0';
-  if (worstAvailElem) worstAvailElem.textContent = '-';
-  if (worstMttrElem) worstMttrElem.textContent = '-';
-  if (currentChart) currentChart.destroy();
 }
 
 function applyTableFilter() {
@@ -902,395 +768,466 @@ function applyTableFilter() {
 }
 
 // ============================================================
-// 8. WHAT-IF SIMULATOR ENGINE (CRASH-PROOF & FULLY FUNCTIONAL)
+// 6. UPGRADED RAM WHAT-IF SIMULATOR ENGINE (COMPLETE)
 // ============================================================
-function populateSimulatorDropdown(sheetName) {
-  const simScenarioSelect = document.getElementById('simScenarioSelect');
-  if (!simScenarioSelect) return;
-  const rows = getNormalizedRows(sheetName);
-  simScenarioSelect.innerHTML = '';
+let updateSimulatorEquipment = null;
 
-  if (rows.length === 0) {
-    const opt = document.createElement('option');
-    opt.value = '';
-    opt.textContent = (currentLang === 'th') ? 'ไม่มีรายการในระบบย่อยนี้' : 'No records in active subsystem';
-    simScenarioSelect.appendChild(opt);
-    simActiveRow = null;
-    return;
-  }
+function initSimulatorEngine() {
+  // Predefined simulated parameter dictionary based on failure causes
+  const simulatedPresetRegistry = {
+    "GIS": {
+      "Gas System Failure": {
+        "Gas Leakage": 18,
+        "Moisture Ingress": 24,
+        "Density Monitor Trip": 8
+      },
+      "Insulation Failure": {
+        "Insulation Defect": 12,
+        "Partial Discharge Breakdown": 36
+      },
+      "Control System Failure": {
+        "Control Circuit Failure": 8,
+        "Auxiliary Switch Malfunction": 6
+      }
+    },
+    "TR": {
+      "Winding Failure": {
+        "Inter-turn Short Circuit": 72,
+        "Winding Deformation": 96
+      },
+      "Bushing Failure": {
+        "Bushing Flashover": 24,
+        "Capacitance Tap Degradation": 16
+      },
+      "OLTC Failure": {
+        "Contact Wear": 14,
+        "Mechanism Jam": 10
+      }
+    },
+    "HV": {
+      "Operating Mechanism Failure": {
+        "Trip Coil Open Circuit": 6,
+        "Linkage Binding": 12
+      },
+      "Interrupter Failure": {
+        "Nozzle Erosion": 20,
+        "Vacuum Loss": 30
+      }
+    },
+    "MV": {
+      "Busbar Breakdown": {
+        "Flashover": 12,
+        "Insulator Cracking": 18
+      },
+      "Switchgear Contact Defect": {
+        "Contact Overheating": 8,
+        "Spring Fatigue": 6
+      }
+    },
+    "LV": {
+      "Thermal Overload": {
+        "Terminal Loose Connection": 4,
+        "Cable Insulation Breakdown": 8
+      },
+      "Switching Mechanism": {
+        "Breaker Jammed": 6
+      }
+    }
+  };
 
-  rows.forEach((r, idx) => {
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = `[${r.id}] ${r.component}`;
-    simScenarioSelect.appendChild(opt);
+  let selectedEquipment = "GIS";
+  let selectedMode = "";
+  let selectedCause = "";
+  let activePresetMttr = 18;
+  let isCustomMode = false;
+  let simChartInstance = null;
+
+  // DOM Elements
+  const eqSelect = document.getElementById("simEquipmentSelect");
+  const modeSelect = document.getElementById("simFailureModeSelect");
+  const causeSelect = document.getElementById("simFailureCauseSelect");
+  
+  const presetCard = document.getElementById("simPresetCard");
+  const presetVal = document.getElementById("simPresetVal");
+  const presetHint = document.getElementById("simPresetHint");
+  const mttrInput = document.getElementById("simMttrInput");
+  const mtbfInput = document.getElementById("simMtbfInput");
+  const mtbfSlider = document.getElementById("simMtbfSlider");
+  const targetInput = document.getElementById("simTargetInput");
+
+  const modePresetBtn = document.getElementById("simModePresetBtn");
+  const modeCustomBtn = document.getElementById("simModeCustomBtn");
+  const runBtn = document.getElementById("simRunBtn");
+  const resetBtn = document.getElementById("simResetBtn");
+
+  const resBaseline = document.getElementById("simResBaseline");
+  const resSimulated = document.getElementById("simResSimulated");
+  const resChange = document.getElementById("simResChange");
+  const resSimBox = document.getElementById("simResSimulatedBox");
+
+  const calcMtbf = document.getElementById("calcParamMtbf");
+  const calcMttr = document.getElementById("calcParamMttr");
+  const calcNum = document.getElementById("calcFormulaNum");
+  const calcDen = document.getElementById("calcFormulaDen");
+  const calcRes = document.getElementById("calcFormulaRes");
+
+  const refTitle = document.getElementById("simRefEquipmentTitle");
+  const refTableBody = document.getElementById("simRefTableBody");
+  const refToggleBtn = document.getElementById("simRefToggleBtn");
+  const refBody = document.getElementById("simRefBody");
+
+  updateSimulatorEquipment = function() {
+    if (!eqSelect) return;
+    eqSelect.innerHTML = '<option value="" disabled selected>Select Equipment...</option>';
+
+    const sheets = (currentWorkbook && currentWorkbook.SheetNames) ? currentWorkbook.SheetNames : [];
+    const available = Object.keys(simulatedPresetRegistry);
+    const combined = [...new Set([...sheets, ...available])];
+
+    combined.forEach(eq => {
+      const opt = document.createElement("option");
+      opt.value = eq;
+      opt.textContent = eq;
+      eqSelect.appendChild(opt);
+    });
+
+    if (eqSelect.options.length > 1) {
+      eqSelect.selectedIndex = 1;
+      eqSelect.dispatchEvent(new Event("change"));
+    }
+  };
+
+  // 1. Equipment Select Cascade
+  eqSelect?.addEventListener("change", function() {
+    selectedEquipment = this.value;
+    selectedMode = "";
+    selectedCause = "";
+
+    modeSelect.innerHTML = '<option value="" disabled selected>Select Failure Mode...</option>';
+    modeSelect.disabled = false;
+    causeSelect.innerHTML = '<option value="" disabled selected>Select Failure Cause...</option>';
+    causeSelect.disabled = true;
+
+    // Retrieve Modes from registry or sheet
+    let modes = [];
+    if (simulatedPresetRegistry[selectedEquipment]) {
+      modes = Object.keys(simulatedPresetRegistry[selectedEquipment]);
+    } else {
+      const rows = getNormalizedRows(selectedEquipment);
+      modes = [...new Set(rows.map(r => r.mode))].filter(Boolean);
+      if (modes.length === 0) modes = ["General Electrical Defect", "Mechanical Stress"];
+    }
+
+    modes.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      modeSelect.appendChild(opt);
+    });
+
+    // Auto-select first mode
+    if (modeSelect.options.length > 1) {
+      modeSelect.selectedIndex = 1;
+      modeSelect.dispatchEvent(new Event("change"));
+    }
+
+    // Update Baseline Availability
+    const rows = getNormalizedRows(selectedEquipment);
+    if (rows.length > 0) {
+      const m = calculateSheetMetrics(rows);
+      if (resBaseline && m.avgAvail !== '-') {
+        resBaseline.textContent = `${m.avgAvail}%`;
+      }
+    }
+
+    renderReferenceTable(selectedEquipment);
   });
 
-  if (rows[0]) {
-    loadSimulatorBaseline(rows[0]);
-  }
-}
+  // 2. Failure Mode Select Cascade
+  modeSelect?.addEventListener("change", function() {
+    selectedMode = this.value;
+    selectedCause = "";
 
-function loadSimulatorBaseline(rowItem) {
-  if (!rowItem) return;
-  simActiveRow = rowItem;
-  const dict = i18nData[currentLang] || i18nData.en;
+    causeSelect.innerHTML = '<option value="" disabled selected>Select Failure Cause...</option>';
+    causeSelect.disabled = false;
 
-  const simCompName = document.getElementById('simCompName');
-  const simFailMode = document.getElementById('simFailMode');
-  const simFailCause = document.getElementById('simFailCause');
-  const simBaseMtbf = document.getElementById('simBaseMtbf');
-  const simBaseMttr = document.getElementById('simBaseMttr');
-  const simBaseAvail = document.getElementById('simBaseAvail');
+    let causes = [];
+    if (simulatedPresetRegistry[selectedEquipment] && simulatedPresetRegistry[selectedEquipment][selectedMode]) {
+      causes = Object.keys(simulatedPresetRegistry[selectedEquipment][selectedMode]);
+    } else {
+      const rows = getNormalizedRows(selectedEquipment);
+      causes = [...new Set(rows.filter(r => r.mode === selectedMode).map(r => r.cause))].filter(Boolean);
+      if (causes.length === 0) causes = ["Thermal Aging", "Operational Overload"];
+    }
 
-  if (simCompName) simCompName.textContent = rowItem.component || '-';
-  if (simFailMode) simFailMode.textContent = rowItem.mode || '-';
-  if (simFailCause) simFailCause.textContent = rowItem.cause || '-';
-
-  if (simBaseMtbf) simBaseMtbf.textContent = `${(rowItem.mtbf || 0).toLocaleString()} ${dict.unit_hrs}`;
-  if (simBaseMttr) simBaseMttr.textContent = `${(rowItem.mttr || 0).toFixed(2)} ${dict.unit_hrs}`;
-  if (simBaseAvail) simBaseAvail.textContent = `${(rowItem.availability || 0).toFixed(2)}%`;
-
-  resetSimulatorInputs();
-  recalculateWhatIfScenario();
-}
-
-function resetSimulatorInputs() {
-  if (!simActiveRow) return;
-
-  const simMttrSlider = document.getElementById('simMttrSlider');
-  const simMttrNum = document.getElementById('simMttrNum');
-  const simMtbfSlider = document.getElementById('simMtbfSlider');
-  const simMtbfNum = document.getElementById('simMtbfNum');
-  const simTargetSlider = document.getElementById('simTargetSlider');
-  const simTargetNum = document.getElementById('simTargetNum');
-
-  const mttrVal = simActiveRow.mttr > 0 ? simActiveRow.mttr : 8;
-  if (simMttrSlider) simMttrSlider.value = mttrVal;
-  if (simMttrNum) simMttrNum.value = mttrVal;
-
-  const mtbfVal = simActiveRow.mtbf > 0 ? simActiveRow.mtbf : 25000;
-  if (simMtbfSlider) {
-    simMtbfSlider.max = Math.max(100000, mtbfVal * 2);
-    simMtbfSlider.value = mtbfVal;
-  }
-  if (simMtbfNum) simMtbfNum.value = mtbfVal;
-
-  if (simTargetSlider) simTargetSlider.value = 99.95;
-  if (simTargetNum) simTargetNum.value = 99.95;
-
-  const defaultStrat = document.querySelector('input[name="simStrategy"][value="fixed-mttr"]');
-  if (defaultStrat) defaultStrat.checked = true;
-}
-
-function initSimulatorEventListeners() {
-  const simScenarioSelect = document.getElementById('simScenarioSelect');
-  if (simScenarioSelect) {
-    simScenarioSelect.addEventListener('change', function() {
-      const sheetSelect = document.getElementById('sheetSelect');
-      if (!sheetSelect) return;
-      const currentSheet = sheetSelect.value;
-      const rows = getNormalizedRows(currentSheet);
-      const selectedIdx = parseInt(this.value);
-      if (!isNaN(selectedIdx) && rows[selectedIdx]) {
-        loadSimulatorBaseline(rows[selectedIdx]);
-      }
+    causes.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      causeSelect.appendChild(opt);
     });
-  }
 
-  const simResetBtn = document.getElementById('simResetBtn');
-  if (simResetBtn) {
-    simResetBtn.addEventListener('click', () => {
-      resetSimulatorInputs();
-      recalculateWhatIfScenario();
-    });
-  }
-
-  document.querySelectorAll('.sim-seg-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.sim-seg-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      simCurrentMode = this.getAttribute('data-mode');
-
-      document.querySelectorAll('.sim-pane').forEach(p => p.classList.remove('active'));
-      if (simCurrentMode === 'mttr') document.getElementById('simPaneMttr')?.classList.add('active');
-      else if (simCurrentMode === 'mtbf') document.getElementById('simPaneMtbf')?.classList.add('active');
-      else if (simCurrentMode === 'target') document.getElementById('simPaneTarget')?.classList.add('active');
-
-      recalculateWhatIfScenario();
-    });
+    // Auto-select first cause
+    if (causeSelect.options.length > 1) {
+      causeSelect.selectedIndex = 1;
+      causeSelect.dispatchEvent(new Event("change"));
+    }
   });
 
-  const simMttrSlider = document.getElementById('simMttrSlider');
-  const simMttrNum = document.getElementById('simMttrNum');
-  if (simMttrSlider && simMttrNum) {
-    simMttrSlider.addEventListener('input', function() {
-      simMttrNum.value = parseFloat(this.value).toFixed(1);
-      recalculateWhatIfScenario();
-    });
-    simMttrNum.addEventListener('input', function() {
-      simMttrSlider.value = this.value;
-      recalculateWhatIfScenario();
-    });
-  }
+  // 3. Failure Cause Select: Auto Preset MTTR
+  causeSelect?.addEventListener("change", function() {
+    selectedCause = this.value;
 
-  const simMtbfSlider = document.getElementById('simMtbfSlider');
-  const simMtbfNum = document.getElementById('simMtbfNum');
-  if (simMtbfSlider && simMtbfNum) {
-    simMtbfSlider.addEventListener('input', function() {
-      simMtbfNum.value = this.value;
-      recalculateWhatIfScenario();
-    });
-    simMtbfNum.addEventListener('input', function() {
-      simMtbfSlider.value = this.value;
-      recalculateWhatIfScenario();
-    });
-  }
+    let preset = 18;
+    if (simulatedPresetRegistry[selectedEquipment] &&
+        simulatedPresetRegistry[selectedEquipment][selectedMode] &&
+        simulatedPresetRegistry[selectedEquipment][selectedMode][selectedCause]) {
+      preset = simulatedPresetRegistry[selectedEquipment][selectedMode][selectedCause];
+    } else {
+      const rows = getNormalizedRows(selectedEquipment);
+      const match = rows.find(r => r.cause === selectedCause);
+      if (match && match.mttr > 0) preset = match.mttr;
+    }
 
-  const simTargetSlider = document.getElementById('simTargetSlider');
-  const simTargetNum = document.getElementById('simTargetNum');
-  if (simTargetSlider && simTargetNum) {
-    simTargetSlider.addEventListener('input', function() {
-      simTargetNum.value = parseFloat(this.value).toFixed(2);
-      recalculateWhatIfScenario();
-    });
-    simTargetNum.addEventListener('input', function() {
-      simTargetSlider.value = this.value;
-      recalculateWhatIfScenario();
-    });
-  }
+    activePresetMttr = preset;
+    if (presetVal) presetVal.textContent = activePresetMttr;
+    if (presetHint) presetHint.textContent = `Auto-filled based on: ${selectedCause}`;
 
-  document.querySelectorAll('input[name="simStrategy"]').forEach(radio => {
-    radio.addEventListener('change', recalculateWhatIfScenario);
+    if (!isCustomMode && mttrInput) {
+      mttrInput.value = activePresetMttr;
+    }
+
+    runSimulation();
   });
-}
 
-function recalculateWhatIfScenario() {
-  if (!simActiveRow) return;
-
-  const baseMtbf = Number(simActiveRow.mtbf) || 1;
-  const baseMttr = Number(simActiveRow.mttr) || 0;
-  const baseAvail = Number(simActiveRow.availability) || calculateAvailabilityFormula(baseMtbf, baseMttr);
-
-  const simMttrNum = document.getElementById('simMttrNum');
-  const simMtbfNum = document.getElementById('simMtbfNum');
-  const simTargetNum = document.getElementById('simTargetNum');
-
-  let scenMtbf = baseMtbf;
-  let scenMttr = baseMttr;
-  let scenAvail = baseAvail;
-  let interpretationText = '';
-  let takeawayText = '';
-
-  if (simCurrentMode === 'mttr') {
-    scenMttr = Math.max(0.1, parseFloat(simMttrNum?.value) || 0.1);
-    scenMtbf = baseMtbf;
-    scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
-
-    updateVisualTrack(baseMttr, scenMttr, 0.5, 96, 'MTTR (hrs)');
-
-    const availDiff = scenAvail - baseAvail;
-    if (scenAvail >= 96.00) {
-      if (currentLang === 'th') {
-        interpretationText = `ภายใต้สถานการณ์จำลองนี้ การปรับเวลาซ่อมเป็น ${scenMttr.toFixed(2)} ชม. ส่งผลให้ความพร้อมใช้งานอยู่ที่ <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%) แบบจำลองชี้ว่าอุปกรณ์ยังคงทำงานได้เหนือเกณฑ์เป้าหมาย`;
-        takeawayText = `การปรับเวลาบำรุงรักษาทำให้ความพร้อมใช้งานอยู่ที่ ${scenAvail.toFixed(2)}% ซึ่งยังคงผ่านเกณฑ์เป้าหมาย 96.00%`;
-      } else {
-        interpretationText = `Under this simulated scenario, adjusting repair time to ${scenMttr.toFixed(2)} hrs yields a calculated Availability of <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%). The model indicates the equipment would remain above the target threshold.`;
-        takeawayText = `A moderate change in repair duration adjusts Availability to ${scenAvail.toFixed(2)}%, maintaining compliance with the 96.00% benchmark.`;
-      }
-    } else {
-      if (currentLang === 'th') {
-        interpretationText = `การเพิ่มเวลาซ่อมเป็น ${scenMttr.toFixed(2)} ชม. จะส่งผลให้ความพร้อมใช้งานลดลงต่ำกว่าเกณฑ์ 96.00% เหลือ <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff.toFixed(2)}%) จำเป็นต้องมีมาตรการเร่งด่วน`;
-        takeawayText = `ภายใต้สถานการณ์จำลองนี้ เวลาบำรุงรักษาที่เพิ่มขึ้นทำให้ความพร้อมใช้งานลดลงต่ำกว่าเป้าหมาย 96.00%`;
-      } else {
-        interpretationText = `Increasing repair time to ${scenMttr.toFixed(2)} hrs would reduce Availability below the 96.00% target threshold to <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff.toFixed(2)}%). Corrective mitigation would be required under these operational parameters.`;
-        takeawayText = `Under this simulated scenario, increased repair time would reduce Availability below the 96.00% target.`;
-      }
+  // Preset vs Custom Toggle
+  modePresetBtn?.addEventListener("click", function() {
+    isCustomMode = false;
+    this.classList.add("active");
+    modeCustomBtn?.classList.remove("active");
+    if (mttrInput) {
+      mttrInput.readOnly = true;
+      mttrInput.value = activePresetMttr;
     }
-  } else if (simCurrentMode === 'mtbf') {
-    scenMtbf = Math.max(10, parseFloat(simMtbfNum?.value) || 10);
-    scenMttr = baseMttr;
-    scenAvail = calculateAvailabilityFormula(scenMtbf, scenMttr);
+    if (presetCard) presetCard.style.opacity = "1";
+    runSimulation();
+  });
 
-    const maxMtbfScale = Math.max(100000, baseMtbf * 2);
-    updateVisualTrack(baseMtbf, scenMtbf, 1000, maxMtbfScale, 'MTBF (hrs)');
-
-    const availDiff = scenAvail - baseAvail;
-    if (scenAvail >= 96.00) {
-      if (currentLang === 'th') {
-        interpretationText = `จากสมมติฐานที่เลือก การปรับค่า MTBF เป็น ${Math.round(scenMtbf).toLocaleString()} ชม. ส่งผลให้ความพร้อมใช้งานอยู่ที่ <strong>${scenAvail.toFixed(2)}%</strong> (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%) แบบจำลองชี้ว่าประสิทธิภาพยังอยู่ในเกณฑ์ที่ยอมรับได้`;
-        takeawayText = `ความน่าเชื่อถือที่เพิ่มขึ้นช่วยรักษาความพร้อมใช้งานของระบบให้อยู่ในระดับสูงที่ ${scenAvail.toFixed(2)}%`;
-      } else {
-        interpretationText = `Based on the selected assumptions, adjusting MTBF to ${Math.round(scenMtbf).toLocaleString()} hrs while holding MTTR at ${baseMttr.toFixed(2)} hrs results in <strong>${scenAvail.toFixed(2)}%</strong> Availability (${availDiff >= 0 ? '+' : ''}${availDiff.toFixed(2)}%). The model indicates performance would remain within target bounds.`;
-        takeawayText = `Reliability scaling indicates operational Availability would remain healthy at ${scenAvail.toFixed(2)}%.`;
-      }
-    } else {
-      if (currentLang === 'th') {
-        interpretationText = `ภายใต้สถานการณ์จำลองนี้ หากเกิดข้อบกพร่องถี่ขึ้น (MTBF ${Math.round(scenMtbf).toLocaleString()} ชม.) จะทำให้ความพร้อมใช้งานลดลงเหลือ <strong>${scenAvail.toFixed(2)}%</strong> ซึ่งหลุดเกณฑ์ 96.00%`;
-        takeawayText = `รอบการชำรุดที่ถี่ขึ้นส่งผลให้อุปกรณ์มีความพร้อมใช้งานต่ำกว่าเป้าหมาย 96.00%`;
-      } else {
-        interpretationText = `Under this simulated scenario, reduced operating intervals (MTBF ${Math.round(scenMtbf).toLocaleString()} hrs) would drop Availability to <strong>${scenAvail.toFixed(2)}%</strong>, falling below the 96.00% target.`;
-        takeawayText = `Degraded failure intervals would drive equipment Availability below the 96.00% target.`;
-      }
+  modeCustomBtn?.addEventListener("click", function() {
+    isCustomMode = true;
+    this.classList.add("active");
+    modePresetBtn?.classList.remove("active");
+    if (mttrInput) {
+      mttrInput.readOnly = false;
+      mttrInput.focus();
     }
-  } else if (simCurrentMode === 'target') {
-    const simVisualTrack = document.getElementById('simVisualTrack');
-    if (simVisualTrack) simVisualTrack.style.display = 'none';
+    if (presetCard) presetCard.style.opacity = "0.75";
+  });
 
-    const targetAvailPct = Math.min(99.99, Math.max(90.0, parseFloat(simTargetNum?.value) || 99.0));
-    const targetAvailDecimal = targetAvailPct / 100;
-    scenAvail = targetAvailPct;
+  // Slider Synchronizations
+  mtbfSlider?.addEventListener("input", function() {
+    if (mtbfInput) mtbfInput.value = this.value;
+    runSimulation();
+  });
 
-    const selectedStrategy = document.querySelector('input[name="simStrategy"]:checked')?.value || 'fixed-mttr';
+  mtbfInput?.addEventListener("input", function() {
+    if (mtbfSlider) mtbfSlider.value = this.value;
+    runSimulation();
+  });
 
-    if (selectedStrategy === 'fixed-mttr') {
-      scenMttr = baseMttr;
-      scenMtbf = calculateRequiredMtbf(targetAvailDecimal, scenMttr);
-      const reqDelta = scenMtbf - baseMtbf;
+  mttrInput?.addEventListener("input", function() {
+    if (isCustomMode) runSimulation();
+  });
 
-      if (currentLang === 'th') {
-        interpretationText = `หากต้องการบรรลุเป้าหมายความพร้อมใช้งานที่ <strong>${targetAvailPct.toFixed(2)}%</strong> โดยใช้เวลาซ่อมเดิม (${baseMttr.toFixed(2)} ชม.) แบบจำลองระบุว่าต้องยืดอายุ MTBF เป็นประมาณ <strong>${Math.round(scenMtbf).toLocaleString()} ชม.</strong> (${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} ชม. จากค่าเริ่มต้น)`;
-        takeawayText = `การตั้งเป้าหมายความพร้อมใช้งาน ${targetAvailPct.toFixed(2)}% ภายใต้เวลาซ่อมคงที่ จำเป็นต้องเพิ่ม MTBF เป็น ${Math.round(scenMtbf).toLocaleString()} ชั่วโมง`;
-      } else {
-        interpretationText = `To achieve target Availability of <strong>${targetAvailPct.toFixed(2)}%</strong> with MTTR fixed at ${baseMttr.toFixed(2)} hrs, the model indicates required MTBF would need to reach approximately <strong>${Math.round(scenMtbf).toLocaleString()} hrs</strong> (${reqDelta >= 0 ? '+' : ''}${Math.round(reqDelta).toLocaleString()} hrs).`;
-        takeawayText = `Targeting ${targetAvailPct.toFixed(2)}% Availability with fixed repair time requires expanding MTBF to ${Math.round(scenMtbf).toLocaleString()} operating hours.`;
-      }
+  targetInput?.addEventListener("input", runSimulation);
+
+  // Toggle Reference Matrix
+  document.getElementById("simRefHeader")?.addEventListener("click", function() {
+    if (refBody) refBody.classList.toggle("collapsed");
+    if (refToggleBtn) refToggleBtn.classList.toggle("collapsed");
+  });
+
+  function renderReferenceTable(eq) {
+    if (refTitle) refTitle.textContent = `${eq} Hierarchy`;
+    if (!refTableBody) return;
+    refTableBody.innerHTML = "";
+
+    const dataset = simulatedPresetRegistry[eq];
+    if (dataset) {
+      Object.entries(dataset).forEach(([mode, causes]) => {
+        Object.entries(causes).forEach(([cause, hours]) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><strong>${mode}</strong></td>
+            <td>${cause}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${hours} hrs</td>
+          `;
+          refTableBody.appendChild(row);
+        });
+      });
     } else {
-      scenMtbf = baseMtbf;
-      scenMttr = calculateRequiredMttr(targetAvailDecimal, scenMtbf);
-      const redDelta = baseMttr - scenMttr;
-
-      if (currentLang === 'th') {
-        interpretationText = `หากต้องการบรรลุเป้าหมายความพร้อมใช้งานที่ <strong>${targetAvailPct.toFixed(2)}%</strong> ภายใต้ความน่าเชื่อถือเดิม (${baseMtbf.toLocaleString()} ชม.) ทีมช่างต้องลดเวลาซ่อมบำรุงลงเหลือไม่เกิน <strong>${scenMttr.toFixed(2)} ชม.</strong> (ต้องลดเวลาลง ${redDelta >= 0 ? '-' : '+'}${Math.abs(redDelta).toFixed(2)} ชม.)`;
-        takeawayText = `การตั้งเป้าหมายความพร้อมใช้งาน ${targetAvailPct.toFixed(2)}% ภายใต้รอบการชำรุดคงที่ จำเป็นต้องคุมเวลา MTTR ให้อยู่ในระดับไม่เกิน ${scenMttr.toFixed(2)} ชั่วโมง`;
-      } else {
-        interpretationText = `To achieve target Availability of <strong>${targetAvailPct.toFixed(2)}%</strong> with MTBF fixed at ${baseMtbf.toLocaleString()} hrs, maximum allowable MTTR must be limited to <strong>${scenMttr.toFixed(2)} hrs or less</strong> (reduction of ${redDelta.toFixed(2)} hrs).`;
-        takeawayText = `Targeting ${targetAvailPct.toFixed(2)}% Availability with fixed failure intervals requires limiting MTTR to ${scenMttr.toFixed(2)} hours.`;
+      const rows = getNormalizedRows(eq);
+      if (rows.length === 0) {
+        refTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No records available.</td></tr>`;
+        return;
       }
+      rows.slice(0, 8).forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${r.mode}</strong></td>
+          <td>${r.cause}</td>
+          <td style="text-align: right; font-weight: 700; color: var(--brand-champagne);">${r.mttr.toFixed(1)} hrs</td>
+        `;
+        refTableBody.appendChild(row);
+      });
     }
   }
 
-  // Update Visual Compare Board
-  const simBoardBaseAvail = document.getElementById('simBoardBaseAvail');
-  const simBoardScenAvail = document.getElementById('simBoardScenAvail');
-  const simBoardDiffAvail = document.getElementById('simBoardDiffAvail');
-  const simBoardDiffCaption = document.getElementById('simBoardDiffCaption');
-  const simBoardScenarioBox = document.getElementById('simBoardScenarioBox');
+  // Calculation Engine & Visualization
+  function runSimulation() {
+    const currentMtbf = Math.max(1, parseFloat(mtbfInput?.value) || 4320);
+    const currentMttr = Math.max(0.1, parseFloat(mttrInput?.value) || activePresetMttr);
+    const targetAvail = Math.min(99.99, Math.max(0, parseFloat(targetInput?.value) || 96.00));
 
-  if (simBoardBaseAvail) simBoardBaseAvail.textContent = `${baseAvail.toFixed(2)}%`;
-  if (simBoardScenAvail) simBoardScenAvail.textContent = `${scenAvail.toFixed(2)}%`;
+    // Availability = MTBF / (MTBF + MTTR)
+    const simAvail = calculateAvailabilityFormula(currentMtbf, currentMttr);
 
-  const availDelta = scenAvail - baseAvail;
-  if (simBoardDiffAvail) {
-    if (Math.abs(availDelta) < 0.005) {
-      simBoardDiffAvail.textContent = '—';
-      simBoardDiffAvail.style.color = 'var(--text-muted)';
-      if (simBoardDiffCaption) simBoardDiffCaption.textContent = (currentLang === 'th') ? 'ไม่มีการเปลี่ยนแปลง' : 'No variation';
-    } else {
-      const arrow = availDelta > 0 ? '↑' : '↓';
-      simBoardDiffAvail.textContent = `${arrow} ${Math.abs(availDelta).toFixed(2)}%`;
-      simBoardDiffAvail.style.color = availDelta > 0 ? '#66756B' : '#A65D57';
-      if (simBoardDiffCaption) {
-        simBoardDiffCaption.textContent = availDelta > 0 
-          ? ((currentLang === 'th') ? 'เพิ่มขึ้น' : 'increase')
-          : ((currentLang === 'th') ? 'ลดลง' : 'decrease');
+    let baselineAvail = 99.12;
+    if (resBaseline) {
+      const parsed = parseFloat(resBaseline.textContent.replace("%", "").trim());
+      if (!isNaN(parsed) && parsed > 0) baselineAvail = parsed;
+    }
+
+    const delta = simAvail - baselineAvail;
+
+    // Update Result Cards
+    if (resSimulated) resSimulated.textContent = `${simAvail.toFixed(2)}%`;
+    if (resChange) {
+      const sign = delta >= 0 ? "+" : "";
+      resChange.textContent = `${sign}${delta.toFixed(2)}%`;
+      resChange.style.color = delta >= 0 ? "var(--status-healthy)" : "var(--status-warning)";
+    }
+
+    // State styling against Target Availability
+    if (resSimBox) {
+      if (simAvail >= targetAvail) {
+        resSimBox.classList.remove("warning-state");
+        if (resSimulated) resSimulated.style.color = "var(--status-healthy)";
+      } else {
+        resSimBox.classList.add("warning-state");
+        if (resSimulated) resSimulated.style.color = "var(--status-warning)";
       }
     }
+
+    // Math Walkthrough Display
+    if (calcMtbf) calcMtbf.textContent = `${currentMtbf.toLocaleString()} hrs`;
+    if (calcMttr) calcMttr.textContent = `${currentMttr.toFixed(1)} hrs`;
+    if (calcNum) calcNum.textContent = currentMtbf.toLocaleString();
+    if (calcDen) calcDen.textContent = `${currentMtbf.toLocaleString()} + ${currentMttr.toFixed(1)}`;
+    if (calcRes) {
+      calcRes.textContent = `${simAvail.toFixed(2)}%`;
+      calcRes.style.color = simAvail >= targetAvail ? "var(--status-healthy)" : "var(--status-warning)";
+    }
+
+    renderComparisonChart(baselineAvail, simAvail, targetAvail);
   }
 
-  // Threshold Styling
-  if (simBoardScenarioBox) {
-    simBoardScenarioBox.classList.remove('within-target', 'below-target');
-    simBoardScenarioBox.classList.add(scenAvail >= 96.00 ? 'within-target' : 'below-target');
+  // Chart Rendering
+  function renderComparisonChart(baseline, simulated, target) {
+    const canvas = document.getElementById("simComparisonChart");
+    if (!canvas) return;
+
+    if (simChartInstance) {
+      simChartInstance.destroy();
+    }
+
+    const ctx = canvas.getContext("2d");
+    simChartInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Baseline", "Simulated Scenario"],
+        datasets: [{
+          data: [baseline, simulated],
+          backgroundColor: ["#8E7C93", simulated >= target ? "#66756B" : "#A65D57"],
+          borderRadius: 4,
+          barThickness: 32
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `Availability: ${ctx.parsed.y.toFixed(2)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: Math.max(80, Math.floor(Math.min(baseline, simulated, target) - 2)),
+            max: 100,
+            grid: { color: "rgba(0, 0, 0, 0.05)" },
+            ticks: {
+              color: "#888E94",
+              font: { size: 10 },
+              callback: (val) => `${val}%`
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: "#888E94", font: { size: 10, family: 'Plus Jakarta Sans' } }
+          }
+        }
+      },
+      plugins: [{
+        id: "targetLine",
+        afterDraw: (chart) => {
+          const yAxis = chart.scales.y;
+          const xAxis = chart.scales.x;
+          if (target < yAxis.min || target > yAxis.max) return;
+
+          const yPos = yAxis.getPixelForValue(target);
+          const c = chart.ctx;
+          c.save();
+          c.beginPath();
+          c.setLineDash([4, 4]);
+          c.strokeStyle = "#B7A58A";
+          c.lineWidth = 1.5;
+          c.moveTo(xAxis.left, yPos);
+          c.lineTo(xAxis.right, yPos);
+          c.stroke();
+          
+          c.fillStyle = "#B7A58A";
+          c.font = "bold 9px 'Plus Jakarta Sans'";
+          c.fillText(`Target: ${target}%`, xAxis.right - 60, yPos - 4);
+          c.restore();
+        }
+      }]
+    });
   }
 
-  // Impact Summary Table
-  const dict = i18nData[currentLang] || i18nData.en;
-  const simCmpBaseMtbf = document.getElementById('simCmpBaseMtbf');
-  const simCmpScenMtbf = document.getElementById('simCmpScenMtbf');
-  const simCmpDeltaMtbf = document.getElementById('simCmpDeltaMtbf');
-  const simCmpBaseMttr = document.getElementById('simCmpBaseMttr');
-  const simCmpScenMttr = document.getElementById('simCmpScenMttr');
-  const simCmpDeltaMttr = document.getElementById('simCmpDeltaMttr');
-  const simCmpBaseAvail = document.getElementById('simCmpBaseAvail');
-  const simCmpScenAvail = document.getElementById('simCmpScenAvail');
-  const simCmpDeltaAvail = document.getElementById('simCmpDeltaAvail');
+  // Reset Button
+  resetBtn?.addEventListener("click", () => {
+    if (eqSelect && eqSelect.options.length > 1) {
+      eqSelect.selectedIndex = 1;
+      eqSelect.dispatchEvent(new Event("change"));
+    }
+    if (mtbfInput) mtbfInput.value = 4320;
+    if (mtbfSlider) mtbfSlider.value = 4320;
+    if (targetInput) targetInput.value = 96.00;
+    modePresetBtn?.click();
+    runSimulation();
+  });
 
-  if (simCmpBaseMtbf) simCmpBaseMtbf.textContent = `${baseMtbf.toLocaleString()} ${dict.unit_hrs}`;
-  if (simCmpScenMtbf) simCmpScenMtbf.textContent = `${Math.round(scenMtbf).toLocaleString()} ${dict.unit_hrs}`;
-  renderDiffIndicator(simCmpDeltaMtbf, scenMtbf - baseMtbf, dict.unit_hrs, true);
+  runBtn?.addEventListener("click", runSimulation);
 
-  if (simCmpBaseMttr) simCmpBaseMttr.textContent = `${baseMttr.toFixed(2)} ${dict.unit_hrs}`;
-  if (simCmpScenMttr) simCmpScenMttr.textContent = `${scenMttr.toFixed(2)} ${dict.unit_hrs}`;
-  renderDiffIndicator(simCmpDeltaMttr, scenMttr - baseMttr, dict.unit_hrs, false);
-
-  if (simCmpBaseAvail) simCmpBaseAvail.textContent = `${baseAvail.toFixed(2)}%`;
-  if (simCmpScenAvail) simCmpScenAvail.textContent = `${scenAvail.toFixed(2)}%`;
-  renderDiffIndicator(simCmpDeltaAvail, scenAvail - baseAvail, '%', true);
-
-  // Interpretation Card Tag & Narrative
-  const simFeasibilityBadge = document.getElementById('simFeasibilityBadge');
-  const simInterpretationText = document.getElementById('simInterpretationText');
-  const simTakeawayText = document.getElementById('simTakeawayText');
-
-  if (simFeasibilityBadge) {
-    simFeasibilityBadge.className = 'interpret-pill ' + (scenAvail >= 96.00 ? 'status-within' : 'status-below');
-    simFeasibilityBadge.textContent = (scenAvail >= 96.00) 
-      ? ((currentLang === 'th') ? '✓ อยู่ในเกณฑ์เป้าหมาย' : '✓ WITHIN TARGET')
-      : ((currentLang === 'th') ? '⚠ ต่ำกว่าเกณฑ์เป้าหมาย' : '⚠ BELOW TARGET');
-  }
-  if (simInterpretationText) simInterpretationText.innerHTML = interpretationText;
-  if (simTakeawayText) simTakeawayText.textContent = takeawayText;
-}
-
-function updateVisualTrack(baseVal, scenVal, minVal, maxVal, unitLabel) {
-  const simVisualTrack = document.getElementById('simVisualTrack');
-  if (!simVisualTrack) return;
-  simVisualTrack.style.display = 'flex';
-
-  const trackLblBase = document.getElementById('trackLblBase');
-  const trackLblScen = document.getElementById('trackLblScen');
-  const trackDotBase = document.getElementById('trackDotBase');
-  const trackDotScen = document.getElementById('trackDotScen');
-  const trackActiveBar = document.getElementById('trackActiveBar');
-
-  const range = maxVal - minVal;
-  const pctBase = Math.min(100, Math.max(0, ((baseVal - minVal) / range) * 100));
-  const pctScen = Math.min(100, Math.max(0, ((scenVal - minVal) / range) * 100));
-
-  if (trackLblBase) trackLblBase.textContent = `Baseline: ${baseVal.toLocaleString()} ${unitLabel}`;
-  if (trackLblScen) trackLblScen.textContent = `Scenario: ${scenVal.toLocaleString()} ${unitLabel}`;
-
-  if (trackDotBase) trackDotBase.style.left = `calc(${pctBase}% - 6px)`;
-  if (trackDotScen) trackDotScen.style.left = `calc(${pctScen}% - 6px)`;
-
-  if (trackActiveBar) {
-    const left = Math.min(pctBase, pctScen);
-    const width = Math.abs(pctScen - pctBase);
-    trackActiveBar.style.left = `${left}%`;
-    trackActiveBar.style.width = `${width}%`;
-  }
-}
-
-function renderDiffIndicator(elem, delta, unit, higherIsBetter) {
-  if (!elem) return;
-  const rounded = Number(delta.toFixed(2));
-  if (Math.abs(rounded) < 0.01) {
-    elem.innerHTML = `<span class="diff-neutral">0.00 ${unit}</span>`;
-    return;
-  }
-
-  const isPositive = rounded > 0;
-  const isGood = higherIsBetter ? isPositive : !isPositive;
-  const colorClass = isGood ? 'diff-up-green' : 'diff-down-red';
-  const arrow = isPositive ? '↑' : '↓';
-  const sign = isPositive ? '+' : '';
-
-  elem.innerHTML = `<span class="${colorClass}">${arrow} ${sign}${rounded.toLocaleString()} ${unit}</span>`;
+  updateSimulatorEquipment();
 }
 
 // ============================================================
-// 9. DRILL-DOWN ENGINE
+// 7. DRAWER & EXPORT REPORT ENGINE
 // ============================================================
 function openDrawer() {
   const detailDrawer = document.getElementById('detailDrawer');
@@ -1309,7 +1246,6 @@ function closeDrawer() {
   drawerBackdrop.classList.remove('show');
   detailDrawer.setAttribute('aria-hidden', 'true');
   drillHistory.length = 0;
-  activeSegmentIndex = null;
 }
 
 function pushDrillView(viewState) {
@@ -1337,155 +1273,6 @@ function renderDrillView(viewState, shouldOpen = true) {
   }
 
   if (shouldOpen) openDrawer();
-}
-
-function openDrillCategory(categoryName) {
-  pushDrillView({ type: 'category', category: categoryName, level: 2 });
-}
-
-function renderCategoryDetail(categoryName) {
-  const drawerContent = document.getElementById('drawerContent');
-  const sheetSelect = document.getElementById('sheetSelect');
-  if (!drawerContent || !sheetSelect) return;
-  const currentSheet = sheetSelect.value;
-  const allRows = getNormalizedRows(currentSheet);
-  const dict = i18nData[currentLang] || i18nData.en;
-  
-  const isOther = categoryName.includes('Other') || categoryName.includes('อื่นๆ');
-  const categoryRows = allRows.filter(r => {
-    if (isOther) {
-      return !['Electrical', 'Mechanical', 'Protection', 'Human Error'].some(top => r.cause.toLowerCase().includes(top.toLowerCase()));
-    }
-    return r.cause.toLowerCase().includes(categoryName.toLowerCase());
-  });
-
-  const totalFailures = categoryRows.length;
-  const totalSubsystemFailures = allRows.length;
-  const sharePct = totalSubsystemFailures > 0 ? ((totalFailures / totalSubsystemFailures) * 100).toFixed(2) : '0.00';
-  
-  const avgDowntime = totalFailures > 0
-    ? (categoryRows.reduce((acc, r) => acc + r.mttr, 0) / totalFailures).toFixed(2)
-    : '0.00';
-
-  const eqMap = {};
-  categoryRows.forEach(r => {
-    eqMap[r.component] = (eqMap[r.component] || 0) + 1;
-  });
-  const sortedEq = Object.entries(eqMap).sort((a, b) => b[1] - a[1]);
-  const maxEqCount = sortedEq.length > 0 ? sortedEq[0][1] : 1;
-
-  const causeBreakdown = {};
-  categoryRows.forEach(r => {
-    causeBreakdown[r.cause] = (causeBreakdown[r.cause] || 0) + 1;
-  });
-  const sortedCauses = Object.entries(causeBreakdown).sort((a, b) => b[1] - a[1]);
-
-  let html = `
-    <div class="drawer-title-group">
-      <h2>${categoryName.toUpperCase()}</h2>
-      <div class="drawer-subtitle">
-        <span>${sharePct}% ${(currentLang === 'th') ? 'ของเหตุการณ์ทั้งหมดในระบบย่อย' : 'of Total Subsystem Incidents'}</span>
-        <span>•</span>
-        <span>${(currentLang === 'th') ? 'ระบบย่อย' : 'Subsystem'} ${currentSheet}</span>
-      </div>
-    </div>
-
-    <div class="drawer-kpi-strip">
-      <div class="drawer-mini-kpi">
-        <span>${(currentLang === 'th') ? 'จำนวนเหตุการณ์' : 'Failure Events'}</span>
-        <strong>${totalFailures}</strong>
-      </div>
-      <div class="drawer-mini-kpi">
-        <span>${(currentLang === 'th') ? 'เวลาบำรุงรักษาเฉลี่ย' : 'Avg Repair Downtime'}</span>
-        <strong>${avgDowntime} ${dict.unit_hrs}</strong>
-      </div>
-      <div class="drawer-mini-kpi">
-        <span>${(currentLang === 'th') ? 'อุปกรณ์ที่ได้รับผลกระทบ' : 'Affected Equipment'}</span>
-        <strong>${sortedEq.length} ${(currentLang === 'th') ? 'รายการ' : 'units'}</strong>
-      </div>
-      <div class="drawer-mini-kpi">
-        <span>${(currentLang === 'th') ? 'สัดส่วนในระบบย่อย' : 'Subsystem Share'}</span>
-        <strong>${sharePct}%</strong>
-      </div>
-    </div>
-
-    <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อบกพร่องจำแนกตามอุปกรณ์' : 'Failures by Equipment'}</span>
-      <div class="horizontal-bars">
-  `;
-
-  sortedEq.slice(0, 5).forEach(([comp, count]) => {
-    const widthPct = Math.round((count / maxEqCount) * 100);
-    html += `
-      <div class="bar-row" onclick="openDrillEquipment('${encodeURIComponent(comp)}')">
-        <div class="bar-row-info">
-          <span>${comp}</span>
-          <span>${count} ${(currentLang === 'th') ? 'ครั้ง' : 'events'}</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill" style="width: ${widthPct}%;"></div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
-      </div>
-    </div>
-
-    <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'สาเหตุข้อบกพร่องสูงสุด' : 'Top Failure Causes'}</span>
-      <div class="horizontal-bars">
-  `;
-
-  sortedCauses.slice(0, 4).forEach(([cause, count]) => {
-    html += `
-      <div class="bar-row">
-        <div class="bar-row-info">
-          <span style="font-weight: 500;">${cause}</span>
-          <span>${count}</span>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
-      </div>
-    </div>
-
-    <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการบันทึกล่าสุด' : 'Recent Registered Events'}</span>
-      <table class="drawer-table">
-        <thead>
-          <tr>
-            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
-            <th>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่อง' : 'Mode'}</th>
-            <th>MTTR</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  categoryRows.slice(0, 6).forEach(r => {
-    html += `
-      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
-        <td><strong>${r.component}</strong></td>
-        <td>${r.mode}</td>
-        <td>${r.mttr.toFixed(2)} ${dict.unit_hrs}</td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-      <button class="drawer-btn-viewall" onclick="applyCategoryFilterToMatrix('${categoryName}')">
-        ${(currentLang === 'th') ? `กรองตารางเฉพาะกลุ่ม ${categoryName} →` : `Filter Matrix to ${categoryName} Failures →`}
-      </button>
-    </div>
-  `;
-
-  drawerContent.innerHTML = html;
 }
 
 function openDrillEquipment(rawCompName) {
@@ -1545,23 +1332,6 @@ function renderEquipmentDetail(compName) {
     </div>
 
     <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'ข้อมูลการวินิจฉัยอุปกรณ์' : 'Equipment Diagnostic Details'}</span>
-      <div style="font-size:0.78rem; line-height:1.6; color:var(--text-secondary); background:var(--surface-base); padding:14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);">
-        <div><strong>${(currentLang === 'th') ? 'สาเหตุหลัก' : 'Primary Cause'}:</strong> ${primary.cause}</div>
-        <div><strong>${(currentLang === 'th') ? 'ลักษณะข้อบกพร่องหลัก' : 'Dominant Failure Mode'}:</strong> ${primary.mode}</div>
-        <div style="margin-top:6px; font-size:0.72rem; color:var(--text-muted);">
-          ${isAttention
-            ? ((currentLang === 'th') 
-               ? 'คำแนะนำ: อุปกรณ์นี้มีค่าความพร้อมใช้งานต่ำกว่าเกณฑ์ หรือใช้เวลาบำรุงรักษานาน ควรตรวจสอบระบบฉนวน หน้าสัมผัสทางไฟฟ้า และกลไกขับเคลื่อน' 
-               : 'Root Cause Advisory: This unit triggers an availability or MTTR breach. Recommended action: inspect insulation, contacts, and mechanical linkages.')
-            : ((currentLang === 'th')
-               ? 'ประสิทธิภาพการทำงานอยู่ภายใต้เกณฑ์มาตรฐาน ISO 14224 และ IEEE' 
-               : 'Performance metrics operate within designated ISO 14224 & IEEE reliability thresholds.')}
-        </div>
-      </div>
-    </div>
-
-    <div class="drawer-section">
       <span class="drawer-section-title">${(currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึก' : 'Registered Subsystem Events'}</span>
       <table class="drawer-table">
         <thead>
@@ -1593,81 +1363,6 @@ function renderEquipmentDetail(compName) {
   drawerContent.innerHTML = html;
 }
 
-function renderKpiDetail(metric) {
-  const drawerContent = document.getElementById('drawerContent');
-  const sheetSelect = document.getElementById('sheetSelect');
-  if (!drawerContent || !sheetSelect) return;
-  const currentSheet = sheetSelect.value;
-  const allRows = getNormalizedRows(currentSheet);
-
-  let title = '';
-  let sub = '';
-  let sorted = [];
-
-  if (metric === 'availability') {
-    title = (currentLang === 'th') ? 'การจัดอันดับความพร้อมใช้งาน (AVAILABILITY)' : 'FLEET AVAILABILITY RANKING';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากความพร้อมใช้งานต่ำสุดไปสูงสุด (เป้าหมาย ≥ 96.00%)' : 'Ranked from lowest availability to highest (Target ≥ 96.00%)';
-    sorted = [...allRows].sort((a, b) => a.availability - b.availability);
-  } else if (metric === 'mtbf') {
-    title = (currentLang === 'th') ? 'การจัดอันดับความน่าเชื่อถือ (MTBF)' : 'MTBF RELIABILITY SPECTRUM';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากชำรุดบ่อยสุด (MTBF ต่ำ) ไปยังตัวที่ทนทานที่สุด' : 'Ranked from lowest MTBF (highest failure rate) to highest';
-    sorted = [...allRows].sort((a, b) => a.mtbf - b.mtbf);
-  } else if (metric === 'mttr') {
-    title = (currentLang === 'th') ? 'การจัดอันดับเวลาบำรุงรักษา (MTTR)' : 'REPAIR LATENCY (MTTR) RANKING';
-    sub = (currentLang === 'th') ? 'เรียงลำดับจากใช้เวลาซ่อมนานสุดไปน้อยสุด (เกณฑ์ ≤ 10 ชม.)' : 'Ranked from highest repair duration to lowest (Limit ≤ 10h)';
-    sorted = [...allRows].sort((a, b) => b.mttr - a.mttr);
-  } else {
-    title = (currentLang === 'th') ? 'ลักษณะข้อบกพร่องที่พบในระบบ' : 'FAILURE MODE FREQUENCY';
-    sub = (currentLang === 'th') ? 'รายการข้อบกพร่องที่บันทึกไว้ในระบบย่อยปัจจุบัน' : 'Most prevalent cataloged mechanisms within current subsystem';
-    sorted = [...allRows];
-  }
-
-  let html = `
-    <div class="drawer-title-group">
-      <h2>${title}</h2>
-      <div class="drawer-subtitle">${sub}</div>
-    </div>
-
-    <div class="drawer-section">
-      <span class="drawer-section-title">${(currentLang === 'th') ? 'อันดับอุปกรณ์ตามตัวชี้วัด' : 'Equipment Diagnostic Ranks'}</span>
-      <table class="drawer-table">
-        <thead>
-          <tr>
-            <th>${(currentLang === 'th') ? 'อุปกรณ์' : 'Equipment'}</th>
-            <th>Avail</th>
-            <th>MTBF</th>
-            <th>MTTR</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  sorted.forEach(r => {
-    const availColor = r.availability >= 96 ? '#66756B' : '#A65D57';
-    const mttrColor = r.mttr <= 10 ? 'inherit' : '#A65D57';
-
-    html += `
-      <tr class="clickable" onclick="openDrillEquipment('${encodeURIComponent(r.component)}')">
-        <td><strong>${r.component}</strong><br><span style="font-size:0.65rem; color:var(--text-muted);">${r.id}</span></td>
-        <td style="color:${availColor}; font-weight:700;">${r.availability.toFixed(2)}%</td>
-        <td>${r.mtbf.toFixed(2)}h</td>
-        <td style="color:${mttrColor}; font-weight:${r.mttr > 10 ? '700' : '500'};">${r.mttr.toFixed(2)}h</td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  drawerContent.innerHTML = html;
-}
-
-// ============================================================
-// 10. PRINT & EXPORT ENGINE
-// ============================================================
 function initExportEvents() {
   const openExportModalBtn = document.getElementById('openExportModalBtn');
   const exportModal = document.getElementById('exportModal');
@@ -1679,10 +1374,7 @@ function initExportEvents() {
     openExportModalBtn.addEventListener('click', function() {
       const sheetSelect = document.getElementById('sheetSelect');
       const sheetOptionsList = document.getElementById('sheetOptionsList');
-      if (!currentWorkbook || !sheetSelect || !sheetOptionsList || !exportModal) {
-        alert((currentLang === 'th') ? 'กรุณารอโหลดข้อมูลให้สมบูรณ์ก่อนสร้างรายงาน' : 'Please wait for system data to complete loading before generating the brief.');
-        return;
-      }
+      if (!currentWorkbook || !sheetSelect || !sheetOptionsList || !exportModal) return;
 
       const currentSheet = sheetSelect.value;
       sheetOptionsList.innerHTML = '';
@@ -1706,14 +1398,6 @@ function initExportEvents() {
           sheetOptionsList.insertAdjacentHTML('beforeend', item);
         }
       });
-
-      const allOption = `
-        <label class="sheet-radio-item" style="border-top: 1px dashed var(--border-divider); margin-top: 8px; padding-top: 12px;">
-          <input type="radio" name="printSheetTarget" value="__ALL__" />
-          <span><strong>${(currentLang === 'th') ? 'รวมทุกระบบย่อย (All Subsystems)' : 'Consolidated Fleet Brief (All Subsystems)'}</strong></span>
-        </label>
-      `;
-      sheetOptionsList.insertAdjacentHTML('beforeend', allOption);
 
       exportModal.classList.add('show');
     });
@@ -1750,7 +1434,6 @@ function buildPrintView(targetSheet) {
   sheetsToPrint.forEach(sName => {
     const rows = getNormalizedRows(sName);
     const metrics = calculateSheetMetrics(rows);
-
     const sheet = currentWorkbook.Sheets[sName];
     const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     if (jsonData.length === 0) return;
